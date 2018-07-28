@@ -68,8 +68,46 @@ pr_auc(dout, iris$Species)
 
 ## Limitations
 
-Early days for this package. The interface could be more friendly, and the implementation a lot more efficient. 
-Currently, I don't recommend using this on datasets larger than ~1000 observations.
+Early days for this package. The interface could be more friendly, and the
+implementation a lot more efficient. Currently, I don't recommend using this on
+datasets larger than ~1000 observations.
+
+For larger datasets, use an Approximate Nearest Neighbors package, e.g
+[RcppAnnoy](https://cran.r-project.org/package=RcppAnnoy) and the 
+`nbr_pres_knn` function:
+
+```R
+# A function to wrap the RcppAnnoy API to return a matrix of the nearest 
+# neighbor indices
+find_nn <- function(X, k = 10, n_trees = 50, search_k = k * n_trees) {
+  nr <- nrow(X)
+  nc <- ncol(X)
+
+  ann <- methods::new(RcppAnnoy::AnnoyEuclidean, nc)
+  for (i in 1:nr) {
+    ann$addItem(i - 1, X[i, ])
+  }
+  ann$build(n_trees)
+
+  idx <- matrix(nrow = nr, ncol = k)
+  for (i in 1:nr) {
+    res <- ann$getNNsByItemList(i - 1, k, search_k, FALSE)
+    if (length(res$item) != k) {
+      stop("search_k/n_trees settings were unable to find ", k,
+           " neighbors for item ", i)
+    }
+    idx[i, ] <- res$item
+  }
+  idx + 1
+}
+
+kin <- find_nn(as.matrix(iris[, -5]), k = 5)
+kout <- find_nn(pca_iris$x, k = 5)
+
+# This should give very similar results to using nbr_pres on the distance
+# matrices, subject to the approximations employed by Annoy
+nbr_pres_knn(kin, kout, k = 5)
+```
 
 ## Further Reading
 

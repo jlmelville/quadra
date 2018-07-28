@@ -36,6 +36,47 @@ nbr_pres <- function(din, dout, k) {
   preservations
 }
 
+
+#' Neighborhood Preservation Between Nearest Neighbor Matrices
+#'
+#' Calculates the neighborhood preservation for each observation in a dataset,
+#' represented by two matrices of the indices of the nearest neighbors. The
+#' first matrix is the "ground truth", the second being the estimation or
+#' approximation. The neighborhood preservation is calculated for each row where
+#' each element d[i, k] is taken to be the index of the kth nearest neighbor
+#' of i.
+#'
+#' Approximate nearest neighbor methods, e.g.
+#' \href{https://cran.r-project.org/package=RcppAnnoy}{RcppAnnoy} can find
+#' k nearest neighbors quite efficiently and so makes calculating preservation
+#' values for larger datasets feasible.
+#'
+#' The neighborhood preservation can vary between 0 (no neighbors in common)
+#' and 1 (perfect preservation). However, random performance gives an
+#' approximate value of k / n, where k is the size of the neighborhood and is
+#' the number of observations or items in the dataset.
+#'
+#' @param kin Nearest neighbor matrix. The "ground truth" or reference indices.
+#' @param kout Nearest neighbor matrix. A set of distances to compare to the reference
+#'  indices.
+#' @param k The size of the neighborhood, where k is the number of neighbors to
+#'  include in the neighborhood.
+#' @return Vector of preservation values, one for each row of \code{kin}
+#' @export
+nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
+  if (k > ncol(kin) || k > ncol(kout)) {
+    stop("k cannot be larger than the number of columns in kin or kout")
+  }
+  preservations <- vector(mode = "numeric", length = nrow(kin))
+  for (i in 1:nrow(kin)) {
+    ki <- kin[i, 1:k]
+    kj <- kout[i, 1:k]
+    k_shared <- Reduce(intersect, list(ki, kj))
+    preservations[i] <- length(k_shared)
+  }
+  preservations * (1 / k)
+}
+
 #' Area Under the RNX Curve
 #'
 #' The RNX curve is formed by calculating the \code{rnx_crm} metric for
