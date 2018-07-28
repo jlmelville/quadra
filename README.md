@@ -81,6 +81,7 @@ For larger datasets, use an Approximate Nearest Neighbors package, e.g
 # neighbor indices
 find_nn <- function(X, k = 10, n_trees = 50, search_k = k * n_trees) {
   nr <- nrow(X)
+  nc <- ncol(X)
 
   ann <- methods::new(RcppAnnoy::AnnoyEuclidean, nc)
   for (i in 1:nr) {
