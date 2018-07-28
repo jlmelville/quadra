@@ -26,6 +26,9 @@
 #'  matrix.
 #' @export
 nbr_pres <- function(din, dout, k) {
+  if (k > ncol(din) || k > ncol(dout)) {
+    stop("k cannot be larger than the number of columns in din or dout")
+  }
   preservations <- vector(mode = "numeric", length = nrow(din))
   for (i in 1:nrow(din)) {
     preservations[i] <- nbr_pres_i(din[i,], dout[i,], k)
