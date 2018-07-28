@@ -158,3 +158,11 @@ https://dx.doi.org/10.1371/journal.pone.0092209.
 ## License
 
 [MIT](https://opensource.org/licenses/MIT).
+
+## See Also
+
+Some other R packages I maintain that might come in handy:
+
+* [snedata](https://github.com/jlmelville/snedata) and [coil20](https://github.com/jlmelville/coil20) provide ways to access some datasets for embedding.
+* A [fork](https://github.com/jlmelville/rtsne) of Justin Donaldson's pure R implementation of [t-SNE](https://github.com/jdonaldson/rtsne), which provides a few quality of life improvements over the original.
+* [vizier](https://github.com/jlmelville/vizier) for visualizing the results of the embedding.
