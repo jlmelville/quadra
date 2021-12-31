@@ -1,3 +1,5 @@
+[![Last Commit](https://img.shields.io/github/last-commit/jlmelville/quadra)](https://github.com/jlmelville/quadra)
+
 # Quadra: QUantitative Assessment of Dimensionality Reduction Algorithms
 
 An R Package for evaluating the success of embeddings from dimensionality
