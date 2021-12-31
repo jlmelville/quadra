@@ -123,8 +123,12 @@ pr_auc_row <- function(dm, labels, i) {
   neg_ind <- which(labels != labels[i], arr.ind = TRUE)
   neg_dist <- dm[i, neg_ind]
 
-  as.numeric(PRROC::pr.curve(scores.class0 = -pos_dist,
-                             scores.class1 = -neg_dist)$auc.davis.goadrich)
+  as.numeric(
+    PRROC::pr.curve(
+      scores.class0 = -pos_dist,
+      scores.class1 = -neg_dist
+    )$auc.davis.goadrich
+  )
 }
 
 # Area Under the ROC Curve of an Observation
@@ -160,8 +164,10 @@ roc_auc_row <- function(dm, labels, i) {
   neg_ind <- which(labels != labels[i], arr.ind = TRUE)
   neg_dist <- dm[i, neg_ind]
 
-  as.numeric(
-    PRROC::roc.curve(scores.class0 = -pos_dist, scores.class1 = -neg_dist)$auc)
+  as.numeric(PRROC::roc.curve(
+    scores.class0 = -pos_dist,
+    scores.class1 = -neg_dist
+  )$auc)
 }
 
 # Average Area Under a Curve
@@ -207,8 +213,7 @@ auc_mat <- function(dm, labels, auc_row_fn) {
     if (is.null(label_av[[label]])) {
       label_av[[label]] <- auc
       ns[[label]] <- 1
-    }
-    else {
+    } else {
       label_av[[label]] <- label_av[[label]] + auc
       ns[[label]] <- ns[[label]] + 1
     }
@@ -216,8 +221,7 @@ auc_mat <- function(dm, labels, auc_row_fn) {
   for (label in names(ns)) {
     if (ns[[label]] == 0) {
       label_av[[label]] <- 0
-    }
-    else {
+    } else {
       label_av[[label]] <- label_av[[label]] / ns[[label]]
     }
   }

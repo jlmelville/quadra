@@ -31,7 +31,7 @@ nbr_pres <- function(din, dout, k) {
   }
   preservations <- vector(mode = "numeric", length = nrow(din))
   for (i in 1:nrow(din)) {
-    preservations[i] <- nbr_pres_i(din[i,], dout[i,], k)
+    preservations[i] <- nbr_pres_i(din[i, ], dout[i, ], k)
   }
   preservations
 }
@@ -130,8 +130,8 @@ rnx_auc <- function(din, dout) {
 coranking_matrix <- function(din, dout) {
   crm <- matrix(0, nrow = nrow(din), ncol = ncol(dout))
   for (i in 1:nrow(din)) {
-    rin <- rank(din[i,])
-    rout <- rank(dout[i,])
+    rin <- rank(din[i, ])
+    rout <- rank(dout[i, ])
     for (j in 1:length(rin)) {
       crm[rin[j], rout[j]] <- crm[rin[j], rout[j]] + 1
     }
