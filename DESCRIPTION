@@ -8,7 +8,7 @@ Authors@R: person("James", "Melville", email = "jlmelville@gmail.com",
 Description: Package for quantifying the embeddings produced by dimensionality 
   reduction methods.
 License: MIT + file LICENSE
-LazyLoad: yes
-RoxygenNote: 6.0.1
+Encoding: UTF-8
+RoxygenNote: 7.1.2
 Suggests:
   PRROC
