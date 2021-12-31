@@ -6,6 +6,11 @@ An R Package for evaluating the success of embeddings from dimensionality
 reduction methods (e.g. Principal Component Analysis, Sammon Maps, 
 t-Distributed Stochastic Neighbor Embedding).
 
+## News
+
+*December 31 2021*: Package is getting relicensed to GPL3+ so I can use some
+other packages and code. Last MIT license version is release 0.0.0.9000.
+
 ## Description
 
 This package provides two ways to evaluate the performance of an embedding.

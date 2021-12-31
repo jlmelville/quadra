@@ -1,13 +1,13 @@
 Package: quadra
 Type: Package
 Title: QUality Assessment of Dimensonality Reduction Algorithms
-Version: 0.0.0.9000
+Version: 0.1.0.9000
 Date: 2017-10-29
 Authors@R: person("James", "Melville", email = "jlmelville@gmail.com",
     role = c("aut", "cre"))
 Description: Package for quantifying the embeddings produced by dimensionality 
   reduction methods.
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
 Suggests:
