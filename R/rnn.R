@@ -47,7 +47,8 @@ random_triplet_eval <-
       }
       n_trips <- n_trips / n
       n_triplets <- n_triplets + 1
-      triplets <- matrix(t(as.matrix(n_triplets)), nrow = n_trips * 2)
+      triplets <-
+        matrix(t(as.matrix(n_triplets)), nrow = n_trips * 2)
       n_triplets <- n_trips
       avoid_self <- FALSE
     } else {
@@ -75,7 +76,7 @@ random_triplet_eval <-
         p2 <- ifelse(avoid_self & p2 == i, p2 + 1, p2)
 
         if (i > nrow(Xin) || p1 > nrow(Xin) || p2 > nrow(Xin)) {
-          browser()
+          stop("Problem with indexing: ", paste(i, p1, p2, collapse = " "))
         }
         dip1_in <- in_dfun(Xin[i, ], Xin[p1, ])
         dip2_in <- in_dfun(Xin[i, ], Xin[p2, ])
@@ -115,12 +116,11 @@ calc_nn_graph <-
       nnd = rnndescent::nnd_knn,
       stop("unknown method '", nn_method, "'")
     )
-
     do.call(nnfun, varargs)
   }
 
 get_nn_graph <- function(X, k = 15, nn_args) {
-  if (is.list(X)) {
+  if (is_nn_graph(X)) {
     nng(X, k = k)
   } else {
     do.call(calc_nn_graph, lmerge(list(X = X, k = k), nn_args))
@@ -137,6 +137,8 @@ nn_preservation <- function(Xin,
     do.call(get_nn_graph, list(X = Xin, k = k, nn_args = in_nn_args))
   nn_out <-
     do.call(get_nn_graph, list(X = Xout, k = k, nn_args = out_nn_args))
+  stopifnot(is_nn_graph(nn_in))
+  stopifnot(is_nn_graph(nn_out))
   acc <- nn_accuracy(nn_out, ref_idx = nn_in, k = k)
   if (ret_extra) {
     res <- list(
@@ -154,6 +156,38 @@ nng <- function(graph, k) {
   list(idx = graph$idx[, 1:k], dist = graph$dist[, 1:k])
 }
 
+is_nn_graph <- function(graph) {
+  if (!is.list(graph) || is.null(graph$idx) || is.null(graph$dist)) {
+    return(FALSE)
+  }
+  idx <- graph$idx
+  if (!is.matrix(idx)) {
+    return(FALSE)
+  }
+  dist <- graph$dist
+  if (!is.matrix(dist)) {
+    return(FALSE)
+  }
+  all(dim(idx) == dim(dist))
+}
+
+check_graph <- function(idx, dist = NULL, k = NULL) {
+  if (is.null(dist) && is.list(idx)) {
+    dist <- idx$dist
+  }
+  if (is.list(idx)) {
+    idx <- idx$idx
+  }
+  stopifnot(methods::is(idx, "matrix"))
+  stopifnot(methods::is(dist, "matrix"))
+  stopifnot(dim(idx) == dim(dist))
+  if (is.null(k)) {
+    k <- ncol(idx)
+  }
+  stopifnot(k > 0)
+  list(idx = idx, dist = dist, k = k)
+}
+
 nn_intersect <-
   function(idx,
            ref_idx,
@@ -164,9 +198,12 @@ nn_intersect <-
     if (is.list(idx)) {
       idx <- idx$idx
     }
+    stopifnot(methods::is(idx, "matrix"))
+
     if (is.list(ref_idx)) {
       ref_idx <- ref_idx$idx
     }
+    stopifnot(methods::is(ref_idx, "matrix"))
 
     if (is.null(k)) {
       k <- findk(idx, ref_idx)
