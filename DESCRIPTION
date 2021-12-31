@@ -12,3 +12,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.2
 Suggests:
   PRROC
+Imports: 
+    rnndescent (>= 0.0.10)
+Remotes:  
+    jlmelville/rnndescent
