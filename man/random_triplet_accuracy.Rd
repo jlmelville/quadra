@@ -63,14 +63,14 @@ proportion of triangles where the relative distances agree between the input
 and output data.
 }
 \examples{
-iris_pca2 <- prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 random_triplet_accuracy(iris, iris_pca2)
 
 # If you plan on comparing the results of multiple output methods, then
 # pre-transposing the input data can save time
 tiris <- t(iris[, -5])
-iris_pca1 <- prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-iris_pca3 <- prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
+iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
 random_triplet_accuracy(tiris, t(iris_pca1), is_transposed = TRUE)
 random_triplet_accuracy(tiris, t(iris_pca2), is_transposed = TRUE)
 random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
