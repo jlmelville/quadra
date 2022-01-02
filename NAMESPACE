@@ -3,5 +3,8 @@
 export(nbr_pres)
 export(nbr_pres_knn)
 export(pr_auc)
+export(random_triplet_accuracy)
 export(rnx_auc)
 export(roc_auc)
+importFrom(Rcpp,sourceCpp)
+useDynLib(quadra, .registration=TRUE)

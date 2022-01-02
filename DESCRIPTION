@@ -13,6 +13,10 @@ RoxygenNote: 7.1.2
 Suggests:
   PRROC
 Imports: 
+    methods,
+    Rcpp,
     rnndescent (>= 0.0.10)
-Remotes:  
+Remotes: 
     jlmelville/rnndescent
+LinkingTo: 
+    Rcpp, rnndescent

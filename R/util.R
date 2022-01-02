@@ -37,3 +37,11 @@ lmerge <- function(l1, l2) {
   }
   l1
 }
+
+supported_distances <- function() {
+  c("l2sqr", "euclidean", "cosine", "hamming", "manhattan", "correlation")
+}
+
+validate_distance <- function(distance) {
+  match.arg(distance, supported_distances())
+}
