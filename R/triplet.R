@@ -134,9 +134,10 @@ get_triplet_matrix <- function(n_obs, n_triplets, zero_index) {
 # the other indices never contain i
 create_triplet_matrix <-
   function(n, n_triplets, zero_index = FALSE) {
-    res <- replicate(n, {
-      sample.int(n - 1, size = n_triplets * 2, replace = FALSE)
+    res <- replicate(n * n_triplets, {
+      sample.int(n - 1, size = 2, replace = FALSE)
     })
+    dim(res) <- c(n_triplets * 2, n)
     res <- avoid_self_matrix(res)
     if (zero_index) {
       res <- res - 1
