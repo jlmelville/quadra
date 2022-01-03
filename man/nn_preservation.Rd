@@ -144,8 +144,10 @@ nn_preservation(res$nn_in, iris_pca, k = c(2, 5, 10), ret_extra = TRUE)
 
 # For small datasets, brute force search is more efficient than nearest
 # neighbor descent
-nn_preservation(res$nn_in, iris_pca, k = c(2, 5, 10), ret_extra = TRUE,
-                nn_method_in = "brute")
+nn_preservation(res$nn_in, iris_pca,
+  k = c(2, 5, 10), ret_extra = TRUE,
+  nn_method_in = "brute"
+)
 }
 \references{
 Dong, W., Moses, C., & Li, K. (2011, March).
