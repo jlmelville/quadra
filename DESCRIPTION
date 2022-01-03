@@ -11,7 +11,8 @@ License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
 Suggests:
-  PRROC
+    PRROC,
+    testthat (>= 3.0.0)
 Imports: 
     methods,
     Rcpp,
@@ -20,3 +21,4 @@ Remotes:
     jlmelville/rnndescent
 LinkingTo: 
     Rcpp, rnndescent
+Config/testthat/edition: 3
