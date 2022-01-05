@@ -47,7 +47,8 @@ thread.}
 }
 \value{
 The triplet accuracy, ranging from 0 (no relative distances agree) to
-1 (all of them agree).
+1 (all of them agree). For randomly distributed \code{Xout}, the
+accuracy will be 0.5.
 }
 \description{
 Evaluates the preservation of global structure of dimensionality reduction

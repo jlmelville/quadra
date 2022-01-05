@@ -44,7 +44,7 @@ once outside of this function and set \code{is_transposed = TRUE}.}
 }
 \value{
 The Pearson correlation between the distances in the input and output
-space.
+space. For randomly distributed data, the expected value is 0.
 }
 \description{
 Evaluates the preservation of global structure of dimensionality reduction

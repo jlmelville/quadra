@@ -32,7 +32,7 @@
 #'   once outside of this function and set `is_transposed = TRUE`.
 #' @param n_threads the maximum number of threads to use.
 #' @return The Pearson correlation between the distances in the input and output
-#' space.
+#' space. For randomly distributed data, the expected value is 0.
 #' @references Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 #' Ng, L. G., ... & Newell, E. W. (2019).
 #' Dimensionality reduction for visualizing single-cell data using UMAP.

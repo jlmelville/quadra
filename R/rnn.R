@@ -78,11 +78,13 @@
 #' @param nn_args_out list of extra arguments to pass to the nearest neighbor
 #'   methods, [rnndescent::brute_force_knn()] or [rnndescent::nnd_knn()],
 #'   depending on the value of `nn_method_out`.
-#' @return the mean value of the intersection of the neighborhoods per observation
-#'   scaled between `0` (no neighbors in common) to `1` (all neighbors in common).
-#'   If `k` is a vector, then the return value is a vector of the preservations
-#'   for each `k` in the order they were passed.
-#'   If `ret_extra = TRUE`, then a list is returned containing:
+#' @return the mean value of the intersection of the neighborhoods per
+#'   observation scaled between `0` (no neighbors in common) to `1` (all
+#'   neighbors in common). For randomly distributed `Xout`, the expected
+#'   preservation is around `1/k` as long as `k` is a lot smaller than the
+#'   number of observations. If `k` is a vector, then the return value is a
+#'   vector of the preservations for each `k` in the order they were passed. If
+#'   `ret_extra = TRUE`, then a list is returned containing:
 #'
 #'   * `nnp`: the vector of nearest neighbor preservation values.
 #'   * `nn_in`: the nearest neighbor graph for `Xin`. See the

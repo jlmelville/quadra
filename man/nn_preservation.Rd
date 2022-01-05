@@ -66,11 +66,13 @@ methods, \code{\link[rnndescent:brute_force_knn]{rnndescent::brute_force_knn()}}
 depending on the value of \code{nn_method_out}.}
 }
 \value{
-the mean value of the intersection of the neighborhoods per observation
-scaled between \code{0} (no neighbors in common) to \code{1} (all neighbors in common).
-If \code{k} is a vector, then the return value is a vector of the preservations
-for each \code{k} in the order they were passed.
-If \code{ret_extra = TRUE}, then a list is returned containing:
+the mean value of the intersection of the neighborhoods per
+observation scaled between \code{0} (no neighbors in common) to \code{1} (all
+neighbors in common). For randomly distributed \code{Xout}, the expected
+preservation is around \code{1/k} as long as \code{k} is a lot smaller than the
+number of observations. If \code{k} is a vector, then the return value is a
+vector of the preservations for each \code{k} in the order they were passed. If
+\code{ret_extra = TRUE}, then a list is returned containing:
 \itemize{
 \item \code{nnp}: the vector of nearest neighbor preservation values.
 \item \code{nn_in}: the nearest neighbor graph for \code{Xin}. See the

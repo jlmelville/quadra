@@ -33,7 +33,8 @@
 #' @param grain_size the minimum number of observations to be processed per
 #'   thread.
 #' @return The triplet accuracy, ranging from 0 (no relative distances agree) to
-#'   1 (all of them agree).
+#'   1 (all of them agree). For randomly distributed `Xout`, the
+#'   accuracy will be 0.5.
 #' @references Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
 #' Understanding how dimension reduction tools work: an empirical approach to
 #' deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
