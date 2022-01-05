@@ -1,13 +1,15 @@
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <string>
 
 #include <Rcpp.h>
-using namespace Rcpp;
 
 #include "RcppPerpendicular.h"
 #include "tdoann/distance.h"
+
+#include "distance.h"
+
+using namespace Rcpp;
 
 template <typename TripIt, typename XIt, typename Xout>
 std::size_t triplet_sample_inner(
@@ -79,25 +81,6 @@ double triplet_sample(
     acc += a;
   }
   return acc / static_cast<double>(nobs * ntriplets_per_obs);
-}
-
-std::function<double(const double *, const double *, const double *)>
-create_dfun(const std::string &metric) {
-  if (metric == "euclidean") {
-    return tdoann::euclidean<double, const double *>;
-  } else if (metric == "l2sqr") {
-    return tdoann::l2sqr<double, const double *>;
-  } else if (metric == "cosine") {
-    return tdoann::cosine<double, const double *>;
-  } else if (metric == "hamming") {
-    return tdoann::hamming<double, const double *>;
-  } else if (metric == "manhattan") {
-    return tdoann::manhattan<double, const double *>;
-  } else if (metric == "correlation") {
-    return tdoann::correlation<double, const double *>;
-  } else {
-    return tdoann::euclidean<double, const double *>;
-  }
 }
 
 // [[Rcpp::export]]

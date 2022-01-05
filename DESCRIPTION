@@ -16,9 +16,14 @@ Suggests:
 Imports: 
     methods,
     Rcpp,
+    dqrng,
     rnndescent (>= 0.0.10)
 Remotes: 
     jlmelville/rnndescent
 LinkingTo: 
-    Rcpp, rnndescent
+    Rcpp,
+    dqrng,
+    sitmo,
+    BH,
+    rnndescent
 Config/testthat/edition: 3
