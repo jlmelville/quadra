@@ -12,6 +12,7 @@ nn_preservation(
   metric_in = "l2sqr",
   nn_method_out = "brute",
   metric_out = "l2sqr",
+  is_transposed = FALSE,
   n_threads = 0,
   verbose = FALSE,
   ret_extra = FALSE,
@@ -21,16 +22,17 @@ nn_preservation(
 }
 \arguments{
 \item{Xin}{the input data (usually high-dimensional), a matrix or data frame
-with one observation per row. Alternatively, it can be a pre-computed
-nearest neighbor graph. In the latter case, \code{nn_method_in}, \code{metric_in} and
-\code{nn_args_in} are ignored. If \code{Xin} is a data-frame, non-numeric columns
-are ignored.}
+with one observation per row, or if \code{is_transposed = TRUE}, one observation
+per column.. Alternatively, it can be a pre-computed nearest neighbor
+graph. In the latter case, \code{nn_method_in}, \code{metric_in} and \code{nn_args_in} are
+ignored. If \code{Xin} is a data-frame, non-numeric columns are ignored.}
 
 \item{Xout}{the output data (usually lower dimensional than \code{Xin}), a matrix
-or data frame with one observation per row. Alternatively, it can be a
-pre-computed nearest neighbor graph. In the latter case, \code{nn_method_out},
-\code{metric_out} and \code{nn_args_out} are ignored. If \code{Xout} is a data-frame,
-non-numeric columns are ignored.}
+or data frame with one observation per row, or if \code{is_transposed = TRUE},
+one observation per column. Alternatively, it can be a pre-computed nearest
+neighbor graph. In the latter case, \code{nn_method_out}, \code{metric_out} and
+\code{nn_args_out} are ignored. If \code{Xout} is a data-frame, non-numeric columns
+are ignored.}
 
 \item{k}{the number of nearest neighbors to find. Can be a numeric vector,
 in which case the preservation is calculated for each value separately.}
@@ -48,6 +50,13 @@ of \code{Xout}. See \code{nn_method_in} for details.}
 
 \item{metric_out}{the distance metric to apply to \code{Xout}. See \code{metric_in} for
 details.}
+
+\item{is_transposed}{if \code{TRUE} then \code{Xin} and \code{Xout} are assumed to have been
+passed in transposed format, i.e. with one observation per column.
+Otherwise, \code{Xin} and \code{Xout} will be transposed. For large datasets,
+transposing can be slow, so if this function will be called multiple times
+with the same input data, it is more efficient to transpose the input data
+once outside of this function and set \code{is_transposed = TRUE}.}
 
 \item{n_threads}{the maximum number of threads to use.}
 

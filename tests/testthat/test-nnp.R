@@ -30,11 +30,68 @@ test_that("neighbor preservation", {
     -0.4729, 1.453, 1.087
   ), byrow = TRUE, nrow = 10)
 
-  expect_equal(nn_preservation(m, n, k = 2, nn_method_in = "brute", nn_method_out = "brute"), named(0.55, "nnp2"))
-  expect_equal(nn_preservation(m, n, k = 2, nn_method_in = "brute", nn_method_out = "brute", n_threads = 2), named(0.55, "nnp2"))
+  expect_equal(
+    nn_preservation(
+      m,
+      n,
+      k = 2,
+      nn_method_in = "brute",
+      nn_method_out = "brute"
+    ),
+    named(0.55, "nnp2")
+  )
+  expect_equal(
+    nn_preservation(
+      m,
+      n,
+      k = 2,
+      nn_method_in = "brute",
+      nn_method_out = "brute",
+      n_threads = 2
+    ),
+    named(0.55, "nnp2")
+  )
 
-  cached_nn <- nn_preservation(m, n, k = 2, nn_method_in = "brute", nn_method_out = "brute", ret_extra = TRUE)
-  expect_equal(nn_preservation(cached_nn$nn_in, cached_nn$nn_out, k = 2, nn_method_in = "brute", nn_method_out = "brute"), named(0.55, "nnp2"))
+  cached_nn <-
+    nn_preservation(
+      m,
+      n,
+      k = 2,
+      nn_method_in = "brute",
+      nn_method_out = "brute",
+      ret_extra = TRUE
+    )
+  expect_equal(
+    nn_preservation(
+      cached_nn$nn_in,
+      cached_nn$nn_out,
+      k = 2,
+      nn_method_in = "brute",
+      nn_method_out = "brute"
+    ),
+    named(0.55, "nnp2")
+  )
 
-  expect_equal(nn_preservation(m, n, k = c(2, 5), nn_method_in = "brute", nn_method_out = "brute"), named(c(0.55, 0.48), c("nnp2", "nnp5")))
+  expect_equal(
+    nn_preservation(
+      m,
+      n,
+      k = c(2, 5),
+      nn_method_in = "brute",
+      nn_method_out = "brute"
+    ),
+    named(c(0.55, 0.48), c("nnp2", "nnp5"))
+  )
+
+  expect_equal(
+    nn_preservation(
+      t(m),
+      t(n),
+      k = c(2, 5),
+      nn_method_in = "brute",
+      nn_method_out = "brute",
+      is_transposed = TRUE
+    ),
+    named(c(0.55, 0.48), c("nnp2", "nnp5"))
+  )
 })

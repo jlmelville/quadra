@@ -46,15 +46,16 @@
 #' does not need to be present.
 #'
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
-#'   with one observation per row. Alternatively, it can be a pre-computed
-#'   nearest neighbor graph. In the latter case, `nn_method_in`, `metric_in` and
-#'   `nn_args_in` are ignored. If `Xin` is a data-frame, non-numeric columns
-#'   are ignored.
+#'   with one observation per row, or if `is_transposed = TRUE`, one observation
+#'   per column.. Alternatively, it can be a pre-computed nearest neighbor
+#'   graph. In the latter case, `nn_method_in`, `metric_in` and `nn_args_in` are
+#'   ignored. If `Xin` is a data-frame, non-numeric columns are ignored.
 #' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
-#'   or data frame with one observation per row. Alternatively, it can be a
-#'   pre-computed nearest neighbor graph. In the latter case, `nn_method_out`,
-#'   `metric_out` and `nn_args_out` are ignored. If `Xout` is a data-frame,
-#'   non-numeric columns are ignored.
+#'   or data frame with one observation per row, or if `is_transposed = TRUE`,
+#'   one observation per column. Alternatively, it can be a pre-computed nearest
+#'   neighbor graph. In the latter case, `nn_method_out`, `metric_out` and
+#'   `nn_args_out` are ignored. If `Xout` is a data-frame, non-numeric columns
+#'   are ignored.
 #' @param k the number of nearest neighbors to find. Can be a numeric vector,
 #' in which case the preservation is calculated for each value separately.
 #' @param nn_method_in the nearest neighbor method to calculate the neighbors of
@@ -67,6 +68,12 @@
 #'   of `Xout`. See `nn_method_in` for details.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
 #'   details.
+#' @param is_transposed if `TRUE` then `Xin` and `Xout` are assumed to have been
+#'   passed in transposed format, i.e. with one observation per column.
+#'   Otherwise, `Xin` and `Xout` will be transposed. For large datasets,
+#'   transposing can be slow, so if this function will be called multiple times
+#'   with the same input data, it is more efficient to transpose the input data
+#'   once outside of this function and set `is_transposed = TRUE`.
 #' @param n_threads the maximum number of threads to use.
 #' @param verbose if `TRUE`, log information about the calculation to the
 #'   console.
@@ -130,6 +137,7 @@ nn_preservation <- function(Xin,
                             metric_in = "l2sqr",
                             nn_method_out = "brute",
                             metric_out = "l2sqr",
+                            is_transposed = FALSE,
                             n_threads = 0,
                             verbose = FALSE,
                             ret_extra = FALSE,
@@ -146,6 +154,7 @@ nn_preservation <- function(Xin,
         k = max_k,
         nn_method = nn_method_in,
         metric = metric_in,
+        is_transposed = is_transposed,
         n_threads = n_threads,
         verbose = verbose,
         nn_args = nn_args_in
@@ -162,6 +171,7 @@ nn_preservation <- function(Xin,
         k = max_k,
         nn_method = nn_method_out,
         metric = metric_out,
+        is_transposed = is_transposed,
         n_threads = n_threads,
         verbose = verbose,
         nn_args = nn_args_out
@@ -224,6 +234,7 @@ get_nn_graph <-
            k = 15,
            nn_method,
            metric,
+           is_transposed,
            n_threads,
            verbose,
            nn_args) {
@@ -241,7 +252,8 @@ get_nn_graph <-
           nn_method = nn_method,
           metric = metric,
           n_threads = n_threads,
-          verbose = verbose
+          verbose = verbose,
+          obs = ifelse(is_transposed, "C", "R")
         ),
         nn_args
       ))
