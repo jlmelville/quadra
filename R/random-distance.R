@@ -107,6 +107,8 @@ random_pair_distance_correlation <- function(Xin,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
 #'   details.
+#' @param range_scale if `TRUE` (the default) then scale each distance vector
+#' to the range 0-1 before converting to a distribution.
 #' @param is_transposed if `TRUE` then `Xin` and `Xout` are assumed to have been
 #'   passed in transposed format, i.e. with one observation per column.
 #'   Otherwise, `Xin` and `Xout` will be transposed. For large datasets,
@@ -140,6 +142,7 @@ random_pair_distance_emd <- function(Xin,
                                      n_pairs = 1000,
                                      metric_in = "l2sqr",
                                      metric_out = "l2sqr",
+                                     range_scale = TRUE,
                                      is_transposed = FALSE,
                                      n_threads = 0) {
   randlist <-
@@ -153,9 +156,16 @@ random_pair_distance_emd <- function(Xin,
       is_transposed = is_transposed
     )
 
+  x <- randlist$din
+  y <- randlist$dout
+  if (range_scale) {
+    x <- scale01(x)
+    y <- scale01(y)
+  }
+
   emd(
-    x = scale01(randlist$din),
-    y = scale01(randlist$dout)
+    x = x,
+    y = y
   )
 }
 

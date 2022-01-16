@@ -10,6 +10,7 @@ random_pair_distance_emd(
   n_pairs = 1000,
   metric_in = "l2sqr",
   metric_out = "l2sqr",
+  range_scale = TRUE,
   is_transposed = FALSE,
   n_threads = 0
 )
@@ -32,6 +33,9 @@ distances for in the input and output space.}
 
 \item{metric_out}{the distance metric to apply to \code{Xout}. See \code{metric_in} for
 details.}
+
+\item{range_scale}{if \code{TRUE} (the default) then scale each distance vector
+to the range 0-1 before converting to a distribution.}
 
 \item{is_transposed}{if \code{TRUE} then \code{Xin} and \code{Xout} are assumed to have been
 passed in transposed format, i.e. with one observation per column.
