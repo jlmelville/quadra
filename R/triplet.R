@@ -39,6 +39,9 @@
 #' Understanding how dimension reduction tools work: an empirical approach to
 #' deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
 #' *J Mach. Learn. Res*, *22*, 1-73. <https://jmlr.org/papers/v22/20-1061.html>.
+#' @seealso [random_pair_distance_emd()] and
+#'   [random_pair_distance_correlation()] for another measure of global
+#'   structure preservation.
 #' @md
 #' @examples
 #' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x

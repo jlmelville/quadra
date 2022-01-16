@@ -79,6 +79,6 @@ Dimensionality reduction for visualizing single-cell data using UMAP.
 \emph{Nature biotechnology}, \emph{37}(1), 38-44.
 }
 \seealso{
-\code{\link[=random_triplet_accuracy]{random_triplet_accuracy()}} for another measure of global structure
-preservation.
+\code{\link[=random_pair_distance_emd]{random_pair_distance_emd()}} and \code{\link[=random_triplet_accuracy]{random_triplet_accuracy()}} for
+another measure of global structure preservation.
 }

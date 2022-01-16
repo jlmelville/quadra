@@ -66,7 +66,7 @@ This sort of thing is a potential problem on all platforms but seems to bite
 Mac owners more.
 [The R for Mac OS X FAQ](https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Installation-of-source-packages)
 may be helpful here to work out what you can get away with. To be on the safe
-side, I would advise building `uwot` without a custom `Makevars`.
+side, I would advise building `quadra` without a custom `Makevars`.
 
 ## Examples
 
@@ -87,9 +87,30 @@ random_triplet_accuracy(iris, pca_iris, n_threads = 2)
 # data, transpose once outside the function and set is_transposed = TRUE for a 
 # slight speed-up
 tiris <- t(iris[, -5])
-random_triplet_accuracy(tiris, t(pca_iris), n_threads = 2, is_transposed = TRUE)
-random_triplet_accuracy(tiris, t(stats::prcomp(iris[, -5], retx = TRUE, rank. = 1)$x), is_transposed = TRUE, n_threads = 2)
-random_triplet_accuracy(tiris, t(stats::prcomp(iris[, -5], retx = TRUE, rank. = 3)$x), is_transposed = TRUE, n_threads = 2)
+
+pca_iris2 <- t(pca_iris)
+pca_iris1 <- t(stats::prcomp(iris[, -5], retx = TRUE, rank. = 1)$x)
+pca_iris3 <- t(stats::prcomp(iris[, -5], retx = TRUE, rank. = 3)$x)
+random_triplet_accuracy(tiris, pca_iris2), n_threads = 2, is_transposed = TRUE)
+random_triplet_accuracy(tiris, pca_iris1, is_transposed = TRUE, n_threads = 2)
+random_triplet_accuracy(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
+
+# Other ways to measure global preservation:
+
+# measure Pearson correlation between equivalent input and output distances
+# similar to the method used by Becht and co-workers
+random_pair_distance_correlation(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
+
+# convert distances to an empirical distribution and compare them via Earth 
+# Mover's Distance (1D Wasserstein) based on the method used by Heiser and Lau
+random_pair_distance_emd(tiris, pca_iris2, is_transposed = TRUE, n_threads = 2)
+
+# For local preservation use nearest neighbor preservation 
+# Pass a vector to k to get back the preservation for different numbers of
+# neighbors
+nn_preservation(tiris, pca_iris2, k = c(15, 30), is_transposed = TRUE)
+
+# slower methods not recommended for large datasets
 
 din <- as.matrix(dist(iris[, -5]))
 dout <- as.matrix(dist(pca_iris$x))
@@ -165,6 +186,20 @@ deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
 *J Mach. Learn. Res*, *22*, 1-73.
 <https://jmlr.org/papers/v22/20-1061.html>
 
+### Pearson Correlation for Distances
+
+Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L. G., ... & Newell, E. W. (2019).
+Dimensionality reduction for visualizing single-cell data using UMAP.
+*Nature biotechnology*, *37*(1), 38-44.
+<https://doi.org/10.1038/nbt.4314>
+
+### Earth-Mover's Distance
+
+Heiser, C. N., & Lau, K. S. (2020). 
+A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques. 
+*Cell reports*, *31*(5), 107576.
+<https://doi.org/10.1016/j.celrep.2020.107576>
+
 ### Neighborhood Preservation
 
 France, S., & Carroll, D. (2007, July). 
@@ -195,6 +230,11 @@ Multi-scale similarities in stochastic neighbour embedding: Reducing
 dimensionality while preserving both local and global structure.
 *Neurocomputing*, *169*, 246-261.
 <https://dx.doi.org/10.1016/j.neucom.2014.12.095>
+
+Cooley, S. M., Hamilton, T., Deeds, E. J., & Ray, J. C. J. (2019).
+A novel metric reveals previously unrecognized distortion in dimensionality reduction of scRNA-Seq data. 
+*BioRxiv*, 689851.
+<https://www.biorxiv.org/content/10.1101/689851v6>
 
 ### Precision-Recall AUC and Receiver Operating Characteristic Area Under the Curve
 
