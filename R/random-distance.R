@@ -121,6 +121,7 @@ random_pair_distance_correlation <- function(Xin,
 #' @references Heiser, C. N., & Lau, K. S. (2020).
 #' A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
 #' *Cell reports*, *31*(5), 107576.
+#' <https://github.com/KenLauLab/DR-structure-preservation>
 #' @seealso [random_pair_distance_correlation()] and [random_triplet_accuracy()]
 #'   for another measure of global structure preservation.
 #' @md
