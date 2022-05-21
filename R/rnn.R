@@ -98,6 +98,9 @@
 #'   'Nearest Neighbor Graph Format' section for details.
 #'   * `nn_out`: the nearest neighbor graph for `Xout`. See the
 #'   'Nearest Neighbor Graph Format' section for details.
+#'   * `nnpv`: a list of vectors where each vector contains the individual
+#'   neighbor preservation per observation. items are named `nnp<k>` where `k`
+#'   * refers to the values provided in the `k` parameter.
 #'
 #' @seealso The [rnndescent](https://github.com/jlmelville/rnndescent) package
 #'   and the [rnndescent::brute_force_knn()] and [rnndescent::nnd_knn()]
@@ -117,8 +120,11 @@
 #' # Calculate for multiple values of k
 #' nn_preservation(iris, iris_pca, k = c(15, 30))
 #'
-#' # Return the nearest neighbor graphs
+#' # Return the nearest neighbor graphs and per-observation preservation
 #' res <- nn_preservation(iris, iris_pca, k = c(15, 30), ret_extra = TRUE)
+#'
+#' # Plot the 2D PCA, coloring each point by neighbor preservation
+#' plot(iris_pca, col = rainbow(15)[round(res$nnpv$nnp15 * 15)], pch = 19)
 #'
 #' # Re-use the input neighbor graph for these calculations
 #' nn_preservation(res$nn_in, iris_pca, k = c(2, 5, 10), ret_extra = TRUE)
@@ -183,18 +189,25 @@ nn_preservation <- function(Xin,
     stop("Number of observations in nn_in != nn_out")
   }
 
-  nnps <-
-    sapply(k, function(ki) {
-      nn_accuracy(nn_out, ref_idx = nn_in, k = ki)
-    })
-
+  # use if ret_extra = TRUE
+  nnpvs <- list()
+  nnps <- rep(0, length(k))
+  for (i in 1:length(k)) {
+    ki <- k[i]
+    nnpv <- nn_accuracyv(nn_out, ref_idx = nn_in, k = ki)
+    nnps[i] <- sum(nnpv) / length(nnpv)
+    if (ret_extra) {
+      nnpvs[[paste0("nnp", as.character(ki))]] <- nnpv
+    }
+  }
   names(nnps) <- paste0("nnp", k)
 
   if (ret_extra) {
     res <- list(
       nn_in = nn_in,
       nn_out = nn_out,
-      nnp = nnps
+      nnp = nnps,
+      nnpv = nnpvs
     )
   } else {
     res <- nnps

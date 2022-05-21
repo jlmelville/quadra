@@ -88,6 +88,9 @@ vector of the preservations for each \code{k} in the order they were passed. If
 'Nearest Neighbor Graph Format' section for details.
 \item \code{nn_out}: the nearest neighbor graph for \code{Xout}. See the
 'Nearest Neighbor Graph Format' section for details.
+\item \code{nnpv}: a list of vectors where each vector contains the individual
+neighbor preservation per observation. items are named \verb{nnp<k>} where \code{k}
+\item refers to the values provided in the \code{k} parameter.
 }
 }
 \description{
@@ -147,8 +150,11 @@ nn_preservation(iris, iris_pca)
 # Calculate for multiple values of k
 nn_preservation(iris, iris_pca, k = c(15, 30))
 
-# Return the nearest neighbor graphs
+# Return the nearest neighbor graphs and per-observation preservation
 res <- nn_preservation(iris, iris_pca, k = c(15, 30), ret_extra = TRUE)
+
+# Plot the 2D PCA, coloring each point by neighbor preservation
+plot(iris_pca, col = rainbow(15)[round(res$nnpv$nnp15 * 15)], pch = 19)
 
 # Re-use the input neighbor graph for these calculations
 nn_preservation(res$nn_in, iris_pca, k = c(2, 5, 10), ret_extra = TRUE)
