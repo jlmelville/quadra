@@ -39,7 +39,7 @@ lmerge <- function(l1, l2) {
 }
 
 supported_distances <- function() {
-  c("l2sqr", "euclidean", "cosine", "hamming", "manhattan", "correlation")
+  c("sqeuclidean", "euclidean", "cosine", "hamming", "manhattan", "correlation")
 }
 
 validate_distance <- function(distance) {

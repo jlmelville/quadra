@@ -19,7 +19,7 @@
 #'   one observation per column.
 #' @param n_triplets the number of triplets per observation to generate.
 #' @param metric_in the distance calculation to apply to `Xin`. One of
-#'   `"euclidean"`, `"l2sqr"` (squared Euclidean), `"cosine"`, `"manhattan"`,
+#'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
 #'   details.
@@ -60,8 +60,8 @@ random_triplet_accuracy <-
   function(Xin,
            Xout,
            n_triplets = 5,
-           metric_in = "l2sqr",
-           metric_out = "l2sqr",
+           metric_in = "sqeuclidean",
+           metric_out = "sqeuclidean",
            is_transposed = FALSE,
            n_threads = 0,
            grain_size = 1) {
@@ -91,19 +91,6 @@ random_triplet_accuracy <-
       n_threads = n_threads
     )
   }
-
-
-get_dfun <- function(metric) {
-  switch(metric,
-    l2sqr = rnndescent::l2sqr_distance,
-    euclidean = rnndescent::euclidean_distance,
-    cosine = rnndescent::cosine_distance,
-    manhattan = rnndescent::manhattan_distance,
-    hamming = rnndescent::hamming_distance,
-    correlation = rnndescent::correlation_distance,
-    stop("Unknown metric '", metric, "'")
-  )
-}
 
 # n_triplets might be a pre-generated triplets matrix
 get_triplet_matrix <- function(n_obs, n_triplets, zero_index) {
@@ -165,62 +152,3 @@ avoid_self_matrix <- function(triplets) {
   # undecorate the matrix
   tripi[-nrow(tripi), ]
 }
-
-random_triplet_eval_slow <-
-  function(Xin,
-           Xout,
-           n_triplets,
-           in_metric = "euclidean",
-           out_metric = "euclidean",
-           is_transposed = FALSE) {
-    Xin <- x2m(Xin)
-    Xout <- x2m(Xout)
-
-    if (is_transposed) {
-      Xin <- t(Xin)
-      Xout <- t(Xout)
-    }
-
-    n <- nrow(Xin)
-    if (n != nrow(Xout)) {
-      stop("Xin and Xout must have the same number of rows")
-    }
-
-    triplets <- get_triplet_matrix(n, n_triplets, zero_index = TRUE)
-    n_triplets <- nrow(triplets) / 2
-
-    in_dfun <- get_dfun(in_metric)
-    out_dfun <- get_dfun(out_metric)
-    acc <- 0
-    for (i in 1:ncol(triplets)) {
-      for (j in 1:n_triplets) {
-        c1 <- j * 2 - 1
-        p1 <- triplets[c1, i]
-        p1 <- ifelse(p1 == i, p1 + 1, p1)
-
-        p2 <- triplets[c1 + 1, i]
-        p2 <- ifelse(p2 == i, p2 + 1, p2)
-
-        if (i > nrow(Xin) || p1 > nrow(Xin) || p2 > nrow(Xin)) {
-          stop("Problem with indexing: ", paste(i, p1, p2, collapse = " "))
-        }
-        dip1_in <- in_dfun(Xin[i, ], Xin[p1, ])
-        dip2_in <- in_dfun(Xin[i, ], Xin[p2, ])
-
-        dip1_out <- out_dfun(Xout[i, ], Xout[p1, ])
-        dip2_out <- out_dfun(Xout[i, ], Xout[p2, ])
-
-        # if (i == 1) {
-        # message(i, " ",
-        #         p1, ": ", dip1_in, " ", p2, ": ", dip2_in,
-        #         p1, ": ", dip1_out, " ", p2, ": ", dip2_out)
-        # }
-
-
-        if ((dip1_in < dip2_in) == (dip1_out < dip2_out)) {
-          acc <- acc + 1
-        }
-      }
-    }
-    acc / (n * n_triplets)
-  }

@@ -12,8 +12,8 @@ t-Distributed Stochastic Neighbor Embedding).
 Also, it depends on the [rnndescent](https://github.com/jlmelville/rnndescent)
 package which is not on CRAN. In return, a new function is available: a
 multi-threaded implementation of the `random_triplet_accuracy` technique for
-evaluating global structure preservation (as used in the [PaCMAP
-paper](https://jmlr.org/papers/v22/20-1061.html)).
+evaluating global structure preservation (as used in the 
+[PaCMAP paper](https://jmlr.org/papers/v22/20-1061.html)).
 
 *December 31 2021*: Package is getting relicensed to GPL3+ so I can use some
 other packages and code. Last MIT license version is release 0.0.0.9000.

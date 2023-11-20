@@ -4,31 +4,33 @@
 
 #include <Rcpp.h>
 
-#include "RcppPerpendicular.h"
 #include "tdoann/distance.h"
 
 #include "distance.h"
+#include "quadrapforr.h"
 
 using namespace Rcpp;
+using It = typename std::vector<double>::const_iterator;
+using Dfun = double(It, It, It);
+using TripIt = typename std::vector<std::size_t>::const_iterator;
 
-template <typename TripIt, typename XIt, typename Xout>
-std::size_t triplet_sample_inner(
-    std::size_t begin, std::size_t end, std::size_t ntriplets_per_obs,
-    std::size_t nobs, const TripIt triplets_begin, const XIt xin_begin,
-    std::size_t xin_ncol,
-    const std::function<Xout(const XIt, const XIt, const XIt)> &dfunin,
-    const XIt xout_begin, std::size_t xout_ncol,
-    const std::function<Xout(const XIt, const XIt, const XIt)> &dfunout) {
+std::size_t triplet_sample_inner(std::size_t begin, std::size_t end,
+                                 std::size_t ntriplets_per_obs,
+                                 std::size_t nobs, const TripIt triplets_begin,
+                                 const It xin_begin, std::size_t xin_ncol,
+                                 const std::function<Dfun> &dfunin,
+                                 const It xout_begin, std::size_t xout_ncol,
+                                 const std::function<Dfun> &dfunout) {
 
   std::size_t acc{0};
   const std::size_t nt2 = ntriplets_per_obs * 2;
   for (std::size_t i = begin; i < end; i++) {
     const TripIt trip_obs_begin = triplets_begin + i * nt2;
-    const XIt xin_i_begin = xin_begin + i * xin_ncol;
-    const XIt xin_i_end = xin_i_begin + xin_ncol;
+    const It xin_i_begin = xin_begin + i * xin_ncol;
+    const It xin_i_end = xin_i_begin + xin_ncol;
 
-    const XIt xout_i_begin = xout_begin + i * xout_ncol;
-    const XIt xout_i_end = xout_i_begin + xout_ncol;
+    const It xout_i_begin = xout_begin + i * xout_ncol;
+    const It xout_i_end = xout_i_begin + xout_ncol;
 
     for (std::size_t j = 0; j < ntriplets_per_obs; j++) {
       const TripIt tripi = trip_obs_begin + (j * 2);
@@ -51,15 +53,11 @@ std::size_t triplet_sample_inner(
   return acc;
 }
 
-double triplet_sample(
-    const int *triplets_begin, const int *triplets_end, std::size_t nobs,
-    const double *xin_begin, const double *xin_end, const double *xout_begin,
-    const double *xout_end,
-    const std::function<double(const double *, const double *, const double *)>
-        &dfunin,
-    const std::function<double(const double *, const double *, const double *)>
-        &dfunout,
-    std::size_t n_threads, std::size_t grain_size) {
+double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
+                      std::size_t nobs, It xin_begin, It xin_end, It xout_begin,
+                      It xout_end, const std::function<Dfun> &dfunin,
+                      const std::function<Dfun> &dfunout,
+                      std::size_t n_threads) {
 
   const std::size_t ntriplets_per_obs =
       (triplets_end - triplets_begin) / nobs / 2;
@@ -69,12 +67,12 @@ double triplet_sample(
   std::vector<std::size_t> accs(std::max(n_threads, std::size_t{1}));
 
   auto worker = [&](std::size_t begin, std::size_t end, std::size_t thread_id) {
-    accs[thread_id] = triplet_sample_inner(
+    accs[thread_id] += triplet_sample_inner(
         begin, end, ntriplets_per_obs, nobs, triplets_begin, xin_begin,
         xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
   };
 
-  RcppPerpendicular::pfor(nobs, worker, n_threads, grain_size);
+  pforr::pfor(0, nobs, worker, n_threads);
 
   std::size_t acc{0};
   for (auto a : accs) {
@@ -86,15 +84,19 @@ double triplet_sample(
 // [[Rcpp::export]]
 double triplet_sample(const IntegerMatrix &triplets, const NumericMatrix &xin,
                       const NumericMatrix &xout,
-                      const std::string &metric_in = "l2sqr",
-                      const std::string &metric_out = "l2sqr",
-                      std::size_t n_threads = 0, std::size_t grain_size = 1) {
+                      const std::string &metric_in = "sqeuclidean",
+                      const std::string &metric_out = "sqeuclidean",
+                      std::size_t n_threads = 0) {
 
-  using Dfun = double(const double *, const double *, const double *);
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
 
-  return triplet_sample(triplets.begin(), triplets.end(), triplets.ncol(),
-                        xin.begin(), xin.end(), xout.begin(), xout.end(),
-                        dfunin, dfunout, n_threads, grain_size);
+  auto triplets_cpp = Rcpp::as<std::vector<std::size_t>>(triplets);
+  auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
+  auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
+
+  return triplet_sample(triplets_cpp.begin(), triplets_cpp.end(),
+                        triplets.ncol(), xin_cpp.begin(), xin_cpp.end(),
+                        xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout,
+                        n_threads);
 }

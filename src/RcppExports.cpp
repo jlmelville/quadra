@@ -28,8 +28,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // triplet_sample
-double triplet_sample(const IntegerMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_threads, std::size_t grain_size);
-RcppExport SEXP _quadra_triplet_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP, SEXP grain_sizeSEXP) {
+double triplet_sample(const IntegerMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_threads);
+RcppExport SEXP _quadra_triplet_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,15 +39,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
     Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type grain_size(grain_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(triplet_sample(triplets, xin, xout, metric_in, metric_out, n_threads, grain_size));
+    rcpp_result_gen = Rcpp::wrap(triplet_sample(triplets, xin, xout, metric_in, metric_out, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 7},
-    {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 7},
+    {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {NULL, NULL, 0}
 };
 

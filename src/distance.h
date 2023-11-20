@@ -32,22 +32,24 @@
 
 #include "tdoann/distance.h"
 
-inline std::function<double(const double *, const double *, const double *)>
+using It = typename std::vector<double>::const_iterator;
+
+inline std::function<double(It, It, It)>
 create_dfun(const std::string &metric) {
   if (metric == "euclidean") {
-    return tdoann::euclidean<double, const double *>;
-  } else if (metric == "l2sqr") {
-    return tdoann::l2sqr<double, const double *>;
+    return tdoann::euclidean<double, It>;
+  } else if (metric == "sqeuclidean") {
+    return tdoann::squared_euclidean<double, It>;
   } else if (metric == "cosine") {
-    return tdoann::cosine<double, const double *>;
+    return tdoann::cosine<double, It>;
   } else if (metric == "hamming") {
-    return tdoann::hamming<double, const double *>;
+    return tdoann::hamming<double, It>;
   } else if (metric == "manhattan") {
-    return tdoann::manhattan<double, const double *>;
+    return tdoann::manhattan<double, It>;
   } else if (metric == "correlation") {
-    return tdoann::correlation<double, const double *>;
+    return tdoann::correlation<double, It>;
   } else {
-    return tdoann::euclidean<double, const double *>;
+    return tdoann::euclidean<double, It>;
   }
 }
 

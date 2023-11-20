@@ -20,7 +20,7 @@
 #' @param n_pairs the number of random pairs of observations to calculate
 #'   distances for in the input and output space.
 #' @param metric_in the distance calculation to apply to `Xin`. One of
-#'   `"euclidean"`, `"l2sqr"` (squared Euclidean), `"cosine"`, `"manhattan"`,
+#'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
 #'   details.
@@ -56,8 +56,8 @@
 random_pair_distance_correlation <- function(Xin,
                                              Xout,
                                              n_pairs = 1000,
-                                             metric_in = "l2sqr",
-                                             metric_out = "l2sqr",
+                                             metric_in = "sqeuclidean",
+                                             metric_out = "sqeuclidean",
                                              is_transposed = FALSE,
                                              n_threads = 0) {
   randlist <-
@@ -103,7 +103,7 @@ random_pair_distance_correlation <- function(Xin,
 #' @param n_pairs the number of random pairs of observations to calculate
 #'   distances for in the input and output space.
 #' @param metric_in the distance calculation to apply to `Xin`. One of
-#'   `"euclidean"`, `"l2sqr"` (squared Euclidean), `"cosine"`, `"manhattan"`,
+#'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
 #'   details.
@@ -141,8 +141,8 @@ random_pair_distance_correlation <- function(Xin,
 random_pair_distance_emd <- function(Xin,
                                      Xout,
                                      n_pairs = 1000,
-                                     metric_in = "l2sqr",
-                                     metric_out = "l2sqr",
+                                     metric_in = "sqeuclidean",
+                                     metric_out = "sqeuclidean",
                                      range_scale = TRUE,
                                      is_transposed = FALSE,
                                      n_threads = 0) {
@@ -178,8 +178,8 @@ emd <- function(x, y) {
 random_pair_distances <- function(Xin,
                                   Xout,
                                   n_pairs = 1000,
-                                  metric_in = "l2sqr",
-                                  metric_out = "l2sqr",
+                                  metric_in = "sqeuclidean",
+                                  metric_out = "sqeuclidean",
                                   is_transposed = FALSE,
                                   n_threads = 0) {
   metric_in <- validate_distance(metric_in)

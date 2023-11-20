@@ -62,7 +62,7 @@
 #'   `Xin`. Can be one of `"brute"` (brute force calculation) or `"nnd"`, the
 #'   nearest neighbor descent method of Dong and co-workers (2011).
 #' @param metric_in the distance calculation to apply to `Xin`. One of
-#'   `"euclidean"`, `"l2sqr"` (squared Euclidean), `"cosine"`, `"manhattan"`,
+#'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
 #' @param nn_method_out the nearest neighbor method to calculate the neighbors
 #'   of `Xout`. See `nn_method_in` for details.
@@ -140,9 +140,9 @@ nn_preservation <- function(Xin,
                             Xout,
                             k = 15,
                             nn_method_in = "nnd",
-                            metric_in = "l2sqr",
+                            metric_in = "sqeuclidean",
                             nn_method_out = "brute",
-                            metric_out = "l2sqr",
+                            metric_out = "sqeuclidean",
                             is_transposed = FALSE,
                             n_threads = 0,
                             verbose = FALSE,
@@ -219,7 +219,7 @@ calc_nn_graph <-
   function(X,
            k = 15,
            nn_method = "brute",
-           metric = "l2sqr",
+           metric = "sqeuclidean",
            n_threads = 0,
            verbose = FALSE,
            ...) {

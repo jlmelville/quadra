@@ -1,7 +1,7 @@
 Package: quadra
 Type: Package
 Title: QUality Assessment of Dimensonality Reduction Algorithms
-Version: 0.1.0.9000
+Version: 0.1.0.9001
 Date: 2017-10-29
 Authors@R: person("James", "Melville", email = "jlmelville@gmail.com",
     role = c("aut", "cre"))
@@ -9,14 +9,14 @@ Description: Package for quantifying the embeddings produced by dimensionality
   reduction methods.
 License: GPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Suggests:
     PRROC,
     testthat (>= 3.0.0)
 Imports: 
     methods,
     Rcpp,
-    rnndescent (>= 0.0.10)
+    rnndescent (>= 0.0.16)
 Remotes: 
     jlmelville/rnndescent
 LinkingTo: 
@@ -26,3 +26,4 @@ LinkingTo:
     BH,
     rnndescent
 Config/testthat/edition: 3
+SystemRequirements: C++17

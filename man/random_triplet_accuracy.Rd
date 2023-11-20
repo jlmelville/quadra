@@ -8,8 +8,8 @@ random_triplet_accuracy(
   Xin,
   Xout,
   n_triplets = 5,
-  metric_in = "l2sqr",
-  metric_out = "l2sqr",
+  metric_in = "sqeuclidean",
+  metric_out = "sqeuclidean",
   is_transposed = FALSE,
   n_threads = 0,
   grain_size = 1
@@ -27,7 +27,7 @@ one observation per column.}
 \item{n_triplets}{the number of triplets per observation to generate.}
 
 \item{metric_in}{the distance calculation to apply to \code{Xin}. One of
-\code{"euclidean"}, \code{"l2sqr"} (squared Euclidean), \code{"cosine"}, \code{"manhattan"},
+\code{"euclidean"}, \code{"sqeuclidean"} (squared Euclidean), \code{"cosine"}, \code{"manhattan"},
 \code{"correlation"} (1 minus the Pearson correlation), or \code{"hamming"}.}
 
 \item{metric_out}{the distance metric to apply to \code{Xout}. See \code{metric_in} for
