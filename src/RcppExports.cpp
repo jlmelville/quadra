@@ -10,6 +10,16 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// pforr_test_worker_exception
+void pforr_test_worker_exception(std::size_t n_threads);
+RcppExport SEXP _quadra_pforr_test_worker_exception(SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
+    pforr_test_worker_exception(n_threads);
+    return R_NilValue;
+END_RCPP
+}
 // random_distances
 List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_pairs, std::size_t n_threads, bool verbose);
 RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
@@ -45,6 +55,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_quadra_pforr_test_worker_exception", (DL_FUNC) &_quadra_pforr_test_worker_exception, 1},
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 7},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {NULL, NULL, 0}

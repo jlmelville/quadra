@@ -26,6 +26,27 @@ test_that("unknown C++ distance metrics error", {
   )
 })
 
+test_that("parallel worker exceptions are rethrown to R", {
+  expect_error(
+    pforr_test_worker_exception(n_threads = 2),
+    "pforr worker exception"
+  )
+})
+
+test_that("random pair sampling is reproducible for same thread count", {
+  set.seed(2024)
+  serial_1 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 0)
+  set.seed(2024)
+  serial_2 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 0)
+  expect_equal(serial_2, serial_1)
+
+  set.seed(2024)
+  parallel_1 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 2)
+  set.seed(2024)
+  parallel_2 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 2)
+  expect_equal(parallel_2, parallel_1)
+})
+
 test_that("random pair inputs are validated", {
   expect_error(
     random_pair_distance_correlation(m[1, , drop = FALSE], n[1, , drop = FALSE]),

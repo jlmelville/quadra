@@ -31,7 +31,8 @@
 #'   transposing can be slow, so if this function will be called multiple times
 #'   with the same input data, it is more efficient to transpose the input data
 #'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use.
+#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#'   serially.
 #' @return The triplet accuracy, ranging from 0 (no relative distances agree) to
 #'   1 (all of them agree). For randomly distributed `Xout`, the
 #'   accuracy will be 0.5.

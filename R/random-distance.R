@@ -30,7 +30,8 @@
 #'   transposing can be slow, so if this function will be called multiple times
 #'   with the same input data, it is more efficient to transpose the input data
 #'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use.
+#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#'   serially.
 #' @return The Pearson correlation between the distances in the input and output
 #' space. For randomly distributed data, the expected value is 0.
 #' @references Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
@@ -115,7 +116,8 @@ random_pair_distance_correlation <- function(Xin,
 #'   transposing can be slow, so if this function will be called multiple times
 #'   with the same input data, it is more efficient to transpose the input data
 #'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use.
+#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#'   serially.
 #' @return The Earth Mover's distance between the empirical distributions formed
 #'   from the distances in the input and output space.
 #' @references Heiser, C. N., & Lau, K. S. (2020).

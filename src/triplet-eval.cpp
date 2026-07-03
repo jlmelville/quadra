@@ -7,7 +7,7 @@
 #include "tdoann/distance.h"
 
 #include "distance.h"
-#include "quadrapforr.h"
+#include "pforr.h"
 
 using namespace Rcpp;
 using It = typename std::vector<double>::const_iterator;
@@ -91,7 +91,7 @@ double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
     counts[thread_id].comparisons += chunk_counts.comparisons;
   };
 
-  pforr::pfor(0, nobs, worker, n_threads);
+  pforr::parallel_for_indexed(0, nobs, worker, n_threads);
 
   TripletCounts total_counts;
   for (const auto &chunk_counts : counts) {

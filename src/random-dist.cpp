@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 
-#include "quadrapforr.h"
+#include "pforr.h"
 
 #include "rnndescent/random.h"
 
@@ -51,14 +51,15 @@ void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
 
   sampler_provider.initialize();
 
-  auto worker = [&](std::size_t begin, std::size_t end) {
-    auto thread_sampler = sampler_provider.get_parallel_instance(end);
+  auto worker = [&](std::size_t begin, std::size_t end,
+                    std::size_t chunk_id) {
+    auto thread_sampler = sampler_provider.get_parallel_instance(chunk_id);
     distance_sample_inner(begin, end, *thread_sampler, n_obs, xin_begin,
                           xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout,
                           din, dout);
   };
 
-  pforr::parallel_for(n_pairs, worker, n_threads);
+  pforr::parallel_for_indexed(n_pairs, worker, n_threads);
 }
 
 // [[Rcpp::export]]

@@ -40,7 +40,8 @@ transposing can be slow, so if this function will be called multiple times
 with the same input data, it is more efficient to transpose the input data
 once outside of this function and set \code{is_transposed = TRUE}.}
 
-\item{n_threads}{the maximum number of threads to use.}
+\item{n_threads}{the maximum number of threads to use. \code{0} or \code{1}
+runs serially.}
 }
 \value{
 The Pearson correlation between the distances in the input and output
