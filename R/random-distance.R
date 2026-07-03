@@ -207,5 +207,9 @@ random_pair_distances <- function(Xin,
 
 scale01 <- function(x) {
   x <- x - min(x)
-  x / max(x)
+  xmax <- max(x)
+  if (xmax == 0) {
+    return(rep(0, length(x)))
+  }
+  x / xmax
 }
