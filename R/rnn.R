@@ -282,7 +282,7 @@ graph_dim <- function(nn_graph) {
 }
 
 is_nn_graph <- function(graph) {
-  if (!is.list(graph) || is.null(graph$idx) || is.null(graph$dist)) {
+  if (!is.list(graph) || is.null(graph$idx)) {
     return(FALSE)
   }
   idx <- graph$idx
@@ -290,6 +290,9 @@ is_nn_graph <- function(graph) {
     return(FALSE)
   }
   dist <- graph$dist
+  if (is.null(dist)) {
+    return(TRUE)
+  }
   if (!is.matrix(dist)) {
     return(FALSE)
   }
@@ -304,8 +307,10 @@ check_graph <- function(idx, dist = NULL, k = NULL) {
     idx <- idx$idx
   }
   stopifnot(methods::is(idx, "matrix"))
-  stopifnot(methods::is(dist, "matrix"))
-  stopifnot(dim(idx) == dim(dist))
+  if (!is.null(dist)) {
+    stopifnot(methods::is(dist, "matrix"))
+    stopifnot(dim(idx) == dim(dist))
+  }
   if (is.null(k)) {
     k <- ncol(idx)
   }
@@ -364,7 +369,7 @@ nn_intersect <-
     nbr_range <- nbr_start:nbr_end
     ref_range <- ref_start:ref_end
 
-    total_intersect <- rep(0, )
+    total_intersect <- integer(n)
     for (i in 1:n) {
       total_intersect[i] <-
         length(intersect(idx[i, nbr_range], ref_idx[i, ref_range]))
