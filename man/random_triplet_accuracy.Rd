@@ -11,8 +11,7 @@ random_triplet_accuracy(
   metric_in = "sqeuclidean",
   metric_out = "sqeuclidean",
   is_transposed = FALSE,
-  n_threads = 0,
-  grain_size = 1
+  n_threads = 0
 )
 }
 \arguments{
@@ -41,9 +40,6 @@ with the same input data, it is more efficient to transpose the input data
 once outside of this function and set \code{is_transposed = TRUE}.}
 
 \item{n_threads}{the maximum number of threads to use.}
-
-\item{grain_size}{the minimum number of observations to be processed per
-thread.}
 }
 \value{
 The triplet accuracy, ranging from 0 (no relative distances agree) to

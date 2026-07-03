@@ -30,8 +30,6 @@
 #'   with the same input data, it is more efficient to transpose the input data
 #'   once outside of this function and set `is_transposed = TRUE`.
 #' @param n_threads the maximum number of threads to use.
-#' @param grain_size the minimum number of observations to be processed per
-#'   thread.
 #' @return The triplet accuracy, ranging from 0 (no relative distances agree) to
 #'   1 (all of them agree). For randomly distributed `Xout`, the
 #'   accuracy will be 0.5.
@@ -63,8 +61,7 @@ random_triplet_accuracy <-
            metric_in = "sqeuclidean",
            metric_out = "sqeuclidean",
            is_transposed = FALSE,
-           n_threads = 0,
-           grain_size = 1) {
+           n_threads = 0) {
     metric_in <- validate_distance(metric_in)
     metric_out <- validate_distance(metric_out)
 
