@@ -57,7 +57,9 @@ in the input data and calculating the distances for two sides of the
 resulting triangle. This is repeated for the output data, and the relative
 ordering of the distances are compared. The returned accuracy is the
 proportion of triangles where the relative distances agree between the input
-and output data.
+and output data. Triplets with tied input-space distances are excluded from
+the denominator because they do not define a relative ordering. If no sampled
+input triplets define an ordering, the result is \code{NA_real_}.
 }
 \examples{
 iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x

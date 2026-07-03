@@ -14,15 +14,25 @@ using It = typename std::vector<double>::const_iterator;
 using Dfun = double(It, It, It);
 using TripIt = typename std::vector<std::size_t>::const_iterator;
 
-std::size_t triplet_sample_inner(std::size_t begin, std::size_t end,
-                                 std::size_t ntriplets_per_obs,
-                                 std::size_t nobs, const TripIt triplets_begin,
-                                 const It xin_begin, std::size_t xin_ncol,
-                                 const std::function<Dfun> &dfunin,
-                                 const It xout_begin, std::size_t xout_ncol,
-                                 const std::function<Dfun> &dfunout) {
+struct TripletCounts {
+  std::size_t agreements{0};
+  std::size_t comparisons{0};
+};
 
-  std::size_t acc{0};
+int compare_distances(double lhs, double rhs) {
+  return (lhs > rhs) - (lhs < rhs);
+}
+
+TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
+                                   std::size_t ntriplets_per_obs,
+                                   std::size_t nobs,
+                                   const TripIt triplets_begin,
+                                   const It xin_begin, std::size_t xin_ncol,
+                                   const std::function<Dfun> &dfunin,
+                                   const It xout_begin, std::size_t xout_ncol,
+                                   const std::function<Dfun> &dfunout) {
+
+  TripletCounts counts;
   const std::size_t nt2 = ntriplets_per_obs * 2;
   for (std::size_t i = begin; i < end; i++) {
     const TripIt trip_obs_begin = triplets_begin + i * nt2;
@@ -45,12 +55,19 @@ std::size_t triplet_sample_inner(std::size_t begin, std::size_t end,
       auto dout_ip2 =
           dfunout(xout_i_begin, xout_i_end, xout_begin + p2 * xout_ncol);
 
-      if ((din_ip1 < din_ip2) == (dout_ip1 < dout_ip2)) {
-        ++acc;
+      const int input_order = compare_distances(din_ip1, din_ip2);
+      if (input_order == 0) {
+        continue;
+      }
+
+      ++counts.comparisons;
+      const int output_order = compare_distances(dout_ip1, dout_ip2);
+      if (input_order == output_order) {
+        ++counts.agreements;
       }
     }
   }
-  return acc;
+  return counts;
 }
 
 double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
@@ -64,21 +81,28 @@ double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
   const std::size_t xin_nfeat = (xin_end - xin_begin) / nobs;
   const std::size_t xout_nfeat = (xout_end - xout_begin) / nobs;
 
-  std::vector<std::size_t> accs(std::max(n_threads, std::size_t{1}));
+  std::vector<TripletCounts> counts(std::max(n_threads, std::size_t{1}));
 
   auto worker = [&](std::size_t begin, std::size_t end, std::size_t thread_id) {
-    accs[thread_id] += triplet_sample_inner(
+    const auto chunk_counts = triplet_sample_inner(
         begin, end, ntriplets_per_obs, nobs, triplets_begin, xin_begin,
         xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
+    counts[thread_id].agreements += chunk_counts.agreements;
+    counts[thread_id].comparisons += chunk_counts.comparisons;
   };
 
   pforr::pfor(0, nobs, worker, n_threads);
 
-  std::size_t acc{0};
-  for (auto a : accs) {
-    acc += a;
+  TripletCounts total_counts;
+  for (const auto &chunk_counts : counts) {
+    total_counts.agreements += chunk_counts.agreements;
+    total_counts.comparisons += chunk_counts.comparisons;
   }
-  return acc / static_cast<double>(nobs * ntriplets_per_obs);
+  if (total_counts.comparisons == 0) {
+    return NA_REAL;
+  }
+  return total_counts.agreements /
+         static_cast<double>(total_counts.comparisons);
 }
 
 // [[Rcpp::export]]

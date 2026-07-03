@@ -9,7 +9,9 @@
 #' resulting triangle. This is repeated for the output data, and the relative
 #' ordering of the distances are compared. The returned accuracy is the
 #' proportion of triangles where the relative distances agree between the input
-#' and output data.
+#' and output data. Triplets with tied input-space distances are excluded from
+#' the denominator because they do not define a relative ordering. If no sampled
+#' input triplets define an ordering, the result is `NA_real_`.
 #'
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
 #'   with one observation per row, or if `is_transposed = TRUE`, one observation
@@ -73,7 +75,13 @@ random_triplet_accuracy <-
     }
     n_obs <- ncol(Xin)
     if (n_obs != ncol(Xout)) {
-      stop("Xin and Xout must have the same number of observations")
+      stop("Xin and Xout must have the same number of observations", call. = FALSE)
+    }
+    if (n_obs < 3) {
+      stop(
+        "Xin and Xout must contain at least 3 observations for triplet accuracy",
+        call. = FALSE
+      )
     }
 
     triplets <-
@@ -93,23 +101,31 @@ random_triplet_accuracy <-
 get_triplet_matrix <- function(n_obs, n_triplets, zero_index) {
   if (is.matrix(n_triplets)) {
     triplets <- n_triplets
+    if (!is.numeric(triplets) || anyNA(triplets) || any(!is.finite(triplets))) {
+      stop("Triplets matrix must contain finite numeric indices", call. = FALSE)
+    }
+    if (any(triplets != floor(triplets))) {
+      stop("Triplets matrix must contain integer indices", call. = FALSE)
+    }
     if (ncol(triplets) != n_obs) {
-      stop("Triplets matrix must have ", n_obs, " columns")
+      stop("Triplets matrix must have ", n_obs, " columns", call. = FALSE)
     }
     if (nrow(triplets) %% 2 != 0) {
-      stop("Triplets matrix must have even number of rows")
+      stop("Triplets matrix must have even number of rows", call. = FALSE)
     }
     if (min(triplets) < 0) {
-      stop("Triplet matrix must have non-negative values")
+      stop("Triplet matrix must have non-negative values", call. = FALSE)
     }
     max_trip_idx <- max(triplets)
     if (max_trip_idx > n_obs - 1) {
-      stop("Triplet matrix elements must be in (0, ", n_obs - 1, ")")
+      stop(
+        "Triplet matrix elements must be between 0 and ",
+        n_obs - 1,
+        call. = FALSE
+      )
     }
   } else {
-    if (!is.numeric(n_triplets) || n_triplets < 1) {
-      stop("n_triplets should be int > 0")
-    }
+    n_triplets <- validate_positive_integer(n_triplets, "n_triplets")
     triplets <-
       create_triplet_matrix(n_obs, n_triplets, zero_index = TRUE)
   }
