@@ -1,15 +1,12 @@
 [![Last Commit](https://img.shields.io/github/last-commit/jlmelville/quadra)](https://github.com/jlmelville/quadra)
-[![pkgdown](https://github.com/jlmelville/quadra/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/jlmelville/quadra/actions/workflows/pkgdown.yaml)
+[![R-CMD-check](https://github.com/jlmelville/quadra/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jlmelville/quadra/actions/workflows/R-CMD-check.yaml)
+[![codecov](https://codecov.io/github/jlmelville/quadra/graph/badge.svg?token=HxTB6T6KmW)](https://codecov.io/github/jlmelville/quadra)
 
 # Quadra: QUantitative Assessment of Dimensionality Reduction Algorithms
 
 An R Package for evaluating the success of embeddings from dimensionality
 reduction methods (e.g. Principal Component Analysis, Sammon Maps,
 t-Distributed Stochastic Neighbor Embedding).
-
-## News
-
-See [NEWS.md](NEWS.md) for release notes.
 
 ## Description
 
@@ -39,7 +36,7 @@ This only needs the output distance matrix, but requires the sort of labeling
 usually reserved for data intended for supervised classification. Quadra can
 also provide some help with this, but requires the [PRROC package](https://cran.r-project.org/package=PRROC) to be installed.
 
-## Installing
+## Install
 
 ```R
 install.packages("pak")
