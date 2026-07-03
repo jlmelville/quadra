@@ -38,3 +38,39 @@ test_that("random triplet accuracy", {
   expect_equal(random_triplet_accuracy(m, n, tm, n_threads = 2), 0.45)
   expect_false("grain_size" %in% names(formals(random_triplet_accuracy)))
 })
+
+test_that("input-distance triplet ties are excluded", {
+  triplets <- matrix(c(1, 2, 0, 2, 0, 1), nrow = 2)
+  xin <- matrix(c(
+    0, 0,
+    1, 0,
+    -1, 0
+  ), nrow = 3, byrow = TRUE)
+  xout <- matrix(c(
+    0, 0,
+    1, 0,
+    -2, 0
+  ), nrow = 3, byrow = TRUE)
+
+  expect_equal(random_triplet_accuracy(xin, xout, triplets), 1)
+  expect_true(is.na(random_triplet_accuracy(matrix(0, 3, 2), xout, triplets)))
+})
+
+test_that("random triplet inputs are validated", {
+  expect_error(
+    random_triplet_accuracy(m[1:2, ], n[1:2, ]),
+    "at least 3 observations"
+  )
+  expect_error(
+    random_triplet_accuracy(m, n, n_triplets = 0),
+    "n_triplets must be a positive integer"
+  )
+  expect_error(
+    random_triplet_accuracy(m, n, n_triplets = 1.5),
+    "n_triplets must be a positive integer"
+  )
+  expect_error(
+    random_triplet_accuracy(data.frame(label = letters[1:3]), n[1:3, ]),
+    "at least one numeric column"
+  )
+})

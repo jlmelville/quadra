@@ -25,3 +25,25 @@ test_that("unknown C++ distance metrics error", {
     "Unknown distance metric"
   )
 })
+
+test_that("random pair inputs are validated", {
+  expect_error(
+    random_pair_distance_correlation(m[1, , drop = FALSE], n[1, , drop = FALSE]),
+    "at least 2 observations"
+  )
+  expect_error(
+    random_pair_distance_correlation(m, n, n_pairs = 0),
+    "n_pairs must be a positive integer"
+  )
+  expect_error(
+    random_pair_distance_correlation(m, n, n_pairs = 1.5),
+    "n_pairs must be a positive integer"
+  )
+  expect_error(
+    random_pair_distance_correlation(
+      data.frame(label = letters[1:3]),
+      data.frame(label = letters[1:3])
+    ),
+    "at least one numeric column"
+  )
+})

@@ -21,12 +21,52 @@ tsmessage <- function(..., domain = NULL, appendLF = TRUE, force = FALSE,
 
 # convert data frame to matrix using numeric columns
 x2m <- function(X) {
-  if (!methods::is(X, "matrix")) {
-    m <- as.matrix(X[, which(vapply(X, is.numeric, logical(1)))])
+  if (is.data.frame(X)) {
+    numeric_cols <- vapply(X, is.numeric, logical(1))
+    if (!any(numeric_cols)) {
+      stop("Data frames must contain at least one numeric column", call. = FALSE)
+    }
+    m <- as.matrix(X[, numeric_cols, drop = FALSE])
+  } else if (!methods::is(X, "matrix")) {
+    m <- as.matrix(X)
   } else {
     m <- X
   }
+  if (!is.numeric(m)) {
+    stop("Input data must be numeric", call. = FALSE)
+  }
+  if (nrow(m) == 0 || ncol(m) == 0) {
+    stop("Input data must contain at least one row and one column", call. = FALSE)
+  }
   m
+}
+
+validate_positive_integer <- function(x, name) {
+  if (
+    !is.numeric(x) ||
+      length(x) != 1L ||
+      is.na(x) ||
+      !is.finite(x) ||
+      x < 1 ||
+      x != floor(x)
+  ) {
+    stop(name, " must be a positive integer", call. = FALSE)
+  }
+  as.integer(x)
+}
+
+validate_positive_integer_vector <- function(x, name) {
+  if (
+    !is.numeric(x) ||
+      length(x) < 1L ||
+      anyNA(x) ||
+      any(!is.finite(x)) ||
+      any(x < 1) ||
+      any(x != floor(x))
+  ) {
+    stop(name, " must contain positive integers", call. = FALSE)
+  }
+  as.integer(x)
 }
 
 # Add the (named) values in l2 to l1.

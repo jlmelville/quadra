@@ -149,6 +149,7 @@ nn_preservation <- function(Xin,
                             ret_extra = FALSE,
                             nn_args_in = list(),
                             nn_args_out = list()) {
+  k <- validate_positive_integer_vector(k, "k")
   max_k <- max(k)
 
   tsmessage("Getting neighbor graph for Xin")
@@ -166,7 +167,7 @@ nn_preservation <- function(Xin,
         nn_args = nn_args_in
       )
     )
-  stopifnot(is_nn_graph(nn_in))
+  check_nn_graph(nn_in, "Xin")
 
   tsmessage("Getting neighbor graph for Xout")
   nn_out <-
@@ -183,10 +184,10 @@ nn_preservation <- function(Xin,
         nn_args = nn_args_out
       )
     )
-  stopifnot(is_nn_graph(nn_out))
+  check_nn_graph(nn_out, "Xout")
 
   if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
-    stop("Number of observations in nn_in != nn_out")
+    stop("Xin and Xout neighbor graphs must have the same number of rows", call. = FALSE)
   }
 
   # use if ret_extra = TRUE
@@ -253,10 +254,12 @@ get_nn_graph <-
            nn_args) {
     if (is_nn_graph(X)) {
       if (graph_k(X) < k) {
-        stop("Graph not large enough for requested k")
+        stop("Nearest-neighbor graph does not contain enough columns for requested k", call. = FALSE)
       } else {
         return(X)
       }
+    } else if (is.list(X) && !is.data.frame(X)) {
+      check_nn_graph(X, "Nearest-neighbor graph")
     } else {
       do.call(calc_nn_graph, lmerge(
         list(
@@ -299,6 +302,18 @@ is_nn_graph <- function(graph) {
   all(dim(idx) == dim(dist))
 }
 
+check_nn_graph <- function(graph, name = "graph") {
+  if (!is_nn_graph(graph)) {
+    stop(
+      name,
+      " must be a nearest-neighbor graph: a list with matrix element 'idx' ",
+      "and optional matrix element 'dist' with matching dimensions",
+      call. = FALSE
+    )
+  }
+  invisible(graph)
+}
+
 check_graph <- function(idx, dist = NULL, k = NULL) {
   if (is.null(dist) && is.list(idx)) {
     dist <- idx$dist
@@ -306,15 +321,21 @@ check_graph <- function(idx, dist = NULL, k = NULL) {
   if (is.list(idx)) {
     idx <- idx$idx
   }
-  stopifnot(methods::is(idx, "matrix"))
+  if (!methods::is(idx, "matrix")) {
+    stop("idx must be a matrix", call. = FALSE)
+  }
   if (!is.null(dist)) {
-    stopifnot(methods::is(dist, "matrix"))
-    stopifnot(dim(idx) == dim(dist))
+    if (!methods::is(dist, "matrix")) {
+      stop("dist must be a matrix when supplied", call. = FALSE)
+    }
+    if (!all(dim(idx) == dim(dist))) {
+      stop("idx and dist must have the same dimensions", call. = FALSE)
+    }
   }
   if (is.null(k)) {
     k <- ncol(idx)
   }
-  stopifnot(k > 0)
+  k <- validate_positive_integer(k, "k")
   list(idx = idx, dist = dist, k = k)
 }
 
@@ -328,27 +349,39 @@ nn_intersect <-
     if (is.list(idx)) {
       idx <- idx$idx
     }
-    stopifnot(methods::is(idx, "matrix"))
+    if (!methods::is(idx, "matrix")) {
+      stop("idx must be a matrix or nearest-neighbor graph", call. = FALSE)
+    }
 
     if (is.list(ref_idx)) {
       ref_idx <- ref_idx$idx
     }
-    stopifnot(methods::is(ref_idx, "matrix"))
+    if (!methods::is(ref_idx, "matrix")) {
+      stop("ref_idx must be a matrix or nearest-neighbor graph", call. = FALSE)
+    }
 
     if (is.null(k)) {
       k <- findk(idx, ref_idx)
     }
+    k <- validate_positive_integer(k, "k")
     if (is.null(ref_k)) {
       ref_k <- k
     }
+    ref_k <- validate_positive_integer(ref_k, "ref_k")
 
+    if (ncol(idx) < k) {
+      stop("Not enough columns in idx for k = ", k, call. = FALSE)
+    }
     if (ncol(ref_idx) < k) {
-      stop("Not enough columns in ref_idx for k = ", k)
+      stop("Not enough columns in ref_idx for k = ", k, call. = FALSE)
+    }
+    if (ncol(ref_idx) < ref_k) {
+      stop("Not enough columns in ref_idx for ref_k = ", ref_k, call. = FALSE)
     }
 
     n <- nrow(idx)
     if (nrow(ref_idx) != n) {
-      stop("Not enough rows in ref_idx")
+      stop("idx and ref_idx must have the same number of rows", call. = FALSE)
     }
 
     nbr_start <- 1

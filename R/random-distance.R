@@ -182,6 +182,7 @@ random_pair_distances <- function(Xin,
                                   metric_out = "sqeuclidean",
                                   is_transposed = FALSE,
                                   n_threads = 0) {
+  n_pairs <- validate_positive_integer(n_pairs, "n_pairs")
   metric_in <- validate_distance(metric_in)
   metric_out <- validate_distance(metric_out)
 
@@ -193,7 +194,13 @@ random_pair_distances <- function(Xin,
   }
   n_obs <- ncol(Xin)
   if (n_obs != ncol(Xout)) {
-    stop("Xin and Xout must have the same number of observations")
+    stop("Xin and Xout must have the same number of observations", call. = FALSE)
+  }
+  if (n_obs < 2) {
+    stop(
+      "Xin and Xout must contain at least 2 observations for random-pair distances",
+      call. = FALSE
+    )
   }
   random_distances(
     Xin,

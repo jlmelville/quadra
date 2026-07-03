@@ -94,6 +94,17 @@ test_that("neighbor preservation", {
     ),
     named(c(0.55, 0.48), c("nnp2", "nnp5"))
   )
+
+  expect_equal(
+    nn_preservation(
+      as.data.frame(m),
+      as.data.frame(n),
+      k = 2,
+      nn_method_in = "brute",
+      nn_method_out = "brute"
+    ),
+    named(0.55, "nnp2")
+  )
 })
 
 test_that("idx-only nearest-neighbor graphs are accepted", {
@@ -127,4 +138,26 @@ test_that("nearest-neighbor intersection helpers return per-row values", {
 
   expect_equal(nn_intersect(idx, ref_idx, k = 1), c(1L, 0L, 1L))
   expect_equal(nn_accuracyv(idx, ref_idx, k = 1), c(1, 0, 1))
+})
+
+test_that("nearest-neighbor inputs are validated", {
+  idx <- matrix(c(
+    2, 3,
+    1, 3,
+    1, 2
+  ), nrow = 3, byrow = TRUE)
+  graph <- list(idx = idx)
+
+  expect_error(nn_preservation(graph, graph, k = 0), "k must contain positive integers")
+  expect_error(nn_preservation(graph, graph, k = 1.5), "k must contain positive integers")
+  expect_error(
+    nn_preservation(graph, graph, k = 3),
+    "does not contain enough columns"
+  )
+  expect_error(
+    nn_preservation(list(idx = 1), graph, k = 1),
+    "nearest-neighbor graph"
+  )
+  expect_error(nn_intersect(1, idx, k = 1), "idx must be a matrix")
+  expect_error(check_graph(idx, dist = idx[1, , drop = FALSE]), "same dimensions")
 })
