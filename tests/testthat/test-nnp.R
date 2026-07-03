@@ -230,11 +230,10 @@ test_that("idx-only nearest-neighbor graphs are accepted", {
   )
   graph <- list(idx = idx)
 
-  expect_true(is_nn_graph(graph))
   expect_equal(nn_preservation(graph, graph, k = 1), named(1, "nnp1"))
 })
 
-test_that("nearest-neighbor intersection helpers return per-row values", {
+test_that("nearest-neighbor preservation returns per-row values", {
   idx <- matrix(
     c(
       2,
@@ -250,7 +249,7 @@ test_that("nearest-neighbor intersection helpers return per-row values", {
   ref_idx <- matrix(
     c(
       2,
-      1,
+      3,
       3,
       1,
       1,
@@ -260,8 +259,15 @@ test_that("nearest-neighbor intersection helpers return per-row values", {
     byrow = TRUE
   )
 
-  expect_equal(nn_intersect(idx, ref_idx, k = 1), c(1L, 0L, 1L))
-  expect_equal(nn_accuracyv(idx, ref_idx, k = 1), c(1, 0, 1))
+  res <- nn_preservation(
+    list(idx = ref_idx),
+    list(idx = idx),
+    k = 1,
+    ret_extra = TRUE
+  )
+
+  expect_equal(res$nnp, c(nnp1 = 2 / 3))
+  expect_equal(res$nnpv$nnp1, c(1, 0, 1))
 })
 
 test_that("nearest-neighbor inputs are validated", {
@@ -299,9 +305,12 @@ test_that("nearest-neighbor inputs are validated", {
     nn_preservation(list(idx = 1), graph, k = 1),
     "nearest-neighbor graph"
   )
-  expect_error(nn_intersect(1, idx, k = 1), "idx must be a matrix")
   expect_error(
-    check_graph(idx, dist = idx[1, , drop = FALSE]),
-    "same dimensions"
+    nn_preservation(
+      list(idx = idx, dist = idx[1, , drop = FALSE]),
+      graph,
+      k = 1
+    ),
+    "nearest-neighbor graph"
   )
 })

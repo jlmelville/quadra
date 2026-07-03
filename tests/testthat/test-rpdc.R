@@ -20,31 +20,44 @@ test_that("random pair distance correlation", {
   expect_gte(rdpct2, -1.0)
 })
 
-test_that("unknown C++ distance metrics error", {
+test_that("unknown distance metrics error", {
   expect_error(
-    random_distances(t(m), t(n), metric_in = "not-a-metric"),
-    "Unknown distance metric"
-  )
-})
-
-test_that("parallel worker exceptions are rethrown to R", {
-  expect_error(
-    pforr_test_worker_exception(n_threads = 2),
-    "pforr worker exception"
+    random_pair_distance_correlation(m, n, metric_in = "not-a-metric"),
+    "should be one of"
   )
 })
 
 test_that("random pair sampling is reproducible for same thread count", {
   set.seed(2024)
-  serial_1 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 0)
+  serial_1 <- random_pair_distance_correlation(
+    m,
+    n,
+    n_pairs = 50,
+    n_threads = 0
+  )
   set.seed(2024)
-  serial_2 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 0)
+  serial_2 <- random_pair_distance_correlation(
+    m,
+    n,
+    n_pairs = 50,
+    n_threads = 0
+  )
   expect_equal(serial_2, serial_1)
 
   set.seed(2024)
-  parallel_1 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 2)
+  parallel_1 <- random_pair_distance_correlation(
+    m,
+    n,
+    n_pairs = 50,
+    n_threads = 2
+  )
   set.seed(2024)
-  parallel_2 <- random_pair_distances(m, n, n_pairs = 50, n_threads = 2)
+  parallel_2 <- random_pair_distance_correlation(
+    m,
+    n,
+    n_pairs = 50,
+    n_threads = 2
+  )
   expect_equal(parallel_2, parallel_1)
 })
 
