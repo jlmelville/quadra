@@ -1,0 +1,12 @@
+pandoc: 3.8.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  articles/global-preservation: global-preservation.html
+  articles/label-retrieval: label-retrieval.html
+  articles/local-preservation: local-preservation.html
+  articles/metrics-overview: metrics-overview.html
+last_built: 2026-07-03T20:46Z
+urls:
+  reference: https://jlmelville.github.io/quadra/reference
+  article: https://jlmelville.github.io/quadra/articles

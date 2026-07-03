@@ -1,0 +1,24 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://jlmelville.github.io/quadra/404.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/LICENSE.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/articles/global-preservation.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/articles/index.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/articles/label-retrieval.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/articles/local-preservation.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/articles/metrics-overview.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/authors.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/index.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/news/index.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/index.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/nbr_pres.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/nbr_pres_knn.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/nn_preservation.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/pr_auc.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/quadra-package.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/rnx_auc.html</loc></url>
+<url><loc>https://jlmelville.github.io/quadra/reference/roc_auc.html</loc></url>
+</urlset>
+
