@@ -1,4 +1,4 @@
-# quadra 0.2.0
+# quadra 0.2.0 (July 3 2026)
 
 ## Bug fixes and minor improvements
 
