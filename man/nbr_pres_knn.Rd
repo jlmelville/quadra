@@ -16,20 +16,20 @@ indices.}
 include in the neighborhood.}
 }
 \value{
-Vector of preservation values, one for each row of \code{kin}
+Vector of preservation values, one for each row of \code{kin}.
 }
 \description{
 Calculates the neighborhood preservation for each observation in a dataset,
 represented by two matrices of the indices of the nearest neighbors. The
 first matrix is the "ground truth", the second being the estimation or
 approximation. The neighborhood preservation is calculated for each row where
-each element d[i, k] is taken to be the index of the kth nearest neighbor
-of i.
+each element \code{d[i, k]} is taken to be the index of the kth nearest neighbor
+of \code{i}.
 }
 \details{
 Approximate nearest neighbor methods, e.g.
-\href{https://cran.r-project.org/package=RcppAnnoy}{RcppAnnoy} can find
-k nearest neighbors quite efficiently and so makes calculating preservation
+\href{https://cran.r-project.org/package=RcppAnnoy}{RcppAnnoy}, can find
+k-nearest neighbors quite efficiently and so makes calculating preservation
 values for larger datasets feasible.
 
 The neighborhood preservation can vary between 0 (no neighbors in common)

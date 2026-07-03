@@ -16,8 +16,7 @@
 #' Perfect retrieval results in an AUC of 1. For random retrieval gives a value
 #' of 0.5.
 #'
-#' @note Use of this function requires that the \code{PRROC} package be
-#' installed.
+#' @note Use of this function requires that the `PRROC` package be installed.
 #'
 #' @param dm Distance matrix of an embedding.
 #' @param labels Vector of labels for each observation in the dataset in the
@@ -53,8 +52,7 @@ roc_auc <- function(dm, labels) {
 #' Perfect retrieval results in an AUC of 1. For random retrieval, the value
 #' is the proportion of the positive class labels for that curve.
 #'
-#' @note Use of this function requires that the \code{PRROC} package be
-#' installed.
+#' @note Use of this function requires that the `PRROC` package be installed.
 #'
 #' @param dm Distance matrix of an embedding.
 #' @param labels Vector of labels for each observation in the dataset in the
@@ -64,12 +62,11 @@ roc_auc <- function(dm, labels) {
 #' @references
 #' Keilwagen, J., Grosse, I., & Grau, J. (2014).
 #' Area under precision-recall curves for weighted and unweighted data.
-#' \emph{PloS One}, \emph{9}(3), e92209.
+#' *PloS One*, *9*(3), e92209.
 #'
 #' Davis, J., & Goadrich, M. (2006, June).
 #' The relationship between Precision-Recall and ROC curves.
-#' In \emph{Proceedings of the 23rd international conference on Machine
-#' learning}
+#' In *Proceedings of the 23rd international conference on Machine learning*
 #' (pp. 233-240). ACM.
 #' @export
 pr_auc <- function(dm, labels) {

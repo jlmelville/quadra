@@ -5,9 +5,10 @@
 * Many small fixes for corner cases and improved validation.
 * rnndescent is now on [CRAN](https://cran.r-project.org/package=rnndescent),
 so we no longer need to install that from github.
-* `grain_size` for thread-handling has been removed any API that exposed it.
-* fix where index-only nearest neighbor graphs were not allowed for metrics
-that didn't need the distances.
+* `grain_size` for thread-handling has been removed from any API that exposed
+it.
+* Fix for issue where index-only nearest neighbor graphs were not allowed for
+metrics that didn't need the distances.
 * `nn_preservation()` now excludes the "self"-neighbor (i.e. the item itself)
 from nearest-neighbor graphs. When calculating the graph internally, `k + 1`
 extra neighbors will be requested from `rnndescent`.

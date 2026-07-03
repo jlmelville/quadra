@@ -1,5 +1,10 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.github$
 ^README\.md$
 ^img$
 ^LICENSE\.md$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^vignettes/articles$

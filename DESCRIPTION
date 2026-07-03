@@ -1,26 +1,36 @@
-Package: quadra
 Type: Package
-Title: QUality Assessment of Dimensonality Reduction Algorithms
-Version: 0.1.0
-Authors@R: person("James", "Melville", email = "jlmelville@gmail.com",
-    role = c("aut", "cre"))
-Description: Package for quantifying the embeddings produced by dimensionality 
-  reduction methods.
+Package: quadra
+Title: QUality Assessment of Dimensionality Reduction Algorithms
+Version: 0.2.0
+Authors@R:
+    person("James", "Melville", , "jlmelville@gmail.com", role = c("aut", "cre"))
+Description: Quantifies dimensionality-reduction embeddings with global
+    distance-preservation metrics, local nearest-neighbor preservation metrics,
+    co-ranking metrics, and label-based retrieval AUC metrics.
 License: GPL (>= 3)
+URL: https://jlmelville.github.io/quadra/,
+    https://github.com/jlmelville/quadra
+BugReports: https://github.com/jlmelville/quadra/issues
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
 Suggests:
+    covr,
+    lintr,
+    pkgdown,
     PRROC,
     testthat (>= 3.0.0)
-Imports: 
+Imports:
     methods,
     Rcpp,
     rnndescent (>= 0.0.16)
-LinkingTo: 
+LinkingTo:
     Rcpp,
     dqrng,
     sitmo,
     BH,
     rnndescent
 Config/testthat/edition: 3
+Config/Needs/website: pkgdown
+Config/roxygen2/version: 8.0.0
 SystemRequirements: C++17

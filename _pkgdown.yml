@@ -1,0 +1,11 @@
+url: https://jlmelville.github.io/quadra/
+template:
+  bootstrap: 5
+
+articles:
+- title: Guides
+  contents:
+  - articles/metrics-overview
+  - articles/global-preservation
+  - articles/local-preservation
+  - articles/label-retrieval

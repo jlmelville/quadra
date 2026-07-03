@@ -6,7 +6,7 @@
 #' represented by two distance matrices. The first matrix is the "ground truth",
 #' the second being the estimation or approximation.
 #' The neighborhood preservation is calculated for each row where each element
-#' d[i, j] is taken to be the distance between observation i and j.
+#' `d[i, j]` is taken to be the distance between observation `i` and `j`.
 #'
 #' The neighborhood preservation can vary between 0 (no neighbors in common)
 #' and 1 (perfect preservation). However, random performance gives an
@@ -17,8 +17,8 @@
 #' neighborhood overlap is calculated.
 #'
 #' @note This is not a very efficient way to calculate the preservation if you
-#'  want to calculate the value for multiple values of \code{k}. For more
-#'  global measures of preservation, see \code{\link{rnx_auc}}.
+#'  want to calculate the value for multiple values of `k`. For more global
+#'  measures of preservation, see [rnx_auc()].
 #'
 #' @param din Distance matrix. The "ground truth" or reference distances.
 #' @param dout Distance matrix. A set of distances to compare to the reference
@@ -53,12 +53,12 @@ nbr_pres <- function(din, dout, k) {
 #' represented by two matrices of the indices of the nearest neighbors. The
 #' first matrix is the "ground truth", the second being the estimation or
 #' approximation. The neighborhood preservation is calculated for each row where
-#' each element d[i, k] is taken to be the index of the kth nearest neighbor
-#' of i.
+#' each element `d[i, k]` is taken to be the index of the kth nearest neighbor
+#' of `i`.
 #'
 #' Approximate nearest neighbor methods, e.g.
-#' \href{https://cran.r-project.org/package=RcppAnnoy}{RcppAnnoy} can find
-#' k nearest neighbors quite efficiently and so makes calculating preservation
+#' [RcppAnnoy](https://cran.r-project.org/package=RcppAnnoy), can find
+#' k-nearest neighbors quite efficiently and so makes calculating preservation
 #' values for larger datasets feasible.
 #'
 #' The neighborhood preservation can vary between 0 (no neighbors in common)
@@ -72,7 +72,7 @@ nbr_pres <- function(din, dout, k) {
 #'  indices.
 #' @param k The size of the neighborhood, where k is the number of neighbors to
 #'  include in the neighborhood.
-#' @return Vector of preservation values, one for each row of \code{kin}
+#' @return Vector of preservation values, one for each row of `kin`.
 #' @export
 nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
   if (k > ncol(kin) || k > ncol(kout)) {
@@ -90,7 +90,7 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
 
 #' Area Under the RNX Curve
 #'
-#' The RNX curve is formed by calculating the \code{rnx_crm} metric for
+#' The RNX curve is formed by calculating the `rnx_crm` metric for
 #' different sizes of neighborhood. Each value of RNX is scaled according to
 #' the natural log of the neighborhood size, to give a higher weight to smaller
 #' neighborhoods. An AUC of 1 indicates perfect neighborhood preservation, an
@@ -104,7 +104,7 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
 #' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
 #' Multi-scale similarities in stochastic neighbour embedding: Reducing
 #' dimensionality while preserving both local and global structure.
-#' \emph{Neurocomputing}, \emph{169}, 246-261.
+#' *Neurocomputing*, *169*, 246-261.
 #' @export
 rnx_auc <- function(din, dout) {
   validate_distance_matrix_pair(din, dout)

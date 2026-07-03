@@ -17,14 +17,14 @@ include in the neighborhood.}
 }
 \value{
 Vector of preservation values, one for each row of the distance
- matrix.
+matrix.
 }
 \description{
 Calculates the neighborhood preservation for each observation in a dataset,
 represented by two distance matrices. The first matrix is the "ground truth",
 the second being the estimation or approximation.
 The neighborhood preservation is calculated for each row where each element
-d[i, j] is taken to be the distance between observation i and j.
+\code{d[i, j]} is taken to be the distance between observation \code{i} and \code{j}.
 }
 \details{
 The neighborhood preservation can vary between 0 (no neighbors in common)
@@ -37,6 +37,6 @@ neighborhood overlap is calculated.
 }
 \note{
 This is not a very efficient way to calculate the preservation if you
- want to calculate the value for multiple values of \code{k}. For more
- global measures of preservation, see \code{\link{rnx_auc}}.
+want to calculate the value for multiple values of \code{k}. For more global
+measures of preservation, see \code{\link[=rnx_auc]{rnx_auc()}}.
 }

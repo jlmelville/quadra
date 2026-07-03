@@ -23,7 +23,7 @@ nn_preservation(
 \arguments{
 \item{Xin}{the input data (usually high-dimensional), a matrix or data frame
 with one observation per row, or if \code{is_transposed = TRUE}, one observation
-per column.. Alternatively, it can be a pre-computed nearest neighbor
+per column. Alternatively, it can be a pre-computed nearest neighbor
 graph. In the latter case, \code{nn_method_in}, \code{metric_in} and \code{nn_args_in} are
 ignored. If \code{Xin} is a data-frame, non-numeric columns are ignored.}
 
@@ -89,8 +89,8 @@ preservations for each \code{k} in the order they were passed. If
 \item \code{nn_out}: the nearest neighbor graph for \code{Xout}. See the
 'Nearest Neighbor Graph Format' section for details.
 \item \code{nnpv}: a list of vectors where each vector contains the individual
-neighbor preservation per observation. items are named \verb{nnp<k>} where \code{k}
-\item refers to the values provided in the \code{k} parameter.
+neighbor preservation per observation. Items are named \verb{nnp<k>}, where
+\verb{<k>} refers to the values provided in the \code{k} parameter.
 }
 }
 \description{
@@ -132,7 +132,7 @@ Rather than provide the observations to \code{Xin} and \code{Xout}, pre-computed
 nearest neighbor graphs can be provided. The format of the graph must be a
 list containing:
 \itemize{
-\item \code{idx} a matrix with as many as rows as observations in the input data and
+\item \code{idx} a matrix with as many rows as observations in the input data and
 \code{k} columns. The \code{i}th row of this matrix contains the row indices of the
 nearest non-self neighbors of observation \code{i} in non-decreasing distance
 order. Graphs calculated by this function are self-excluded. Older cached

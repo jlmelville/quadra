@@ -39,8 +39,7 @@ Perfect retrieval results in an AUC of 1. For random retrieval, the value
 is the proportion of the positive class labels for that curve.
 }
 \note{
-Use of this function requires that the \code{PRROC} package be
-installed.
+Use of this function requires that the \code{PRROC} package be installed.
 }
 \references{
 Keilwagen, J., Grosse, I., & Grau, J. (2014).
@@ -49,7 +48,6 @@ Area under precision-recall curves for weighted and unweighted data.
 
 Davis, J., & Goadrich, M. (2006, June).
 The relationship between Precision-Recall and ROC curves.
-In \emph{Proceedings of the 23rd international conference on Machine
-learning}
+In \emph{Proceedings of the 23rd international conference on Machine learning}
 (pp. 233-240). ACM.
 }

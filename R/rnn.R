@@ -36,7 +36,7 @@
 #' nearest neighbor graphs can be provided. The format of the graph must be a
 #' list containing:
 #'
-#' * `idx` a matrix with as many as rows as observations in the input data and
+#' * `idx` a matrix with as many rows as observations in the input data and
 #' `k` columns. The `i`th row of this matrix contains the row indices of the
 #' nearest non-self neighbors of observation `i` in non-decreasing distance
 #' order. Graphs calculated by this function are self-excluded. Older cached
@@ -49,7 +49,7 @@
 #'
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
 #'   with one observation per row, or if `is_transposed = TRUE`, one observation
-#'   per column.. Alternatively, it can be a pre-computed nearest neighbor
+#'   per column. Alternatively, it can be a pre-computed nearest neighbor
 #'   graph. In the latter case, `nn_method_in`, `metric_in` and `nn_args_in` are
 #'   ignored. If `Xin` is a data-frame, non-numeric columns are ignored.
 #' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
@@ -101,8 +101,8 @@
 #'   * `nn_out`: the nearest neighbor graph for `Xout`. See the
 #'   'Nearest Neighbor Graph Format' section for details.
 #'   * `nnpv`: a list of vectors where each vector contains the individual
-#'   neighbor preservation per observation. items are named `nnp<k>` where `k`
-#'   * refers to the values provided in the `k` parameter.
+#'   neighbor preservation per observation. Items are named `nnp<k>`, where
+#'   `<k>` refers to the values provided in the `k` parameter.
 #'
 #' @seealso The [rnndescent](https://github.com/jlmelville/rnndescent) package
 #'   and the [rnndescent::brute_force_knn()] and [rnndescent::nnd_knn()]
@@ -114,7 +114,6 @@
 #' (pp. 577-586).
 #' ACM.
 #' <https://doi.org/10.1145/1963405.1963487>.
-#' @md
 #' @examples
 #' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' nn_preservation(iris, iris_pca)

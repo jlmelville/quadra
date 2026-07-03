@@ -40,7 +40,6 @@
 #' *Nature biotechnology*, *37*(1), 38-44.
 #' @seealso [random_pair_distance_emd()] and [random_triplet_accuracy()] for
 #'   another measure of global structure preservation.
-#' @md
 #' @examples
 #' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' random_pair_distance_correlation(iris, iris_pca2)
@@ -126,7 +125,6 @@ random_pair_distance_correlation <- function(Xin,
 #' <https://github.com/KenLauLab/DR-structure-preservation>
 #' @seealso [random_pair_distance_correlation()] and [random_triplet_accuracy()]
 #'   for another measure of global structure preservation.
-#' @md
 #' @examples
 #' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' random_pair_distance_emd(iris, iris_pca2)

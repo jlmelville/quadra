@@ -4,12 +4,26 @@
 \name{quadra-package}
 \alias{quadra}
 \alias{quadra-package}
-\title{quadra: QUality Assessment of Dimensonality Reduction Algorithms}
+\title{quadra: QUality Assessment of Dimensionality Reduction Algorithms}
 \description{
-Package for quantifying the embeddings produced by dimensionality reduction methods.
+Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, and label-based retrieval AUC metrics.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://jlmelville.github.io/quadra/}
+  \item \url{https://github.com/jlmelville/quadra}
+  \item Report bugs at \url{https://github.com/jlmelville/quadra/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: James Melville \email{jlmelville@gmail.com}
+
+Authors:
+\itemize{
+  \item James Melville \email{jlmelville@gmail.com}
+}
 
 }
 \keyword{internal}
