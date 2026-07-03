@@ -5,8 +5,13 @@ stime <- function() {
 # message with a time stamp
 # appears only if called from an environment where a logical verbose = TRUE
 # OR force = TRUE
-tsmessage <- function(..., domain = NULL, appendLF = TRUE, force = FALSE,
-                      time_stamp = TRUE) {
+tsmessage <- function(
+  ...,
+  domain = NULL,
+  appendLF = TRUE,
+  force = FALSE,
+  time_stamp = TRUE
+) {
   verbose <- get0("verbose", envir = sys.parent())
 
   if (force || (!is.null(verbose) && verbose)) {
@@ -24,7 +29,10 @@ x2m <- function(X) {
   if (is.data.frame(X)) {
     numeric_cols <- vapply(X, is.numeric, logical(1))
     if (!any(numeric_cols)) {
-      stop("Data frames must contain at least one numeric column", call. = FALSE)
+      stop(
+        "Data frames must contain at least one numeric column",
+        call. = FALSE
+      )
     }
     m <- as.matrix(X[, numeric_cols, drop = FALSE])
   } else if (!methods::is(X, "matrix")) {
@@ -36,7 +44,10 @@ x2m <- function(X) {
     stop("Input data must be numeric", call. = FALSE)
   }
   if (nrow(m) == 0 || ncol(m) == 0) {
-    stop("Input data must contain at least one row and one column", call. = FALSE)
+    stop(
+      "Input data must contain at least one row and one column",
+      call. = FALSE
+    )
   }
   m
 }

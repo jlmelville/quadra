@@ -8,9 +8,10 @@ test_that("random pair distance correlation", {
   expect_equal(random_pair_distance_correlation(m, n), rdpc)
 
   set.seed(1337)
-  expect_equal(random_pair_distance_correlation(t(m), t(n),
-    is_transposed = TRUE
-  ), rdpc)
+  expect_equal(
+    random_pair_distance_correlation(t(m), t(n), is_transposed = TRUE),
+    rdpc
+  )
 
   expect_equal(random_pair_distance_correlation(m, m), 1.0)
 
@@ -49,7 +50,10 @@ test_that("random pair sampling is reproducible for same thread count", {
 
 test_that("random pair inputs are validated", {
   expect_error(
-    random_pair_distance_correlation(m[1, , drop = FALSE], n[1, , drop = FALSE]),
+    random_pair_distance_correlation(
+      m[1, , drop = FALSE],
+      n[1, , drop = FALSE]
+    ),
     "at least 2 observations"
   )
   expect_error(

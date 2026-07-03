@@ -57,13 +57,15 @@
 #' random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
 #' @export
 random_triplet_accuracy <-
-  function(Xin,
-           Xout,
-           n_triplets = 5,
-           metric_in = "sqeuclidean",
-           metric_out = "sqeuclidean",
-           is_transposed = FALSE,
-           n_threads = 0) {
+  function(
+    Xin,
+    Xout,
+    n_triplets = 5,
+    metric_in = "sqeuclidean",
+    metric_out = "sqeuclidean",
+    is_transposed = FALSE,
+    n_threads = 0
+  ) {
     metric_in <- validate_distance(metric_in)
     metric_out <- validate_distance(metric_out)
 
@@ -75,7 +77,10 @@ random_triplet_accuracy <-
     }
     n_obs <- ncol(Xin)
     if (n_obs != ncol(Xout)) {
-      stop("Xin and Xout must have the same number of observations", call. = FALSE)
+      stop(
+        "Xin and Xout must have the same number of observations",
+        call. = FALSE
+      )
     }
     if (n_obs < 3) {
       stop(
@@ -154,11 +159,12 @@ create_triplet_matrix <-
 # for each column add 1 to each element which is >= the column index
 avoid_self_matrix <- function(triplets) {
   # add the column index as a new row (1:ncol)
-  tripi <- rbind(triplets, 1:ncol(triplets))
+  tripi <- rbind(triplets, seq_len(ncol(triplets)))
 
   # for each column, if the element >= the column index, add 1 to it
   tripi <-
-    tripi + apply(tripi, 2, function(x) {
+    tripi +
+    apply(tripi, 2, function(x) {
       x >= x[length(x)]
     })
 

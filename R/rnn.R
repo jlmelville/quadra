@@ -137,19 +137,21 @@
 #'   nn_method_in = "brute"
 #' )
 #' @export
-nn_preservation <- function(Xin,
-                            Xout,
-                            k = 15,
-                            nn_method_in = "nnd",
-                            metric_in = "sqeuclidean",
-                            nn_method_out = "brute",
-                            metric_out = "sqeuclidean",
-                            is_transposed = FALSE,
-                            n_threads = 0,
-                            verbose = FALSE,
-                            ret_extra = FALSE,
-                            nn_args_in = list(),
-                            nn_args_out = list()) {
+nn_preservation <- function(
+  Xin,
+  Xout,
+  k = 15,
+  nn_method_in = "nnd",
+  metric_in = "sqeuclidean",
+  nn_method_out = "brute",
+  metric_out = "sqeuclidean",
+  is_transposed = FALSE,
+  n_threads = 0,
+  verbose = FALSE,
+  ret_extra = FALSE,
+  nn_args_in = list(),
+  nn_args_out = list()
+) {
   k <- validate_positive_integer_vector(k, "k")
   max_k <- max(k)
 
@@ -190,13 +192,16 @@ nn_preservation <- function(Xin,
   check_nn_graph(nn_out, "Xout")
 
   if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
-    stop("Xin and Xout neighbor graphs must have the same number of rows", call. = FALSE)
+    stop(
+      "Xin and Xout neighbor graphs must have the same number of rows",
+      call. = FALSE
+    )
   }
 
   # use if ret_extra = TRUE
   nnpvs <- list()
   nnps <- rep(0, length(k))
-  for (i in 1:length(k)) {
+  for (i in seq_along(k)) {
     ki <- k[i]
     nnpv <- nn_accuracyv(nn_out, ref_idx = nn_in, k = ki)
     nnps[i] <- sum(nnpv) / length(nnpv)
@@ -220,13 +225,15 @@ nn_preservation <- function(Xin,
 }
 
 calc_nn_graph <-
-  function(X,
-           k = 15,
-           nn_method = "brute",
-           metric = "sqeuclidean",
-           n_threads = 0,
-           verbose = FALSE,
-           ...) {
+  function(
+    X,
+    k = 15,
+    nn_method = "brute",
+    metric = "sqeuclidean",
+    n_threads = 0,
+    verbose = FALSE,
+    ...
+  ) {
     varargs <- lmerge(
       list(
         data = X,
@@ -238,7 +245,8 @@ calc_nn_graph <-
       list(...)
     )
 
-    nnfun <- switch(nn_method,
+    nnfun <- switch(
+      nn_method,
       brute = rnndescent::brute_force_knn,
       nnd = rnndescent::nnd_knn,
       stop("unknown method '", nn_method, "'")
@@ -247,17 +255,19 @@ calc_nn_graph <-
   }
 
 get_nn_graph <-
-  function(X,
-           k = 15,
-           nn_method,
-           metric,
-           is_transposed,
-           n_threads,
-           verbose,
-           nn_args,
-           name = "Nearest-neighbor graph") {
+  function(
+    X,
+    k = 15,
+    nn_method,
+    metric,
+    is_transposed,
+    n_threads,
+    verbose,
+    nn_args,
+    name = "Nearest-neighbor graph"
+  ) {
     if (is_nn_graph(X)) {
-      return(prepare_supplied_nn_graph(X, k = k, name = name))
+      prepare_supplied_nn_graph(X, k = k, name = name)
     } else if (is.list(X) && !is.data.frame(X)) {
       check_nn_graph(X, "Nearest-neighbor graph")
     } else {
@@ -266,23 +276,28 @@ get_nn_graph <-
       check_k_for_n_obs(k, n_obs)
       if ("k" %in% names(nn_args)) {
         warning(
-          "Ignoring 'k' in ", name, " nn_args; use nn_preservation()'s k argument",
+          "Ignoring 'k' in ",
+          name,
+          " nn_args; use nn_preservation()'s k argument",
           call. = FALSE
         )
         nn_args$k <- NULL
       }
-      nn_graph <- do.call(calc_nn_graph, lmerge(
-        list(
-          X = X,
-          k = k + 1L,
-          nn_method = nn_method,
-          metric = metric,
-          n_threads = n_threads,
-          verbose = verbose,
-          obs = ifelse(is_transposed, "C", "R")
-        ),
-        nn_args
-      ))
+      nn_graph <- do.call(
+        calc_nn_graph,
+        lmerge(
+          list(
+            X = X,
+            k = k + 1L,
+            nn_method = nn_method,
+            metric = metric,
+            n_threads = n_threads,
+            verbose = verbose,
+            obs = ifelse(is_transposed, "C", "R")
+          ),
+          nn_args
+        )
+      )
       strip_self_neighbors(nn_graph, k = k, name = name)
     }
   }
@@ -330,14 +345,21 @@ check_nn_graph <- function(graph, name = "graph") {
     stop(name, " idx must contain finite integer indices", call. = FALSE)
   }
   if (any(idx < 1L) || any(idx > nrow(idx))) {
-    stop(name, " idx values must be between 1 and the number of graph rows", call. = FALSE)
+    stop(
+      name,
+      " idx values must be between 1 and the number of graph rows",
+      call. = FALSE
+    )
   }
   invisible(graph)
 }
 
 check_k_for_n_obs <- function(k, n_obs) {
   if (k > n_obs - 1L) {
-    stop("k cannot be larger than the number of non-self observations", call. = FALSE)
+    stop(
+      "k cannot be larger than the number of non-self observations",
+      call. = FALSE
+    )
   }
   invisible(k)
 }
@@ -347,7 +369,11 @@ has_self_neighbors <- function(graph) {
   any(idx == row(idx))
 }
 
-prepare_supplied_nn_graph <- function(graph, k, name = "Nearest-neighbor graph") {
+prepare_supplied_nn_graph <- function(
+  graph,
+  k,
+  name = "Nearest-neighbor graph"
+) {
   check_nn_graph(graph, name)
   check_k_for_n_obs(k, nrow(graph$idx))
   if (has_self_neighbors(graph)) {
@@ -360,7 +386,10 @@ prepare_supplied_nn_graph <- function(graph, k, name = "Nearest-neighbor graph")
     return(strip_self_neighbors(graph, k = k, name = name))
   }
   if (graph_k(graph) < k) {
-    stop("Nearest-neighbor graph does not contain enough columns for requested k", call. = FALSE)
+    stop(
+      "Nearest-neighbor graph does not contain enough columns for requested k",
+      call. = FALSE
+    )
   }
   graph
 }
@@ -428,12 +457,14 @@ check_graph <- function(idx, dist = NULL, k = NULL) {
 }
 
 nn_intersect <-
-  function(idx,
-           ref_idx,
-           k = NULL,
-           include_self = TRUE,
-           ref_k = NULL,
-           verbose = TRUE) {
+  function(
+    idx,
+    ref_idx,
+    k = NULL,
+    include_self = TRUE,
+    ref_k = NULL,
+    verbose = TRUE
+  ) {
     if (is.list(idx)) {
       idx <- idx$idx
     }
@@ -500,7 +531,6 @@ nn_intersect <-
   }
 
 
-
 findk <- function(idx, ref_idx) {
   if (is.list(idx)) {
     idx <- idx$idx
@@ -512,12 +542,14 @@ findk <- function(idx, ref_idx) {
 }
 
 nn_accuracyv <-
-  function(idx,
-           ref_idx,
-           k = NULL,
-           include_self = TRUE,
-           ref_k = NULL,
-           verbose = TRUE) {
+  function(
+    idx,
+    ref_idx,
+    k = NULL,
+    include_self = TRUE,
+    ref_k = NULL,
+    verbose = TRUE
+  ) {
     nn_intersect(
       idx = idx,
       ref_idx = ref_idx,
@@ -530,12 +562,14 @@ nn_accuracyv <-
   }
 
 nn_accuracy <-
-  function(idx,
-           ref_idx,
-           k = NULL,
-           include_self = TRUE,
-           ref_k = NULL,
-           verbose = TRUE) {
+  function(
+    idx,
+    ref_idx,
+    k = NULL,
+    include_self = TRUE,
+    ref_k = NULL,
+    verbose = TRUE
+  ) {
     vec <- nn_accuracyv(
       idx = idx,
       ref_idx = ref_idx,

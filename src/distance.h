@@ -36,7 +36,7 @@
 using It = typename std::vector<double>::const_iterator;
 
 inline std::function<double(It, It, It)>
-create_dfun(const std::string &metric) {
+create_dfun(const std::string& metric) {
   if (metric == "euclidean") {
     return tdoann::euclidean<double, It>;
   } else if (metric == "sqeuclidean") {

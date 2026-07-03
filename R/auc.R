@@ -167,10 +167,12 @@ roc_auc_row <- function(dm, labels, i) {
   neg_ind <- which(labels != labels[i], arr.ind = TRUE)
   neg_dist <- dm[i, neg_ind]
 
-  as.numeric(PRROC::roc.curve(
-    scores.class0 = -pos_dist,
-    scores.class1 = -neg_dist
-  )$auc)
+  as.numeric(
+    PRROC::roc.curve(
+      scores.class0 = -pos_dist,
+      scores.class1 = -neg_dist
+    )$auc
+  )
 }
 
 # Average Area Under a Curve

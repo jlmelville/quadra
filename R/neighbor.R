@@ -33,10 +33,13 @@ nbr_pres <- function(din, dout, k) {
   k <- validate_positive_integer(k, "k")
   max_k <- ncol(din) - 1L
   if (k > max_k) {
-    stop("k cannot be larger than the number of non-self observations", call. = FALSE)
+    stop(
+      "k cannot be larger than the number of non-self observations",
+      call. = FALSE
+    )
   }
   preservations <- vector(mode = "numeric", length = nrow(din))
-  for (i in 1:nrow(din)) {
+  for (i in seq_len(nrow(din))) {
     di <- din[i, ]
     dj <- dout[i, ]
     di[i] <- Inf
@@ -79,7 +82,7 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
     stop("k cannot be larger than the number of columns in kin or kout")
   }
   preservations <- vector(mode = "numeric", length = nrow(kin))
-  for (i in 1:nrow(kin)) {
+  for (i in seq_len(nrow(kin))) {
     ki <- kin[i, 1:k]
     kj <- kout[i, 1:k]
     k_shared <- Reduce(intersect, list(ki, kj))
@@ -146,10 +149,10 @@ coranking_matrix <- function(din, dout) {
   validate_distance_matrix_pair(din, dout)
   n <- nrow(din)
   crm <- matrix(0, nrow = n - 1L, ncol = n - 1L)
-  for (i in 1:nrow(din)) {
+  for (i in seq_len(nrow(din))) {
     rin <- rank(din[i, -i], ties.method = "first")
     rout <- rank(dout[i, -i], ties.method = "first")
-    for (j in 1:length(rin)) {
+    for (j in seq_along(rin)) {
       crm[rin[j], rout[j]] <- crm[rin[j], rout[j]] + 1
     }
   }

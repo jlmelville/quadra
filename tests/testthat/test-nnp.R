@@ -4,31 +4,69 @@ test_that("neighbor preservation", {
     x
   }
 
-  n <- matrix(c(
-    -0.3673, -1.595,
-    1.287, 0.5113,
-    0.7557, -0.2293,
-    1.519, -0.4499,
-    0.4918, 1.085,
-    1.716, -2.044,
-    -0.1086, 2.228,
-    -0.04816, 0.4036,
-    0.2425, -0.2668,
-    -1.734, 0.395
-  ), byrow = TRUE, nrow = 10)
+  n <- matrix(
+    c(
+      -0.3673,
+      -1.595,
+      1.287,
+      0.5113,
+      0.7557,
+      -0.2293,
+      1.519,
+      -0.4499,
+      0.4918,
+      1.085,
+      1.716,
+      -2.044,
+      -0.1086,
+      2.228,
+      -0.04816,
+      0.4036,
+      0.2425,
+      -0.2668,
+      -1.734,
+      0.395
+    ),
+    byrow = TRUE,
+    nrow = 10
+  )
 
-  m <- matrix(c(
-    1.506, 0.05989, 0.3542,
-    0.8419, -1.146, -0.2262,
-    1.031, 1.457, 0.5978,
-    0.4838, -0.005043, 1.771,
-    -0.3932, -0.01158, 1.47,
-    -0.5604, -0.3132, -0.502,
-    2.624, 1.509, -0.4661,
-    0.1407, -1.111, 0.1571,
-    0.3512, -1.103, -0.5345,
-    -0.4729, 1.453, 1.087
-  ), byrow = TRUE, nrow = 10)
+  m <- matrix(
+    c(
+      1.506,
+      0.05989,
+      0.3542,
+      0.8419,
+      -1.146,
+      -0.2262,
+      1.031,
+      1.457,
+      0.5978,
+      0.4838,
+      -0.005043,
+      1.771,
+      -0.3932,
+      -0.01158,
+      1.47,
+      -0.5604,
+      -0.3132,
+      -0.502,
+      2.624,
+      1.509,
+      -0.4661,
+      0.1407,
+      -1.111,
+      0.1571,
+      0.3512,
+      -1.103,
+      -0.5345,
+      -0.4729,
+      1.453,
+      1.087
+    ),
+    byrow = TRUE,
+    nrow = 10
+  )
 
   expect_equal(
     nn_preservation(
@@ -178,11 +216,18 @@ test_that("idx-only nearest-neighbor graphs are accepted", {
     x
   }
 
-  idx <- matrix(c(
-    2, 3,
-    1, 3,
-    1, 2
-  ), nrow = 3, byrow = TRUE)
+  idx <- matrix(
+    c(
+      2,
+      3,
+      1,
+      3,
+      1,
+      2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
   graph <- list(idx = idx)
 
   expect_true(is_nn_graph(graph))
@@ -190,31 +235,58 @@ test_that("idx-only nearest-neighbor graphs are accepted", {
 })
 
 test_that("nearest-neighbor intersection helpers return per-row values", {
-  idx <- matrix(c(
-    2, 3,
-    1, 3,
-    1, 2
-  ), nrow = 3, byrow = TRUE)
-  ref_idx <- matrix(c(
-    2, 1,
-    3, 1,
-    1, 2
-  ), nrow = 3, byrow = TRUE)
+  idx <- matrix(
+    c(
+      2,
+      3,
+      1,
+      3,
+      1,
+      2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  ref_idx <- matrix(
+    c(
+      2,
+      1,
+      3,
+      1,
+      1,
+      2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
 
   expect_equal(nn_intersect(idx, ref_idx, k = 1), c(1L, 0L, 1L))
   expect_equal(nn_accuracyv(idx, ref_idx, k = 1), c(1, 0, 1))
 })
 
 test_that("nearest-neighbor inputs are validated", {
-  idx <- matrix(c(
-    2, 3,
-    1, 3,
-    1, 2
-  ), nrow = 3, byrow = TRUE)
+  idx <- matrix(
+    c(
+      2,
+      3,
+      1,
+      3,
+      1,
+      2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
   graph <- list(idx = idx)
 
-  expect_error(nn_preservation(graph, graph, k = 0), "k must contain positive integers")
-  expect_error(nn_preservation(graph, graph, k = 1.5), "k must contain positive integers")
+  expect_error(
+    nn_preservation(graph, graph, k = 0),
+    "k must contain positive integers"
+  )
+  expect_error(
+    nn_preservation(graph, graph, k = 1.5),
+    "k must contain positive integers"
+  )
   expect_error(
     nn_preservation(graph, graph, k = 3),
     "non-self observations"
@@ -228,5 +300,8 @@ test_that("nearest-neighbor inputs are validated", {
     "nearest-neighbor graph"
   )
   expect_error(nn_intersect(1, idx, k = 1), "idx must be a matrix")
-  expect_error(check_graph(idx, dist = idx[1, , drop = FALSE]), "same dimensions")
+  expect_error(
+    check_graph(idx, dist = idx[1, , drop = FALSE]),
+    "same dimensions"
+  )
 })

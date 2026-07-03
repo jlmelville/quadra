@@ -28,9 +28,9 @@ TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
                                    std::size_t nobs,
                                    const TripIt triplets_begin,
                                    const It xin_begin, std::size_t xin_ncol,
-                                   const std::function<Dfun> &dfunin,
+                                   const std::function<Dfun>& dfunin,
                                    const It xout_begin, std::size_t xout_ncol,
-                                   const std::function<Dfun> &dfunout) {
+                                   const std::function<Dfun>& dfunout) {
 
   TripletCounts counts;
   const std::size_t nt2 = ntriplets_per_obs * 2;
@@ -72,8 +72,8 @@ TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
 
 double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
                       std::size_t nobs, It xin_begin, It xin_end, It xout_begin,
-                      It xout_end, const std::function<Dfun> &dfunin,
-                      const std::function<Dfun> &dfunout,
+                      It xout_end, const std::function<Dfun>& dfunin,
+                      const std::function<Dfun>& dfunout,
                       std::size_t n_threads) {
 
   const std::size_t ntriplets_per_obs =
@@ -94,7 +94,7 @@ double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
   pforr::parallel_for_indexed(0, nobs, worker, n_threads);
 
   TripletCounts total_counts;
-  for (const auto &chunk_counts : counts) {
+  for (const auto& chunk_counts : counts) {
     total_counts.agreements += chunk_counts.agreements;
     total_counts.comparisons += chunk_counts.comparisons;
   }
@@ -106,10 +106,10 @@ double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
 }
 
 // [[Rcpp::export]]
-double triplet_sample(const IntegerMatrix &triplets, const NumericMatrix &xin,
-                      const NumericMatrix &xout,
-                      const std::string &metric_in = "sqeuclidean",
-                      const std::string &metric_out = "sqeuclidean",
+double triplet_sample(const IntegerMatrix& triplets, const NumericMatrix& xin,
+                      const NumericMatrix& xout,
+                      const std::string& metric_in = "sqeuclidean",
+                      const std::string& metric_out = "sqeuclidean",
                       std::size_t n_threads = 0) {
 
   std::function<Dfun> dfunin = create_dfun(metric_in);

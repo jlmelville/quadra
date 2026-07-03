@@ -53,13 +53,15 @@
 #' random_pair_distance_correlation(tiris, t(iris_pca2), is_transposed = TRUE)
 #' random_pair_distance_correlation(tiris, t(iris_pca3), is_transposed = TRUE)
 #' @export
-random_pair_distance_correlation <- function(Xin,
-                                             Xout,
-                                             n_pairs = 1000,
-                                             metric_in = "sqeuclidean",
-                                             metric_out = "sqeuclidean",
-                                             is_transposed = FALSE,
-                                             n_threads = 0) {
+random_pair_distance_correlation <- function(
+  Xin,
+  Xout,
+  n_pairs = 1000,
+  metric_in = "sqeuclidean",
+  metric_out = "sqeuclidean",
+  is_transposed = FALSE,
+  n_threads = 0
+) {
   randlist <-
     random_pair_distances(
       Xin,
@@ -138,14 +140,16 @@ random_pair_distance_correlation <- function(Xin,
 #' random_pair_distance_emd(tiris, t(iris_pca2), is_transposed = TRUE)
 #' random_pair_distance_emd(tiris, t(iris_pca3), is_transposed = TRUE)
 #' @export
-random_pair_distance_emd <- function(Xin,
-                                     Xout,
-                                     n_pairs = 1000,
-                                     metric_in = "sqeuclidean",
-                                     metric_out = "sqeuclidean",
-                                     range_scale = TRUE,
-                                     is_transposed = FALSE,
-                                     n_threads = 0) {
+random_pair_distance_emd <- function(
+  Xin,
+  Xout,
+  n_pairs = 1000,
+  metric_in = "sqeuclidean",
+  metric_out = "sqeuclidean",
+  range_scale = TRUE,
+  is_transposed = FALSE,
+  n_threads = 0
+) {
   randlist <-
     random_pair_distances(
       Xin,
@@ -175,13 +179,15 @@ emd <- function(x, y) {
   mean(abs(sort(x) - sort(y)))
 }
 
-random_pair_distances <- function(Xin,
-                                  Xout,
-                                  n_pairs = 1000,
-                                  metric_in = "sqeuclidean",
-                                  metric_out = "sqeuclidean",
-                                  is_transposed = FALSE,
-                                  n_threads = 0) {
+random_pair_distances <- function(
+  Xin,
+  Xout,
+  n_pairs = 1000,
+  metric_in = "sqeuclidean",
+  metric_out = "sqeuclidean",
+  is_transposed = FALSE,
+  n_threads = 0
+) {
   n_pairs <- validate_positive_integer(n_pairs, "n_pairs")
   metric_in <- validate_distance(metric_in)
   metric_out <- validate_distance(metric_out)
@@ -194,7 +200,10 @@ random_pair_distances <- function(Xin,
   }
   n_obs <- ncol(Xin)
   if (n_obs != ncol(Xout)) {
-    stop("Xin and Xout must have the same number of observations", call. = FALSE)
+    stop(
+      "Xin and Xout must have the same number of observations",
+      call. = FALSE
+    )
   }
   if (n_obs < 2) {
     stop(

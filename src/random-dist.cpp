@@ -15,14 +15,14 @@ using It = typename std::vector<double>::const_iterator;
 using Dfun = double(It, It, It);
 
 void distance_sample_inner(std::size_t begin, std::size_t end,
-                           tdoann::RandomIntGenerator<uint64_t> &int_sampler,
+                           tdoann::RandomIntGenerator<uint64_t>& int_sampler,
                            std::size_t n_obs, const It xin_begin,
                            std::size_t xin_ncol,
-                           const std::function<Dfun> &dfunin,
+                           const std::function<Dfun>& dfunin,
                            const It xout_begin, std::size_t xout_ncol,
-                           const std::function<Dfun> &dfunout,
-                           std::vector<double> &din,
-                           std::vector<double> &dout) {
+                           const std::function<Dfun>& dfunout,
+                           std::vector<double>& din,
+                           std::vector<double>& dout) {
 
   for (std::size_t i = begin; i < end; i++) {
     auto idxs = int_sampler.sample(n_obs, 2);
@@ -39,9 +39,9 @@ void distance_sample_inner(std::size_t begin, std::size_t end,
 
 void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
                       It xin_end, It xout_begin, It xout_end,
-                      const std::function<Dfun> &dfunin,
-                      const std::function<Dfun> &dfunout,
-                      std::vector<double> &din, std::vector<double> &dout,
+                      const std::function<Dfun>& dfunin,
+                      const std::function<Dfun>& dfunout,
+                      std::vector<double>& din, std::vector<double>& dout,
                       std::size_t n_threads) {
   const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
   const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
@@ -51,8 +51,7 @@ void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
 
   sampler_provider.initialize();
 
-  auto worker = [&](std::size_t begin, std::size_t end,
-                    std::size_t chunk_id) {
+  auto worker = [&](std::size_t begin, std::size_t end, std::size_t chunk_id) {
     auto thread_sampler = sampler_provider.get_parallel_instance(chunk_id);
     distance_sample_inner(begin, end, *thread_sampler, n_obs, xin_begin,
                           xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout,
@@ -64,8 +63,8 @@ void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
 
 // [[Rcpp::export]]
 List random_distances(NumericMatrix xin, NumericMatrix xout,
-                      const std::string &metric_in = "euclidean",
-                      const std::string &metric_out = "euclidean",
+                      const std::string& metric_in = "euclidean",
+                      const std::string& metric_out = "euclidean",
                       std::size_t n_pairs = 10000, std::size_t n_threads = 0,
                       bool verbose = false) {
 
