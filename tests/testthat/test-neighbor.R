@@ -8,30 +8,24 @@ test_that("distance-matrix neighborhood preservation excludes self", {
 })
 
 test_that("nearest-neighbor matrix preservation uses the supplied neighbors", {
+  # fmt: skip
   kin <- matrix(
     c(
-      2,
-      3,
-      1,
-      3,
-      2,
-      1,
-      3,
-      2
+      2, 3,
+      1, 3,
+      2, 1,
+      3, 2
     ),
     nrow = 4,
     byrow = TRUE
   )
+  # fmt: skip
   kout <- matrix(
     c(
-      4,
-      3,
-      3,
-      4,
-      4,
-      1,
-      1,
-      3
+      4, 3,
+      3, 4,
+      4, 1,
+      1, 3
     ),
     nrow = 4,
     byrow = TRUE
@@ -47,23 +41,19 @@ test_that("co-ranking matrices exclude self-neighbors", {
   dout <- distance_matrix(matrix(c(0, 10, 3, 1), ncol = 1))
 
   expect_equal(coranking_matrix(din, din), diag(4, 3))
+  # fmt: skip
+  expected_crm <- matrix(
+    c(
+      0, 1, 3,
+      1, 2, 1,
+      3, 1, 0
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
   expect_equal(
     coranking_matrix(din, dout),
-    matrix(
-      c(
-        0,
-        1,
-        3,
-        1,
-        2,
-        1,
-        3,
-        1,
-        0
-      ),
-      nrow = 3,
-      byrow = TRUE
-    )
+    expected_crm
   )
 })
 

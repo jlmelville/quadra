@@ -24,7 +24,7 @@
 #' @return Area Under the ROC curve, averaged over each observation.
 #' @export
 roc_auc <- function(dm, labels) {
-  if (!requireNamespace("PRROC", quietly = TRUE, warn.conflicts = FALSE)) {
+  if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("roc_auc function requires 'PRROC' package")
   }
   auc_mat(dm, labels, roc_auc_row)
@@ -70,7 +70,7 @@ roc_auc <- function(dm, labels) {
 #' (pp. 233-240). ACM.
 #' @export
 pr_auc <- function(dm, labels) {
-  if (!requireNamespace("PRROC", quietly = TRUE, warn.conflicts = FALSE)) {
+  if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("pr_auc function requires 'PRROC' package")
   }
   auc_mat(dm, labels, pr_auc_row)
@@ -116,7 +116,7 @@ pr_auc <- function(dm, labels) {
 # learning}
 # (pp. 233-240). ACM.
 pr_auc_row <- function(dm, labels, i) {
-  if (!requireNamespace("PRROC", quietly = TRUE, warn.conflicts = FALSE)) {
+  if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("pr_auc_row function requires 'PRROC' package")
   }
   pos_ind <- which(labels == labels[i], arr.ind = TRUE)
@@ -157,7 +157,7 @@ pr_auc_row <- function(dm, labels, i) {
 # @param i The row of the distance matrix to use in the ROC calculation.
 # @return Area Under the curve.
 roc_auc_row <- function(dm, labels, i) {
-  if (!requireNamespace("PRROC", quietly = TRUE, warn.conflicts = FALSE)) {
+  if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("roc_auc_row function requires 'PRROC' package")
   }
   pos_ind <- which(labels == labels[i], arr.ind = TRUE)
