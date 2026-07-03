@@ -38,7 +38,7 @@ test_that("neighbor preservation", {
       nn_method_in = "brute",
       nn_method_out = "brute"
     ),
-    named(0.55, "nnp2")
+    named(0.15, "nnp2")
   )
   expect_equal(
     nn_preservation(
@@ -49,7 +49,7 @@ test_that("neighbor preservation", {
       nn_method_out = "brute",
       n_threads = 2
     ),
-    named(0.55, "nnp2")
+    named(0.15, "nnp2")
   )
 
   cached_nn <-
@@ -61,6 +61,10 @@ test_that("neighbor preservation", {
       nn_method_out = "brute",
       ret_extra = TRUE
     )
+  expect_false(any(cached_nn$nn_in$idx == row(cached_nn$nn_in$idx)))
+  expect_false(any(cached_nn$nn_out$idx == row(cached_nn$nn_out$idx)))
+  expect_equal(ncol(cached_nn$nn_in$idx), 2)
+  expect_equal(ncol(cached_nn$nn_out$idx), 2)
   expect_equal(
     nn_preservation(
       cached_nn$nn_in,
@@ -69,7 +73,7 @@ test_that("neighbor preservation", {
       nn_method_in = "brute",
       nn_method_out = "brute"
     ),
-    named(0.55, "nnp2")
+    named(0.15, "nnp2")
   )
 
   expect_equal(
@@ -80,7 +84,7 @@ test_that("neighbor preservation", {
       nn_method_in = "brute",
       nn_method_out = "brute"
     ),
-    named(c(0.55, 0.48), c("nnp2", "nnp5"))
+    named(c(0.15, 0.5), c("nnp2", "nnp5"))
   )
 
   expect_equal(
@@ -92,7 +96,7 @@ test_that("neighbor preservation", {
       nn_method_out = "brute",
       is_transposed = TRUE
     ),
-    named(c(0.55, 0.48), c("nnp2", "nnp5"))
+    named(c(0.15, 0.5), c("nnp2", "nnp5"))
   )
 
   expect_equal(
@@ -103,8 +107,69 @@ test_that("neighbor preservation", {
       nn_method_in = "brute",
       nn_method_out = "brute"
     ),
-    named(0.55, "nnp2")
+    named(0.15, "nnp2")
   )
+})
+
+test_that("generated nearest-neighbor graphs exclude self-neighbors", {
+  x <- matrix(c(0, 1, 3, 10), ncol = 1)
+
+  brute_res <- nn_preservation(
+    x,
+    x,
+    k = 2,
+    nn_method_in = "brute",
+    nn_method_out = "brute",
+    ret_extra = TRUE
+  )
+  expect_false(any(brute_res$nn_in$idx == row(brute_res$nn_in$idx)))
+  expect_false(any(brute_res$nn_out$idx == row(brute_res$nn_out$idx)))
+  expect_equal(ncol(brute_res$nn_in$idx), 2)
+  expect_equal(ncol(brute_res$nn_out$idx), 2)
+
+  set.seed(1337)
+  nnd_res <- nn_preservation(
+    m,
+    n,
+    k = 2,
+    nn_method_in = "nnd",
+    nn_method_out = "nnd",
+    ret_extra = TRUE
+  )
+  expect_false(any(nnd_res$nn_in$idx == row(nnd_res$nn_in$idx)))
+  expect_false(any(nnd_res$nn_out$idx == row(nnd_res$nn_out$idx)))
+  expect_equal(ncol(nnd_res$nn_in$idx), 2)
+  expect_equal(ncol(nnd_res$nn_out$idx), 2)
+})
+
+test_that("cached self-excluded graphs reproduce raw-data values", {
+  raw_res <- nn_preservation(
+    m,
+    n,
+    k = c(2, 5),
+    nn_method_in = "brute",
+    nn_method_out = "brute",
+    ret_extra = TRUE
+  )
+
+  expect_equal(
+    nn_preservation(raw_res$nn_in, raw_res$nn_out, k = c(2, 5)),
+    raw_res$nnp
+  )
+})
+
+test_that("old self-inclusive cached graphs are stripped with a warning", {
+  old_graph <- rnndescent::brute_force_knn(m, k = 3, metric = "sqeuclidean")
+  stripped_graph <- list(
+    idx = old_graph$idx[, -1, drop = FALSE],
+    dist = old_graph$dist[, -1, drop = FALSE]
+  )
+
+  expect_warning(
+    res <- nn_preservation(old_graph, stripped_graph, k = 2),
+    "contains self-neighbors"
+  )
+  expect_equal(res, c(nnp2 = 1))
 })
 
 test_that("idx-only nearest-neighbor graphs are accepted", {
@@ -152,7 +217,11 @@ test_that("nearest-neighbor inputs are validated", {
   expect_error(nn_preservation(graph, graph, k = 1.5), "k must contain positive integers")
   expect_error(
     nn_preservation(graph, graph, k = 3),
-    "does not contain enough columns"
+    "non-self observations"
+  )
+  expect_error(
+    nn_preservation(m[1:3, , drop = FALSE], n[1:3, , drop = FALSE], k = 3),
+    "non-self observations"
   )
   expect_error(
     nn_preservation(list(idx = 1), graph, k = 1),

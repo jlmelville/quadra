@@ -8,6 +8,9 @@ so we no longer need to install that from github.
 * `grain_size` for thread-handling has been removed any API that exposed it.
 * fix where index-only nearest neighbor graphs were not allowed for metrics
 that didn't need the distances.
+* `nn_preservation()` now excludes the "self"-neighbor (i.e. the item itself)
+from nearest-neighbor graphs. When calculating the graph internally, `k + 1`
+extra neighbors will be requested from `rnndescent`.
 
 # quadra 0.1.0 (November 20 2023)
 

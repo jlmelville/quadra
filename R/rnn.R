@@ -38,10 +38,9 @@
 #'
 #' * `idx` a matrix with as many as rows as observations in the input data and
 #' `k` columns. The `i`th row of this matrix contains the row indices of the
-#' nearest neighbors of observation `i` in non-decreasing distance order. This
-#' function compares the first `k` columns exactly as supplied. Graphs
-#' calculated by this function are self-inclusive: the first neighbor of row
-#' `i` is `i`.
+#' nearest non-self neighbors of observation `i` in non-decreasing distance
+#' order. Graphs calculated by this function are self-excluded. Older cached
+#' self-inclusive graphs are detected and stripped with a warning.
 #' * `dist` (optional) a matrix with the same dimensions as `idx`, containing the
 #' equivalent distances. This information is not actually used by the
 #' preservation function but is included in the output of the nearest neighbor
@@ -90,12 +89,10 @@
 #'   depending on the value of `nn_method_out`.
 #' @return the mean value of the intersection of the neighborhoods per
 #'   observation scaled between `0` (no neighbors in common) to `1` (all
-#'   neighbors in common). For self-inclusive graphs, such as graphs calculated
-#'   by this function, unrelated output neighborhoods have expected preservation
-#'   `(1 + (k - 1)^2 / (n - 1)) / k`, where n is the number of observations.
-#'   For self-excluded graphs supplied by the user, the corresponding random
-#'   baseline is `k / (n - 1)`. If `k` is a vector, then the return value is a
-#'   vector of the preservations for each `k` in the order they were passed. If
+#'   neighbors in common). For unrelated output neighborhoods, the expected
+#'   preservation is approximately `k / (n - 1)`, where n is the number of
+#'   observations. If `k` is a vector, then the return value is a vector of the
+#'   preservations for each `k` in the order they were passed. If
 #'   `ret_extra = TRUE`, then a list is returned containing:
 #'
 #'   * `nnp`: the vector of nearest neighbor preservation values.
@@ -169,7 +166,8 @@ nn_preservation <- function(Xin,
         is_transposed = is_transposed,
         n_threads = n_threads,
         verbose = verbose,
-        nn_args = nn_args_in
+        nn_args = nn_args_in,
+        name = "Xin"
       )
     )
   check_nn_graph(nn_in, "Xin")
@@ -186,7 +184,8 @@ nn_preservation <- function(Xin,
         is_transposed = is_transposed,
         n_threads = n_threads,
         verbose = verbose,
-        nn_args = nn_args_out
+        nn_args = nn_args_out,
+        name = "Xout"
       )
     )
   check_nn_graph(nn_out, "Xout")
@@ -256,20 +255,27 @@ get_nn_graph <-
            is_transposed,
            n_threads,
            verbose,
-           nn_args) {
+           nn_args,
+           name = "Nearest-neighbor graph") {
     if (is_nn_graph(X)) {
-      if (graph_k(X) < k) {
-        stop("Nearest-neighbor graph does not contain enough columns for requested k", call. = FALSE)
-      } else {
-        return(X)
-      }
+      return(prepare_supplied_nn_graph(X, k = k, name = name))
     } else if (is.list(X) && !is.data.frame(X)) {
       check_nn_graph(X, "Nearest-neighbor graph")
     } else {
-      do.call(calc_nn_graph, lmerge(
+      X <- x2m(X)
+      n_obs <- if (is_transposed) ncol(X) else nrow(X)
+      check_k_for_n_obs(k, n_obs)
+      if ("k" %in% names(nn_args)) {
+        warning(
+          "Ignoring 'k' in ", name, " nn_args; use nn_preservation()'s k argument",
+          call. = FALSE
+        )
+        nn_args$k <- NULL
+      }
+      nn_graph <- do.call(calc_nn_graph, lmerge(
         list(
           X = X,
-          k = k,
+          k = k + 1L,
           nn_method = nn_method,
           metric = metric,
           n_threads = n_threads,
@@ -278,6 +284,7 @@ get_nn_graph <-
         ),
         nn_args
       ))
+      strip_self_neighbors(nn_graph, k = k, name = name)
     }
   }
 
@@ -316,7 +323,84 @@ check_nn_graph <- function(graph, name = "graph") {
       call. = FALSE
     )
   }
+  idx <- graph$idx
+  if (!is.numeric(idx)) {
+    stop(name, " idx must be a numeric matrix", call. = FALSE)
+  }
+  if (anyNA(idx) || any(!is.finite(idx)) || any(idx != floor(idx))) {
+    stop(name, " idx must contain finite integer indices", call. = FALSE)
+  }
+  if (any(idx < 1L) || any(idx > nrow(idx))) {
+    stop(name, " idx values must be between 1 and the number of graph rows", call. = FALSE)
+  }
   invisible(graph)
+}
+
+check_k_for_n_obs <- function(k, n_obs) {
+  if (k > n_obs - 1L) {
+    stop("k cannot be larger than the number of non-self observations", call. = FALSE)
+  }
+  invisible(k)
+}
+
+has_self_neighbors <- function(graph) {
+  idx <- graph$idx
+  any(idx == row(idx))
+}
+
+prepare_supplied_nn_graph <- function(graph, k, name = "Nearest-neighbor graph") {
+  check_nn_graph(graph, name)
+  check_k_for_n_obs(k, nrow(graph$idx))
+  if (has_self_neighbors(graph)) {
+    warning(
+      name,
+      " contains self-neighbors; stripping row self-indices. ",
+      "Provide self-excluded graphs to avoid this warning.",
+      call. = FALSE
+    )
+    return(strip_self_neighbors(graph, k = k, name = name))
+  }
+  if (graph_k(graph) < k) {
+    stop("Nearest-neighbor graph does not contain enough columns for requested k", call. = FALSE)
+  }
+  graph
+}
+
+strip_self_neighbors <- function(graph, k, name = "Nearest-neighbor graph") {
+  check_nn_graph(graph, name)
+  check_k_for_n_obs(k, nrow(graph$idx))
+
+  idx <- graph$idx
+  dist <- graph$dist
+  n <- nrow(idx)
+  idx_out <- matrix(idx[NA_integer_], nrow = n, ncol = k)
+  dist_out <- if (!is.null(dist)) {
+    matrix(dist[NA_integer_], nrow = n, ncol = k)
+  }
+
+  for (i in seq_len(n)) {
+    non_self <- which(idx[i, ] != i)
+    if (length(non_self) < k) {
+      stop(
+        name,
+        " does not contain at least ",
+        k,
+        " non-self neighbors in every row",
+        call. = FALSE
+      )
+    }
+    keep <- non_self[seq_len(k)]
+    idx_out[i, ] <- idx[i, keep]
+    if (!is.null(dist)) {
+      dist_out[i, ] <- dist[i, keep]
+    }
+  }
+
+  graph$idx <- idx_out
+  if (!is.null(dist)) {
+    graph$dist <- dist_out
+  }
+  graph
 }
 
 check_graph <- function(idx, dist = NULL, k = NULL) {
