@@ -1,4 +1,4 @@
-# quadra 0.1.0.9000
+# quadra 0.1.0 (November 20 2023)
 
 ## New features
 
@@ -23,6 +23,6 @@ Lau](https://doi.org/10.1016/j.celrep.2020.107576).
 
 * Added a `NEWS.md` file to track changes to the package.
 
-# quadra 0.0.0.9000
+# quadra 0.0.0.9000 (December 31 2021)
 
 * Initial version. MIT Licensed.
