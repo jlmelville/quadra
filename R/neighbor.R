@@ -10,8 +10,11 @@
 #'
 #' The neighborhood preservation can vary between 0 (no neighbors in common)
 #' and 1 (perfect preservation). However, random performance gives an
-#' approximate value of k / n, where k is the size of the neighborhood and is
-#' the number of observations or items in the dataset.
+#' approximate value of k / (n - 1), where k is the size of the neighborhood and
+#' n is the number of observations or items in the dataset.
+#'
+#' Self-neighbors on the diagonal are excluded from each row before the
+#' neighborhood overlap is calculated.
 #'
 #' @note This is not a very efficient way to calculate the preservation if you
 #'  want to calculate the value for multiple values of \code{k}. For more
@@ -26,12 +29,19 @@
 #'  matrix.
 #' @export
 nbr_pres <- function(din, dout, k) {
-  if (k > ncol(din) || k > ncol(dout)) {
-    stop("k cannot be larger than the number of columns in din or dout")
+  validate_distance_matrix_pair(din, dout)
+  k <- validate_positive_integer(k, "k")
+  max_k <- ncol(din) - 1L
+  if (k > max_k) {
+    stop("k cannot be larger than the number of non-self observations", call. = FALSE)
   }
   preservations <- vector(mode = "numeric", length = nrow(din))
   for (i in 1:nrow(din)) {
-    preservations[i] <- nbr_pres_i(din[i, ], dout[i, ], k)
+    di <- din[i, ]
+    dj <- dout[i, ]
+    di[i] <- Inf
+    dj[i] <- Inf
+    preservations[i] <- nbr_pres_i(di, dj, k)
   }
   preservations
 }
@@ -52,9 +62,10 @@ nbr_pres <- function(din, dout, k) {
 #' values for larger datasets feasible.
 #'
 #' The neighborhood preservation can vary between 0 (no neighbors in common)
-#' and 1 (perfect preservation). However, random performance gives an
-#' approximate value of k / n, where k is the size of the neighborhood and is
-#' the number of observations or items in the dataset.
+#' and 1 (perfect preservation). For nearest-neighbor matrices that exclude
+#' self-neighbors, random performance gives an approximate value of k / (n - 1),
+#' where k is the size of the neighborhood and n is the number of observations
+#' or items in the dataset.
 #'
 #' @param kin Nearest neighbor matrix. The "ground truth" or reference indices.
 #' @param kout Nearest neighbor matrix. A set of distances to compare to the reference
@@ -83,7 +94,8 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
 #' different sizes of neighborhood. Each value of RNX is scaled according to
 #' the natural log of the neighborhood size, to give a higher weight to smaller
 #' neighborhoods. An AUC of 1 indicates perfect neighborhood preservation, an
-#' AUC of 0 is due to random results.
+#' AUC of 0 is due to random results. Self-neighbors on the distance-matrix
+#' diagonal are excluded before the co-ranking matrix is calculated.
 #'
 #' @param din Input distance matrix.
 #' @param dout Output distance matrix.
@@ -95,6 +107,10 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
 #' \emph{Neurocomputing}, \emph{169}, 246-261.
 #' @export
 rnx_auc <- function(din, dout) {
+  validate_distance_matrix_pair(din, dout)
+  if (nrow(din) < 3L) {
+    stop("RNX AUC requires at least three observations", call. = FALSE)
+  }
   rnx_auc_crm(coranking_matrix(din, dout))
 }
 
@@ -106,9 +122,8 @@ rnx_auc <- function(din, dout) {
 # various quality metrics, such as \code{qnx_crm},
 # \code{rnx_crm} and \code{bnx_crm}.
 #
-# The co-ranking matrix is an N x N matrix where N is the number of
-# observations (so it's the same size as the distance matrices its
-# constructed from). The element (i, j) in the co-ranking matrix is the
+# The co-ranking matrix is an (N - 1) x (N - 1) matrix where N is the number of
+# observations. The diagonal self-neighbor is excluded. The element (i, j) is the
 # number of times an ith-nearest neighbor of an observation in the input
 # distance matrix was the jth-nearest neighbor in the output space.
 #
@@ -128,10 +143,12 @@ rnx_auc <- function(din, dout) {
 # Quality assessment of dimensionality reduction: Rank-based criteria.
 # \emph{Neurocomputing}, \emph{72(7)}, 1431-1443.
 coranking_matrix <- function(din, dout) {
-  crm <- matrix(0, nrow = nrow(din), ncol = ncol(dout))
+  validate_distance_matrix_pair(din, dout)
+  n <- nrow(din)
+  crm <- matrix(0, nrow = n - 1L, ncol = n - 1L)
   for (i in 1:nrow(din)) {
-    rin <- rank(din[i, ])
-    rout <- rank(dout[i, ])
+    rin <- rank(din[i, -i], ties.method = "first")
+    rout <- rank(dout[i, -i], ties.method = "first")
     for (j in 1:length(rin)) {
       crm[rin[j], rout[j]] <- crm[rin[j], rout[j]] + 1
     }
@@ -156,9 +173,12 @@ coranking_matrix <- function(din, dout) {
 # \emph{Neurocomputing}, \emph{169}, 246-261.
 rnx_auc_crm <- function(crm) {
   n <- nrow(crm)
+  if (n < 2L) {
+    return(NA_real_)
+  }
   num <- 0
   den <- 0
-  for (k in 1:(n - 2)) {
+  for (k in 1:(n - 1)) {
     num <- num + rnx_crm(crm, k) / k
     den <- den + (1 / k)
   }
@@ -182,8 +202,8 @@ rnx_auc_crm <- function(crm) {
 # dimensionality reduction based on similarity preservation.
 # \emph{Neurocomputing}, \emph{112}, 92-108.
 rnx_crm <- function(crm, k) {
-  n <- nrow(crm)
-  ((qnx_crm(crm, k) * (n - 1)) - k) / (n - 1 - k)
+  n_ranks <- nrow(crm)
+  ((qnx_crm(crm, k) * n_ranks) - k) / (n_ranks - k)
 }
 
 # Average Normalized Agreement Between K-ary Neighborhoods (QNX)
@@ -210,7 +230,8 @@ rnx_crm <- function(crm, k) {
 # Quality assessment of dimensionality reduction: Rank-based criteria.
 # \emph{Neurocomputing}, \emph{72(7)}, 1431-1443.
 qnx_crm <- function(crm, k) {
-  sum(crm[1:k, 1:k]) / (k * nrow(crm))
+  n_obs <- nrow(crm) + 1L
+  sum(crm[1:k, 1:k]) / (k * n_obs)
 }
 
 
@@ -230,7 +251,7 @@ bnx_crm <- function(crm, k) {
   kcrm <- crm[1:k, 1:k]
   intrusions <- sum(kcrm[lower.tri(kcrm)])
   extrusions <- sum(kcrm[upper.tri(kcrm)])
-  (intrusions - extrusions) / (k * nrow(crm))
+  (intrusions - extrusions) / (k * (nrow(crm) + 1L))
 }
 
 # Indexes of the k-largest numbers.
@@ -282,8 +303,8 @@ k_shared_nbrs_ind <- function(di, dj, k) {
 # normalized with respect to K.
 #
 # The neighborhood preservation can vary between 0 (no neighbors in common)
-# and 1 (perfect preservation). However, random performance gives an
-# approximate value of K / N, where N is the number of distances.
+# and 1 (perfect preservation). With self-neighbors excluded, random performance
+# gives an approximate value of K / (N - 1), where N is the number of distances.
 #
 # @param di Vector of distances.
 # @param dj Vector of distances.
@@ -292,6 +313,22 @@ k_shared_nbrs_ind <- function(di, dj, k) {
 # \code{di} and \code{dj}.
 nbr_pres_i <- function(di, dj, k) {
   base::min(k, length(k_shared_nbrs_ind(di, dj, k))) / k
+}
+
+validate_distance_matrix_pair <- function(din, dout) {
+  if (!is.matrix(din) || !is.numeric(din)) {
+    stop("din must be a numeric matrix", call. = FALSE)
+  }
+  if (!is.matrix(dout) || !is.numeric(dout)) {
+    stop("dout must be a numeric matrix", call. = FALSE)
+  }
+  if (!all(dim(din) == dim(dout))) {
+    stop("din and dout must have the same dimensions", call. = FALSE)
+  }
+  if (nrow(din) != ncol(din)) {
+    stop("din and dout must be square distance matrices", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 

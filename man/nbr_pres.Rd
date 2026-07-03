@@ -29,8 +29,11 @@ d[i, j] is taken to be the distance between observation i and j.
 \details{
 The neighborhood preservation can vary between 0 (no neighbors in common)
 and 1 (perfect preservation). However, random performance gives an
-approximate value of k / n, where k is the size of the neighborhood and is
-the number of observations or items in the dataset.
+approximate value of k / (n - 1), where k is the size of the neighborhood and
+n is the number of observations or items in the dataset.
+
+Self-neighbors on the diagonal are excluded from each row before the
+neighborhood overlap is calculated.
 }
 \note{
 This is not a very efficient way to calculate the preservation if you

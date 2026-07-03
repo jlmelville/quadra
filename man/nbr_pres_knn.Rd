@@ -33,7 +33,8 @@ k nearest neighbors quite efficiently and so makes calculating preservation
 values for larger datasets feasible.
 
 The neighborhood preservation can vary between 0 (no neighbors in common)
-and 1 (perfect preservation). However, random performance gives an
-approximate value of k / n, where k is the size of the neighborhood and is
-the number of observations or items in the dataset.
+and 1 (perfect preservation). For nearest-neighbor matrices that exclude
+self-neighbors, random performance gives an approximate value of k / (n - 1),
+where k is the size of the neighborhood and n is the number of observations
+or items in the dataset.
 }

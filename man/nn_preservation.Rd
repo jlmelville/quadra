@@ -77,9 +77,11 @@ depending on the value of \code{nn_method_out}.}
 \value{
 the mean value of the intersection of the neighborhoods per
 observation scaled between \code{0} (no neighbors in common) to \code{1} (all
-neighbors in common). For randomly distributed \code{Xout}, the expected
-preservation is around \code{1/k} as long as \code{k} is a lot smaller than the
-number of observations. If \code{k} is a vector, then the return value is a
+neighbors in common). For self-inclusive graphs, such as graphs calculated
+by this function, unrelated output neighborhoods have expected preservation
+\code{(1 + (k - 1)^2 / (n - 1)) / k}, where n is the number of observations.
+For self-excluded graphs supplied by the user, the corresponding random
+baseline is \code{k / (n - 1)}. If \code{k} is a vector, then the return value is a
 vector of the preservations for each \code{k} in the order they were passed. If
 \code{ret_extra = TRUE}, then a list is returned containing:
 \itemize{
@@ -134,7 +136,10 @@ list containing:
 \itemize{
 \item \code{idx} a matrix with as many as rows as observations in the input data and
 \code{k} columns. The \code{i}th row of this matrix contains the row indices of the
-nearest neighbors of observation \code{i} in non-decreasing distance order.
+nearest neighbors of observation \code{i} in non-decreasing distance order. This
+function compares the first \code{k} columns exactly as supplied. Graphs
+calculated by this function are self-inclusive: the first neighbor of row
+\code{i} is \code{i}.
 \item \code{dist} (optional) a matrix with the same dimensions as \code{idx}, containing the
 equivalent distances. This information is not actually used by the
 preservation function but is included in the output of the nearest neighbor

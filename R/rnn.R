@@ -38,7 +38,10 @@
 #'
 #' * `idx` a matrix with as many as rows as observations in the input data and
 #' `k` columns. The `i`th row of this matrix contains the row indices of the
-#' nearest neighbors of observation `i` in non-decreasing distance order.
+#' nearest neighbors of observation `i` in non-decreasing distance order. This
+#' function compares the first `k` columns exactly as supplied. Graphs
+#' calculated by this function are self-inclusive: the first neighbor of row
+#' `i` is `i`.
 #' * `dist` (optional) a matrix with the same dimensions as `idx`, containing the
 #' equivalent distances. This information is not actually used by the
 #' preservation function but is included in the output of the nearest neighbor
@@ -87,9 +90,11 @@
 #'   depending on the value of `nn_method_out`.
 #' @return the mean value of the intersection of the neighborhoods per
 #'   observation scaled between `0` (no neighbors in common) to `1` (all
-#'   neighbors in common). For randomly distributed `Xout`, the expected
-#'   preservation is around `1/k` as long as `k` is a lot smaller than the
-#'   number of observations. If `k` is a vector, then the return value is a
+#'   neighbors in common). For self-inclusive graphs, such as graphs calculated
+#'   by this function, unrelated output neighborhoods have expected preservation
+#'   `(1 + (k - 1)^2 / (n - 1)) / k`, where n is the number of observations.
+#'   For self-excluded graphs supplied by the user, the corresponding random
+#'   baseline is `k / (n - 1)`. If `k` is a vector, then the return value is a
 #'   vector of the preservations for each `k` in the order they were passed. If
 #'   `ret_extra = TRUE`, then a list is returned containing:
 #'
