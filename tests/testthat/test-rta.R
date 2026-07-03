@@ -34,5 +34,7 @@ test_that("random triplet accuracy", {
 
   expect_equal(random_triplet_accuracy(m, n, tm), 0.45)
   expect_equal(random_triplet_accuracy(t(m), t(n), tm, is_transposed = TRUE), 0.45)
+  expect_equal(random_triplet_accuracy(m, n, tm, n_threads = 1), 0.45)
   expect_equal(random_triplet_accuracy(m, n, tm, n_threads = 2), 0.45)
+  expect_false("grain_size" %in% names(formals(random_triplet_accuracy)))
 })

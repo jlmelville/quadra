@@ -18,3 +18,10 @@ test_that("random pair distance correlation", {
   expect_lte(rdpct2, 1.0)
   expect_gte(rdpct2, -1.0)
 })
+
+test_that("unknown C++ distance metrics error", {
+  expect_error(
+    random_distances(t(m), t(n), metric_in = "not-a-metric"),
+    "Unknown distance metric"
+  )
+})
