@@ -4,11 +4,6 @@ An R Package for evaluating the success of embeddings from
 dimensionality reduction methods (e.g. Principal Component Analysis,
 Sammon Maps, t-Distributed Stochastic Neighbor Embedding).
 
-## News
-
-See [NEWS.md](https://jlmelville.github.io/quadra/NEWS.md) for release
-notes.
-
 ## Description
 
 This package provides two ways to evaluate the performance of an
@@ -40,7 +35,7 @@ classification. Quadra can also provide some help with this, but
 requires the [PRROC package](https://cran.r-project.org/package=PRROC)
 to be installed.
 
-## Installing
+## Install
 
 ``` r
 
