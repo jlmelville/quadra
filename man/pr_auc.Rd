@@ -31,6 +31,9 @@ and then the other observations are ranked according to their distance from
 the Nth observation in the output coordinates (lower distances being better).
 Observations with the same label as the Nth observation count as positive
 observations. The final reported result is the average over all observations.
+Rows with undefined AUC values, such as rows that cannot define both positive
+and negative examples, are excluded from overall and per-label averages. If no
+rows remain for an average, that average is \code{NA_real_}.
 
 Perfect retrieval results in an AUC of 1. For random retrieval, the value
 is the proportion of the positive class labels for that curve.

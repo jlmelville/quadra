@@ -9,6 +9,9 @@
 #' the Nth observation in the output coordinates (lower distances being better).
 #' Observations with the same label as the Nth observation count as positive
 #' observations. The final reported result is the average over all observations.
+#' Rows with undefined AUC values, such as rows that cannot define both positive
+#' and negative examples, are excluded from overall and per-label averages. If
+#' no rows remain for an average, that average is `NA_real_`.
 #'
 #' Perfect retrieval results in an AUC of 1. For random retrieval gives a value
 #' of 0.5.
@@ -43,6 +46,9 @@ roc_auc <- function(dm, labels) {
 #' the Nth observation in the output coordinates (lower distances being better).
 #' Observations with the same label as the Nth observation count as positive
 #' observations. The final reported result is the average over all observations.
+#' Rows with undefined AUC values, such as rows that cannot define both positive
+#' and negative examples, are excluded from overall and per-label averages. If no
+#' rows remain for an average, that average is `NA_real_`.
 #'
 #' Perfect retrieval results in an AUC of 1. For random retrieval, the value
 #' is the proportion of the positive class labels for that curve.
@@ -200,32 +206,34 @@ roc_auc_row <- function(dm, labels, i) {
 # being named after the class label.
 auc_mat <- function(dm, labels, auc_row_fn) {
   av_auc <- 0
+  av_n <- 0
   n <- nrow(dm)
   ns <- list()
   result <- list()
   label_av <- list()
   for (i in 1:n) {
+    label <- as.character(labels[[i]])
+    if (is.null(label_av[[label]])) {
+      label_av[[label]] <- 0
+      ns[[label]] <- 0
+    }
+
     auc <- auc_row_fn(dm, labels, i)
     if (!is.nan(auc)) {
       av_auc <- av_auc + auc
-    }
-    label <- as.character(labels[[i]])
-    if (is.null(label_av[[label]])) {
-      label_av[[label]] <- auc
-      ns[[label]] <- 1
-    } else {
+      av_n <- av_n + 1
       label_av[[label]] <- label_av[[label]] + auc
       ns[[label]] <- ns[[label]] + 1
     }
   }
   for (label in names(ns)) {
     if (ns[[label]] == 0) {
-      label_av[[label]] <- 0
+      label_av[[label]] <- NA_real_
     } else {
       label_av[[label]] <- label_av[[label]] / ns[[label]]
     }
   }
-  result$av_auc <- av_auc / n
+  result$av_auc <- if (av_n == 0) NA_real_ else av_auc / av_n
   result$label_av <- label_av
   result
 }
