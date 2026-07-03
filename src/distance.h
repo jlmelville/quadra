@@ -28,6 +28,7 @@
 #define QUADRA_DISTANCE_H
 
 #include <functional>
+#include <stdexcept>
 #include <string>
 
 #include "tdoann/distance.h"
@@ -49,7 +50,7 @@ create_dfun(const std::string &metric) {
   } else if (metric == "correlation") {
     return tdoann::correlation<double, It>;
   } else {
-    return tdoann::euclidean<double, It>;
+    throw std::invalid_argument("Unknown distance metric: " + metric);
   }
 }
 
