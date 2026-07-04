@@ -9,3 +9,7 @@ triplet_sample <- function(triplets, xin, xout, metric_in = "sqeuclidean", metri
     .Call(`_quadra_triplet_sample`, triplets, xin, xout, metric_in, metric_out, n_threads)
 }
 
+random_triplet_sample <- function(xin, xout, n_triplets = 5L, metric_in = "sqeuclidean", metric_out = "sqeuclidean", n_threads = 0L) {
+    .Call(`_quadra_random_triplet_sample`, xin, xout, n_triplets, metric_in, metric_out, n_threads)
+}
+

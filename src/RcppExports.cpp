@@ -43,10 +43,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// random_triplet_sample
+double random_triplet_sample(const NumericMatrix& xin, const NumericMatrix& xout, std::size_t n_triplets, const std::string& metric_in, const std::string& metric_out, std::size_t n_threads);
+RcppExport SEXP _quadra_random_triplet_sample(SEXP xinSEXP, SEXP xoutSEXP, SEXP n_tripletsSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type n_triplets(n_tripletsSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(random_triplet_sample(xin, xout, n_triplets, metric_in, metric_out, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 7},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
+    {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 6},
     {NULL, NULL, 0}
 };
 

@@ -89,13 +89,27 @@ random_triplet_accuracy <-
       )
     }
 
-    triplets <-
-      get_triplet_matrix(n_obs, n_triplets, zero_index = TRUE)
+    if (is.matrix(n_triplets)) {
+      triplets <-
+        get_triplet_matrix(n_obs, n_triplets, zero_index = TRUE)
 
-    triplet_sample(
-      triplets,
+      return(
+        triplet_sample(
+          triplets,
+          Xin,
+          Xout,
+          metric_in = metric_in,
+          metric_out = metric_out,
+          n_threads = n_threads
+        )
+      )
+    }
+
+    n_triplets <- validate_positive_integer(n_triplets, "n_triplets")
+    random_triplet_sample(
       Xin,
       Xout,
+      n_triplets = n_triplets,
       metric_in = metric_in,
       metric_out = metric_out,
       n_threads = n_threads

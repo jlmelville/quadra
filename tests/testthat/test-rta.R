@@ -57,6 +57,48 @@ test_that("random triplet accuracy", {
   expect_false("grain_size" %in% names(formals(random_triplet_accuracy)))
 })
 
+test_that("numeric random triplet sampling is reproducible", {
+  set.seed(20260704)
+  serial <- random_triplet_accuracy(m, n, n_triplets = 20, n_threads = 0)
+  expect_lte(serial, 1)
+  expect_gte(serial, 0)
+
+  set.seed(20260704)
+  expect_equal(
+    random_triplet_accuracy(m, n, n_triplets = 20, n_threads = 0),
+    serial
+  )
+
+  set.seed(20260704)
+  expect_equal(
+    random_triplet_accuracy(m, n, n_triplets = 20, n_threads = 1),
+    serial
+  )
+
+  set.seed(20260704)
+  expect_equal(
+    random_triplet_accuracy(
+      t(m),
+      t(n),
+      n_triplets = 20,
+      is_transposed = TRUE,
+      n_threads = 0
+    ),
+    serial
+  )
+
+  set.seed(20260704)
+  parallel <- random_triplet_accuracy(m, n, n_triplets = 20, n_threads = 2)
+  expect_lte(parallel, 1)
+  expect_gte(parallel, 0)
+
+  set.seed(20260704)
+  expect_equal(
+    random_triplet_accuracy(m, n, n_triplets = 20, n_threads = 2),
+    parallel
+  )
+})
+
 test_that("input-distance triplet ties are excluded", {
   # fmt: skip
   triplets <- matrix(
@@ -90,6 +132,7 @@ test_that("input-distance triplet ties are excluded", {
 
   expect_equal(random_triplet_accuracy(xin, xout, triplets), 1)
   expect_true(is.na(random_triplet_accuracy(matrix(0, 3, 2), xout, triplets)))
+  expect_true(is.na(random_triplet_accuracy(matrix(0, 4, 2), m[1:4, ])))
 })
 
 test_that("random triplet inputs are validated", {
