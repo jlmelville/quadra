@@ -10,11 +10,13 @@ Triplets with tied input-space distances are excluded from the
 denominator because they do not define a relative ordering. If no
 sampled input triplets define an ordering, the result is `NA_real_`.
 
-## Pearson Correlation for Distances
+## Random Pair Distance Correlation
 
 [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md)
 measures Pearson correlation between equivalent input and output
-distances, similar to the method used by Becht and co-workers.
+distances by default, similar to the method used by Becht and
+co-workers. Set `method = "spearman"` to compare the sampled distance
+ranks instead of their linear agreement.
 
 ## Earth-Mover’s Distance
 
@@ -22,6 +24,31 @@ distances, similar to the method used by Becht and co-workers.
 converts distances to an empirical distribution and compares them via
 Earth Mover’s Distance (1D Wasserstein), based on the method used by
 Heiser and Lau.
+
+## Random Pair Distance Stress
+
+[`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
+compares the matched sampled distances with a root mean squared
+difference. By default, each sampled distance vector is scaled to the
+range 0-1 first, so the value is most useful when comparing embeddings
+under the same sampling and scaling settings.
+
+## RNX AUC
+
+[`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
+summarizes exact rank-based neighborhood agreement over all neighborhood
+sizes from a pair of distance matrices. It gives more weight to smaller
+neighborhoods, so it is useful when you want one score for the
+local-to-global rank structure of a small or medium dataset.
+
+``` r
+
+iris_x <- as.matrix(iris[, -5])
+pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
+din <- as.matrix(stats::dist(iris_x))
+dout <- as.matrix(stats::dist(pca_iris))
+rnx_auc(din, dout)
+```
 
 ## Further Reading
 
@@ -32,7 +59,7 @@ how dimension reduction tools work: an empirical approach to deciphering
 t-SNE, UMAP, TriMAP, and PaCMAP for data visualization. *J Mach. Learn.
 Res*, *22*, 1-73. <https://jmlr.org/papers/v22/20-1061.html>
 
-### Pearson Correlation for Distances
+### Random Pair Distance Correlation
 
 Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L.
 G., … & Newell, E. W. (2019). Dimensionality reduction for visualizing
@@ -45,3 +72,10 @@ Heiser, C. N., & Lau, K. S. (2020). A quantitative framework for
 evaluating single-cell data structure preservation by dimensionality
 reduction techniques. *Cell reports*, *31*(5), 107576.
 <https://doi.org/10.1016/j.celrep.2020.107576>
+
+### RNX AUC
+
+Lee, J. A., Peluffo-Ordonez, D. H., & Verleysen, M. (2015). Multi-scale
+similarities in stochastic neighbour embedding: Reducing dimensionality
+while preserving both local and global structure. *Neurocomputing*,
+*169*, 246-261. <https://dx.doi.org/10.1016/j.neucom.2014.12.095>

@@ -72,11 +72,13 @@ sampled input triplets define an ordering, the result is
 <code>NA_real_</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="pearson-correlation-for-distances">Pearson Correlation for Distances<a class="anchor" aria-label="anchor" href="#pearson-correlation-for-distances"></a>
+<h2 id="random-pair-distance-correlation">Random Pair Distance Correlation<a class="anchor" aria-label="anchor" href="#random-pair-distance-correlation"></a>
 </h2>
 <p><code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code> measures Pearson
-correlation between equivalent input and output distances, similar to
-the method used by Becht and co-workers.</p>
+correlation between equivalent input and output distances by default,
+similar to the method used by Becht and co-workers. Set
+<code>method = "spearman"</code> to compare the sampled distance ranks
+instead of their linear agreement.</p>
 </div>
 <div class="section level2">
 <h2 id="earth-movers-distance">Earth-Mover’s Distance<a class="anchor" aria-label="anchor" href="#earth-movers-distance"></a>
@@ -84,6 +86,30 @@ the method used by Becht and co-workers.</p>
 <p><code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code> converts distances to an
 empirical distribution and compares them via Earth Mover’s Distance (1D
 Wasserstein), based on the method used by Heiser and Lau.</p>
+</div>
+<div class="section level2">
+<h2 id="random-pair-distance-stress">Random Pair Distance Stress<a class="anchor" aria-label="anchor" href="#random-pair-distance-stress"></a>
+</h2>
+<p><code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares the matched
+sampled distances with a root mean squared difference. By default, each
+sampled distance vector is scaled to the range 0-1 first, so the value
+is most useful when comparing embeddings under the same sampling and
+scaling settings.</p>
+</div>
+<div class="section level2">
+<h2 id="rnx-auc">RNX AUC<a class="anchor" aria-label="anchor" href="#rnx-auc"></a>
+</h2>
+<p><code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes exact rank-based neighborhood
+agreement over all neighborhood sizes from a pair of distance matrices.
+It gives more weight to smaller neighborhoods, so it is useful when you
+want one score for the local-to-global rank structure of a small or
+medium dataset.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
@@ -97,7 +123,7 @@ to deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
 <em>J Mach. Learn. Res</em>, <em>22</em>, 1-73. <a href="https://jmlr.org/papers/v22/20-1061.html" class="external-link uri">https://jmlr.org/papers/v22/20-1061.html</a></p>
 </div>
 <div class="section level3">
-<h3 id="pearson-correlation-for-distances-1">Pearson Correlation for Distances<a class="anchor" aria-label="anchor" href="#pearson-correlation-for-distances-1"></a>
+<h3 id="random-pair-distance-correlation-1">Random Pair Distance Correlation<a class="anchor" aria-label="anchor" href="#random-pair-distance-correlation-1"></a>
 </h3>
 <p>Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng,
 L. G., … &amp; Newell, E. W. (2019). Dimensionality reduction for
@@ -110,6 +136,14 @@ visualizing single-cell data using UMAP. <em>Nature biotechnology</em>,
 <p>Heiser, C. N., &amp; Lau, K. S. (2020). A quantitative framework for
 evaluating single-cell data structure preservation by dimensionality
 reduction techniques. <em>Cell reports</em>, <em>31</em>(5), 107576. <a href="https://doi.org/10.1016/j.celrep.2020.107576" class="external-link uri">https://doi.org/10.1016/j.celrep.2020.107576</a></p>
+</div>
+<div class="section level3">
+<h3 id="rnx-auc-1">RNX AUC<a class="anchor" aria-label="anchor" href="#rnx-auc-1"></a>
+</h3>
+<p>Lee, J. A., Peluffo-Ordonez, D. H., &amp; Verleysen, M. (2015).
+Multi-scale similarities in stochastic neighbour embedding: Reducing
+dimensionality while preserving both local and global structure.
+<em>Neurocomputing</em>, <em>169</em>, 246-261. <a href="https://dx.doi.org/10.1016/j.neucom.2014.12.095" class="external-link uri">https://dx.doi.org/10.1016/j.neucom.2014.12.095</a></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

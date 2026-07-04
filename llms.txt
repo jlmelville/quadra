@@ -1,7 +1,7 @@
 # Quadra: QUantitative Assessment of Dimensionality Reduction Algorithms
 
 An R Package for evaluating the success of embeddings from
-dimensionality reduction methods (e.g. Principal Component Analysis,
+dimensionality reduction methods (e.g.  Principal Component Analysis,
 Sammon Maps, t-Distributed Stochastic Neighbor Embedding).
 
 ## Description
@@ -25,7 +25,7 @@ point can be treated as the target in a retrieval procedure:
 2.  See how highly in the ranked list the points with the same label are
     found.
 3.  Construct a Receiver Operating Characteristic (ROC) curve, or
-    something like it (e.g. Precision-Recall curve)
+    something like it (e.g.  Precision-Recall curve)
 4.  Calculate the Area Under the Curve (AUC).
 5.  Average over all points.
 
@@ -88,18 +88,40 @@ random_triplet_accuracy(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
 
 # Other ways to measure global preservation:
 
-# measure Pearson correlation between equivalent input and output distances
-# similar to the method used by Becht and co-workers
+# measure Pearson or Spearman correlation between equivalent input and output
+# distances, similar to the method used by Becht and co-workers
 random_pair_distance_correlation(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
+random_pair_distance_correlation(tiris, pca_iris3, method = "spearman", is_transposed = TRUE)
 
 # convert distances to an empirical distribution and compare them via Earth
 # Mover's Distance (1D Wasserstein) based on the method used by Heiser and Lau
 random_pair_distance_emd(tiris, pca_iris2, is_transposed = TRUE, n_threads = 2)
 
+# compare matched sampled distances with range-scaled stress
+random_pair_distance_stress(tiris, pca_iris2, is_transposed = TRUE, n_threads = 2)
+
 # For local preservation use nearest neighbor preservation
 # Pass a vector to k to get back the preservation for different numbers of
 # neighbors
 nn_preservation(tiris, pca_iris2, k = c(15, 30), is_transposed = TRUE)
+
+# Compare local radius or scale preservation
+local_radius_correlation(
+  tiris,
+  pca_iris2,
+  k = c(15, 30),
+  is_transposed = TRUE,
+  nn_method_in = "brute"
+)
+
+# Compare mutual-neighbor count patterns in the input and output graphs
+mutual_neighbor_correlation(
+  tiris,
+  pca_iris2,
+  k = c(15, 30),
+  is_transposed = TRUE,
+  nn_method_in = "brute"
+)
 
 # slower methods not recommended for large datasets
 
@@ -109,9 +131,14 @@ dout <- as.matrix(dist(pca_iris))
 # Preservation of the 5-nearest neighbors for each point: returns a vector
 nbr_pres(din, dout, k = 5)
 
-# Area under the RNX curve. This is like a weighted average over neighborhood preservation for a range of k
-# with a bias towards smaller k: returns a single value
+# Area under the RNX curve. This is like a weighted average over neighborhood 
+# preservation for a range of k with a bias towards smaller k: returns a single 
+# value
 rnx_auc(din, dout)
+
+# Exact rank-penalty neighborhood preservation at a fixed k
+trustworthiness(din, dout, k = 15)
+continuity(din, dout, k = 15)
 
 # Install the PRROC package
 install.packages("PRROC")
@@ -126,8 +153,8 @@ pr_auc(dout, iris$Species)
 
 ## More Detail
 
-Longer metric notes, larger-dataset examples, and references have moved
-to the pkgdown articles:
+Please see the longer metric notes, larger-dataset examples, and
+references.
 
 - [Metric
   overview](https://jlmelville.github.io/quadra/articles/metrics-overview.html)
@@ -149,13 +176,17 @@ Some other R packages I maintain that might come in handy:
 - [snedata](https://github.com/jlmelville/snedata) and
   [coil20](https://github.com/jlmelville/coil20) provide ways to access
   some datasets for embedding.
-- [vizier](https://github.com/jlmelville/vizier) for a… let’s call it
-  cheap and cheerful way to visualize the results of the embedding.
+- [vizier](https://github.com/jlmelville/vizier) to visualize the
+  results of the embedding.
 
 # Package index
 
 ## All functions
 
+- [`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md)
+  : Local Radius Correlation
+- [`mutual_neighbor_correlation()`](https://jlmelville.github.io/quadra/reference/mutual_neighbor_correlation.md)
+  : Mutual Neighbor Correlation
 - [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
   : Neighborhood Preservation Between Distance Matrices
 - [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
@@ -168,12 +199,17 @@ Some other R packages I maintain that might come in handy:
   : Random Pair Distance Correlation
 - [`random_pair_distance_emd()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.md)
   : Random Pair Distance Earth Mover's Distance
+- [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
+  : Random Pair Distance Stress
 - [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
   : Random Triplet Accuracy
 - [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
   : Area Under the RNX Curve
 - [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
   : Average Area Under the ROC Curve
+- [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  [`continuity()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  : Trustworthiness and Continuity Between Distance Matrices
 
 # Articles
 

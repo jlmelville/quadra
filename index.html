@@ -51,7 +51,7 @@
 <div class="section level1">
 <div class="page-header"><h1 id="quadra-quantitative-assessment-of-dimensionality-reduction-algorithms">Quadra: QUantitative Assessment of Dimensionality Reduction Algorithms<a class="anchor" aria-label="anchor" href="#quadra-quantitative-assessment-of-dimensionality-reduction-algorithms"></a>
 </h1></div>
-<p>An R Package for evaluating the success of embeddings from dimensionality reduction methods (e.g. Principal Component Analysis, Sammon Maps, t-Distributed Stochastic Neighbor Embedding).</p>
+<p>An R Package for evaluating the success of embeddings from dimensionality reduction methods (e.g.  Principal Component Analysis, Sammon Maps, t-Distributed Stochastic Neighbor Embedding).</p>
 <div class="section level2">
 <h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
 </h2>
@@ -66,7 +66,7 @@
 <ol style="list-style-type: decimal">
 <li>Rank all the other points by distance to the target point.</li>
 <li>See how highly in the ranked list the points with the same label are found.</li>
-<li>Construct a Receiver Operating Characteristic (ROC) curve, or something like it (e.g. Precision-Recall curve)</li>
+<li>Construct a Receiver Operating Characteristic (ROC) curve, or something like it (e.g.  Precision-Recall curve)</li>
 <li>Calculate the Area Under the Curve (AUC).</li>
 <li>Average over all points.</li>
 </ol>
@@ -112,18 +112,40 @@
 <span></span>
 <span><span class="co"># Other ways to measure global preservation:</span></span>
 <span></span>
-<span><span class="co"># measure Pearson correlation between equivalent input and output distances</span></span>
-<span><span class="co"># similar to the method used by Becht and co-workers</span></span>
+<span><span class="co"># measure Pearson or Spearman correlation between equivalent input and output</span></span>
+<span><span class="co"># distances, similar to the method used by Becht and co-workers</span></span>
 <span><span class="fu"><a href="reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span><span class="va">tiris</span>, <span class="va">pca_iris3</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span>, n_threads <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span><span class="va">tiris</span>, <span class="va">pca_iris3</span>, method <span class="op">=</span> <span class="st">"spearman"</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># convert distances to an empirical distribution and compare them via Earth</span></span>
 <span><span class="co"># Mover's Distance (1D Wasserstein) based on the method used by Heiser and Lau</span></span>
 <span><span class="fu"><a href="reference/random_pair_distance_emd.html">random_pair_distance_emd</a></span><span class="op">(</span><span class="va">tiris</span>, <span class="va">pca_iris2</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span>, n_threads <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># compare matched sampled distances with range-scaled stress</span></span>
+<span><span class="fu"><a href="reference/random_pair_distance_stress.html">random_pair_distance_stress</a></span><span class="op">(</span><span class="va">tiris</span>, <span class="va">pca_iris2</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span>, n_threads <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># For local preservation use nearest neighbor preservation</span></span>
 <span><span class="co"># Pass a vector to k to get back the preservation for different numbers of</span></span>
 <span><span class="co"># neighbors</span></span>
 <span><span class="fu"><a href="reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span><span class="va">tiris</span>, <span class="va">pca_iris2</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compare local radius or scale preservation</span></span>
+<span><span class="fu"><a href="reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
+<span>  <span class="va">tiris</span>,</span>
+<span>  <span class="va">pca_iris2</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  is_transposed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compare mutual-neighbor count patterns in the input and output graphs</span></span>
+<span><span class="fu"><a href="reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation</a></span><span class="op">(</span></span>
+<span>  <span class="va">tiris</span>,</span>
+<span>  <span class="va">pca_iris2</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  is_transposed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># slower methods not recommended for large datasets</span></span>
 <span></span>
@@ -133,9 +155,14 @@
 <span><span class="co"># Preservation of the 5-nearest neighbors for each point: returns a vector</span></span>
 <span><span class="fu"><a href="reference/nbr_pres.html">nbr_pres</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Area under the RNX curve. This is like a weighted average over neighborhood preservation for a range of k</span></span>
-<span><span class="co"># with a bias towards smaller k: returns a single value</span></span>
+<span><span class="co"># Area under the RNX curve. This is like a weighted average over neighborhood </span></span>
+<span><span class="co"># preservation for a range of k with a bias towards smaller k: returns a single </span></span>
+<span><span class="co"># value</span></span>
 <span><span class="fu"><a href="reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Exact rank-penalty neighborhood preservation at a fixed k</span></span>
+<span><span class="fu"><a href="reference/trustworthiness.html">trustworthiness</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/trustworthiness.html">continuity</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Install the PRROC package</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"PRROC"</span><span class="op">)</span></span>
@@ -150,7 +177,7 @@
 <div class="section level2">
 <h2 id="more-detail">More Detail<a class="anchor" aria-label="anchor" href="#more-detail"></a>
 </h2>
-<p>Longer metric notes, larger-dataset examples, and references have moved to the pkgdown articles:</p>
+<p>Please see the longer metric notes, larger-dataset examples, and references.</p>
 <ul>
 <li><a href="https://jlmelville.github.io/quadra/articles/metrics-overview.html">Metric overview</a></li>
 <li><a href="https://jlmelville.github.io/quadra/articles/global-preservation.html">Global preservation</a></li>
@@ -171,7 +198,7 @@
 <li>
 <a href="https://github.com/jlmelville/snedata" class="external-link">snedata</a> and <a href="https://github.com/jlmelville/coil20" class="external-link">coil20</a> provide ways to access some datasets for embedding.</li>
 <li>
-<a href="https://github.com/jlmelville/vizier" class="external-link">vizier</a> for a… let’s call it cheap and cheerful way to visualize the results of the embedding.</li>
+<a href="https://github.com/jlmelville/vizier" class="external-link">vizier</a> to visualize the results of the embedding.</li>
 </ul>
 </div>
 </div>

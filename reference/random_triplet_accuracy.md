@@ -96,7 +96,7 @@ for another measure of global structure preservation.
 ``` r
 iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 random_triplet_accuracy(iris, iris_pca2)
-#> [1] 0.9826667
+#> [1] 0.976
 
 # If you plan on comparing the results of multiple output methods, then
 # pre-transposing the input data can save time
@@ -104,9 +104,9 @@ tiris <- t(iris[, -5])
 iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
 random_triplet_accuracy(tiris, t(iris_pca1), is_transposed = TRUE)
-#> [1] 0.928
+#> [1] 0.9386667
 random_triplet_accuracy(tiris, t(iris_pca2), is_transposed = TRUE)
-#> [1] 0.9813333
+#> [1] 0.988
 random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
-#> [1] 0.9933333
+#> [1] 0.9986667
 ```

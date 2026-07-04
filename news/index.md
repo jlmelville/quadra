@@ -1,6 +1,42 @@
 # Changelog
 
-## quadra 0.2.0 (July 3 2026)
+## quadra 0.2.0
+
+### New features
+
+- New metric:
+  [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  and
+  [`continuity()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  for exact distance-matrix rank-penalty neighborhood preservation at a
+  fixed `k`. Only useful for small datasets, though because it needs the
+  full distance matrix.
+- New metric:
+  [`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md)
+  for comparing local radius or scale preservation from raw observations
+  or nearest-neighbor graphs with distances. Possibly useful for
+  dimensionality reduction methods that attempt to retain the density of
+  the input data (which standard t-SNE and UMAP do not).
+- Added Spearman rank-correlation support to
+  [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md)
+  via `method = "spearman"`.
+- New metric:
+  [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
+  for sampled root mean squared differences between matched random-pair
+  distances. This is like a traditional STRESS metric (basically the
+  root mean square error between the input and output distances), but
+  only sampling a subset of distances, so this can scale to larger
+  datasets.
+- New metric:
+  [`mutual_neighbor_correlation()`](https://jlmelville.github.io/quadra/reference/mutual_neighbor_correlation.md)
+  for comparing mutual-neighbor count patterns between input and output
+  nearest-neighbor graphs.
+- [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md),
+  [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md),
+  [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+  and
+  [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
+  are now implemented with C++ so should be faster to calculate.
 
 ### Bug fixes and minor improvements
 
@@ -10,6 +46,11 @@
   need to install that from github.
 - `grain_size` for thread-handling has been removed from any API that
   exposed it.
+- Numeric
+  [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
+  sampling uses a new sampler, so the exact sample sequence can differ
+  from earlier versions. Set the seed and thread count for reproducible
+  results within this version. Matrix triplet inputs are unchanged.
 - Fix for issue where index-only nearest neighbor graphs were not
   allowed for metrics that didn’t need the distances.
 - [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)

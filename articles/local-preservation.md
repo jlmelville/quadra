@@ -12,6 +12,104 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 nn_preservation(iris_x, pca_iris, k = c(15, 30))
 ```
 
+## Trustworthiness and Continuity
+
+[`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+and
+[`continuity()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+are exact rank-penalty neighborhood metrics for distance matrices.
+Trustworthiness penalizes observations that appear as low-dimensional
+neighbors even though they are not close in the input space. Continuity
+applies the dual penalty to input-space neighbors that are no longer
+nearby in the embedding.
+
+``` r
+
+din <- as.matrix(stats::dist(iris_x))
+dout <- as.matrix(stats::dist(pca_iris))
+trustworthiness(din, dout, k = 15)
+continuity(din, dout, k = 15)
+```
+
+These functions use full `n` by `n` distance matrices and require `k` to
+be less than half the number of observations, so they are intended for
+exact small-dataset checks. For larger datasets, use nearest-neighbor
+preservation metrics such as
+[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+or
+[`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md).
+
+## Local Radius Correlation
+
+Nearest neighbor preservation asks whether the same observations remain
+nearby.
+[`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md)
+asks a different local-scale question: do points in dense or sparse
+regions of the input data still have relatively small or large
+nearest-neighbor radii in the embedding?
+
+``` r
+
+local_radius_correlation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute"
+)
+```
+
+By default, the metric uses Spearman correlation between the distance to
+the `k`th nearest non-self neighbor in the input data and output
+embedding. Set `statistic = "mean"` to use the mean distance to the
+first `k` neighbors, or `log = TRUE` to compare log radii when all
+selected radii are positive.
+
+If you already have nearest-neighbor graphs with distance matrices, you
+can reuse them:
+
+``` r
+
+cached <- local_radius_correlation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute",
+  ret_extra = TRUE
+)
+
+local_radius_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
+```
+
+This metric is a radius or scale diagnostic. It does not estimate local
+density directly and should be interpreted alongside neighbor-identity
+metrics such as
+[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md).
+
+## Mutual Neighbor Correlation
+
+[`mutual_neighbor_correlation()`](https://jlmelville.github.io/quadra/reference/mutual_neighbor_correlation.md)
+compares mutual-neighbor count patterns. For each observation, the
+mutual-neighbor count is the number of its first `k` nearest neighbors
+that also include the observation among their first `k` nearest
+neighbors.
+
+``` r
+
+mutual_neighbor_correlation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute"
+)
+```
+
+This is a graph diagnostic. It does not require neighbor distances, so
+cached idx-only nearest-neighbor graphs are enough. It should be
+interpreted alongside neighbor-identity metrics such as
+[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+and scale metrics such as
+[`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md).
+
 For larger datasets,
 [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
 can use approximate nearest neighbors via
@@ -81,3 +179,8 @@ Cooley, S. M., Hamilton, T., Deeds, E. J., & Ray, J. C. J. (2019). A
 novel metric reveals previously unrecognized distortion in
 dimensionality reduction of scRNA-Seq data. *BioRxiv*, 689851.
 <https://www.biorxiv.org/content/10.1101/689851v6>
+
+Narayan, A., Berger, B., & Cho, H. (2021). Assessing single-cell
+transcriptomic variability through density-preserving data
+visualization. *Nature Biotechnology*, *39*, 765-774.
+<https://doi.org/10.1038/s41587-020-00801-7>

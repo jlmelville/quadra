@@ -34,13 +34,24 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0" id="quadra-020-july-3-2026">quadra 0.2.0 (July 3 2026)<a class="anchor" aria-label="anchor" href="#quadra-020-july-3-2026"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.2.0" id="quadra-020">quadra 0.2.0<a class="anchor" aria-label="anchor" href="#quadra-020"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h3>
+<ul><li>New metric: <code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> for exact distance-matrix rank-penalty neighborhood preservation at a fixed <code>k</code>. Only useful for small datasets, though because it needs the full distance matrix.</li>
+<li>New metric: <code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code> for comparing local radius or scale preservation from raw observations or nearest-neighbor graphs with distances. Possibly useful for dimensionality reduction methods that attempt to retain the density of the input data (which standard t-SNE and UMAP do not).</li>
+<li>Added Spearman rank-correlation support to <code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code> via <code>method = "spearman"</code>.</li>
+<li>New metric: <code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> for sampled root mean squared differences between matched random-pair distances. This is like a traditional STRESS metric (basically the root mean square error between the input and output distances), but only sampling a subset of distances, so this can scale to larger datasets.</li>
+<li>New metric: <code><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation()</a></code> for comparing mutual-neighbor count patterns between input and output nearest-neighbor graphs.</li>
+<li>
+<code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code>, <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code>, <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code> are now implemented with C++ so should be faster to calculate.</li>
+</ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-and-minor-improvements-0-2-0">Bug fixes and minor improvements<a class="anchor" aria-label="anchor" href="#bug-fixes-and-minor-improvements-0-2-0"></a></h3>
 <ul><li>Many small fixes for corner cases and improved validation.</li>
 <li>rnndescent is now on <a href="https://cran.r-project.org/package=rnndescent" class="external-link">CRAN</a>, so we no longer need to install that from github.</li>
 <li>
 <code>grain_size</code> for thread-handling has been removed from any API that exposed it.</li>
+<li>Numeric <code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code> sampling uses a new sampler, so the exact sample sequence can differ from earlier versions. Set the seed and thread count for reproducible results within this version. Matrix triplet inputs are unchanged.</li>
 <li>Fix for issue where index-only nearest neighbor graphs were not allowed for metrics that didn’t need the distances.</li>
 <li>
 <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> now excludes the “self”-neighbor (i.e. the item itself) from nearest-neighbor graphs. When calculating the graph internally, <code>k + 1</code> extra neighbors will be requested from <code>rnndescent</code>.</li>

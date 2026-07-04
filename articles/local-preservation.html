@@ -70,12 +70,89 @@ numbers of neighbors.</p>
 <code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
 <span><span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">pca_iris</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="trustworthiness-and-continuity">Trustworthiness and Continuity<a class="anchor" aria-label="anchor" href="#trustworthiness-and-continuity"></a>
+</h2>
+<p><code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> are
+exact rank-penalty neighborhood metrics for distance matrices.
+Trustworthiness penalizes observations that appear as low-dimensional
+neighbors even though they are not close in the input space. Continuity
+applies the dual penalty to input-space neighbors that are no longer
+nearby in the embedding.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/trustworthiness.html">trustworthiness</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/trustworthiness.html">continuity</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></code></pre></div>
+<p>These functions use full <code>n</code> by <code>n</code> distance
+matrices and require <code>k</code> to be less than half the number of
+observations, so they are intended for exact small-dataset checks. For
+larger datasets, use nearest-neighbor preservation metrics such as
+<code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> or <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="local-radius-correlation">Local Radius Correlation<a class="anchor" aria-label="anchor" href="#local-radius-correlation"></a>
+</h2>
+<p>Nearest neighbor preservation asks whether the same observations
+remain nearby. <code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code> asks a different
+local-scale question: do points in dense or sparse regions of the input
+data still have relatively small or large nearest-neighbor radii in the
+embedding?</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
+<span>  <span class="va">iris_x</span>,</span>
+<span>  <span class="va">pca_iris</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>By default, the metric uses Spearman correlation between the distance
+to the <code>k</code>th nearest non-self neighbor in the input data and
+output embedding. Set <code>statistic = "mean"</code> to use the mean
+distance to the first <code>k</code> neighbors, or
+<code>log = TRUE</code> to compare log radii when all selected radii are
+positive.</p>
+<p>If you already have nearest-neighbor graphs with distance matrices,
+you can reuse them:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cached</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
+<span>  <span class="va">iris_x</span>,</span>
+<span>  <span class="va">pca_iris</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  ret_extra <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span><span class="va">cached</span><span class="op">$</span><span class="va">nn_in</span>, <span class="va">cached</span><span class="op">$</span><span class="va">nn_out</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>This metric is a radius or scale diagnostic. It does not estimate
+local density directly and should be interpreted alongside
+neighbor-identity metrics such as <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="mutual-neighbor-correlation">Mutual Neighbor Correlation<a class="anchor" aria-label="anchor" href="#mutual-neighbor-correlation"></a>
+</h2>
+<p><code><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation()</a></code> compares mutual-neighbor
+count patterns. For each observation, the mutual-neighbor count is the
+number of its first <code>k</code> nearest neighbors that also include
+the observation among their first <code>k</code> nearest neighbors.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation</a></span><span class="op">(</span></span>
+<span>  <span class="va">iris_x</span>,</span>
+<span>  <span class="va">pca_iris</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This is a graph diagnostic. It does not require neighbor distances,
+so cached idx-only nearest-neighbor graphs are enough. It should be
+interpreted alongside neighbor-identity metrics such as
+<code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and scale metrics such as
+<code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code>.</p>
 <p>For larger datasets, <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> can use
 approximate nearest neighbors via <a href="https://github.com/jlmelville/rnndescent" class="external-link">rnndescent</a>. If you
 have nearest-neighbor matrices from another approximate nearest neighbor
 package, e.g. <a href="https://cran.r-project.org/package=RcppAnnoy" class="external-link">RcppAnnoy</a>, use
 the <code>nbr_pres_knn</code> function:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A function to wrap the RcppAnnoy API to return a matrix of the nearest</span></span>
 <span><span class="co"># neighbor indices</span></span>
 <span><span class="va">find_nn</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">k</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">n_trees</span> <span class="op">=</span> <span class="fl">50</span>, <span class="va">search_k</span> <span class="op">=</span> <span class="va">k</span> <span class="op">*</span> <span class="va">n_trees</span><span class="op">)</span> <span class="op">{</span></span>
@@ -130,6 +207,9 @@ dimensionality while preserving both local and global structure.
 <p>Cooley, S. M., Hamilton, T., Deeds, E. J., &amp; Ray, J. C. J.
 (2019). A novel metric reveals previously unrecognized distortion in
 dimensionality reduction of scRNA-Seq data. <em>BioRxiv</em>, 689851. <a href="https://www.biorxiv.org/content/10.1101/689851v6" class="external-link uri">https://www.biorxiv.org/content/10.1101/689851v6</a></p>
+<p>Narayan, A., Berger, B., &amp; Cho, H. (2021). Assessing single-cell
+transcriptomic variability through density-preserving data
+visualization. <em>Nature Biotechnology</em>, <em>39</em>, 765-774. <a href="https://doi.org/10.1038/s41587-020-00801-7" class="external-link uri">https://doi.org/10.1038/s41587-020-00801-7</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

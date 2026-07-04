@@ -1,20 +1,17 @@
-# Random Pair Distance Correlation
+# Random Pair Distance Stress
 
-Evaluates the preservation of global structure of dimensionality
-reduction results using the correlation coefficient between randomly
-selected distances. The default Pearson correlation is similar to the
-method of Becht and co-workers (2019).
+Evaluates global distance preservation with a sampled stress summary.
 
 ## Usage
 
 ``` r
-random_pair_distance_correlation(
+random_pair_distance_stress(
   Xin,
   Xout,
   n_pairs = 1000,
   metric_in = "sqeuclidean",
   metric_out = "sqeuclidean",
-  method = c("pearson", "spearman"),
+  range_scale = TRUE,
   is_transposed = FALSE,
   n_threads = 0
 )
@@ -49,9 +46,10 @@ random_pair_distance_correlation(
 
   the distance metric to apply to `Xout`. See `metric_in` for details.
 
-- method:
+- range_scale:
 
-  correlation method, either `"pearson"` or `"spearman"`.
+  if `TRUE` (the default) then scale each sampled distance vector to the
+  range 0-1 before calculating stress.
 
 - is_transposed:
 
@@ -68,50 +66,46 @@ random_pair_distance_correlation(
 
 ## Value
 
-The correlation between the distances in the input and output space. For
-randomly distributed data, the expected value is 0.
+The sampled stress between the matched distances in the input and output
+space.
 
 ## Details
 
 This function repeatedly samples random pairs of observations and
 calculates the distance between the points in both the original data and
-the embedding space. The correlation coefficient between the two sets of
-distances is reported. Pearson correlation measures linear agreement in
-the sampled distances, while Spearman correlation measures rank
-agreement. This differs slightly from the procedure in the Becht paper
-which randomly samples a subset of observations and then exhaustively
-calculates all pair-wise distances within that subset.
+the embedding space. The returned value is the root mean squared
+difference between the matched sampled distances.
 
-## References
-
-Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L.
-G., ... & Newell, E. W. (2019). Dimensionality reduction for visualizing
-single-cell data using UMAP. *Nature biotechnology*, *37*(1), 38-44.
+By default, each sampled distance vector is scaled to the range 0-1
+before stress is calculated. This makes the result comparable across
+embeddings with different distance scales, but it also means the value
+is mainly useful for comparing methods under identical sampling and
+scaling settings.
 
 ## See also
 
+[`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md),
 [`random_pair_distance_emd()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.md),
-[`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md),
 and
 [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
-for another measure of global structure preservation.
+for other measures of global structure preservation.
 
 ## Examples
 
 ``` r
 iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-random_pair_distance_correlation(iris, iris_pca2)
-#> [1] 0.9997105
+random_pair_distance_stress(iris, iris_pca2)
+#> [1] 0.005466072
 
 # If you plan on comparing the results of multiple output methods, then
 # pre-transposing the input data can save time
 tiris <- t(iris[, -5])
 iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-random_pair_distance_correlation(tiris, t(iris_pca1), is_transposed = TRUE)
-#> [1] 0.9977412
-random_pair_distance_correlation(tiris, t(iris_pca2), is_transposed = TRUE)
-#> [1] 0.9997525
-random_pair_distance_correlation(tiris, t(iris_pca3), is_transposed = TRUE)
-#> [1] 0.9999674
+random_pair_distance_stress(tiris, t(iris_pca1), is_transposed = TRUE)
+#> [1] 0.01893072
+random_pair_distance_stress(tiris, t(iris_pca2), is_transposed = TRUE)
+#> [1] 0.006364007
+random_pair_distance_stress(tiris, t(iris_pca3), is_transposed = TRUE)
+#> [1] 0.001815861
 ```

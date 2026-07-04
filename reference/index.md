@@ -2,6 +2,10 @@
 
 ## All functions
 
+- [`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md)
+  : Local Radius Correlation
+- [`mutual_neighbor_correlation()`](https://jlmelville.github.io/quadra/reference/mutual_neighbor_correlation.md)
+  : Mutual Neighbor Correlation
 - [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
   : Neighborhood Preservation Between Distance Matrices
 - [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
@@ -14,9 +18,14 @@
   : Random Pair Distance Correlation
 - [`random_pair_distance_emd()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.md)
   : Random Pair Distance Earth Mover's Distance
+- [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
+  : Random Pair Distance Stress
 - [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
   : Random Triplet Accuracy
 - [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
   : Area Under the RNX Curve
 - [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
   : Average Area Under the ROC Curve
+- [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  [`continuity()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  : Trustworthiness and Continuity Between Distance Matrices

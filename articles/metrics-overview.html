@@ -60,8 +60,12 @@
 
     
     
-<p>This package provides two ways to evaluate the performance of an
-embedding. The most generic is to consider “neighborhood
+<p>This package provides several ways to evaluate the performance of an
+embedding. They fall into four broad families.</p>
+<div class="section level2">
+<h2 id="local-neighborhood-preservation">Local Neighborhood Preservation<a class="anchor" aria-label="anchor" href="#local-neighborhood-preservation"></a>
+</h2>
+<p>The most generic approach is to consider “neighborhood
 preservation”:</p>
 <ol style="list-style-type: decimal">
 <li>Find the <em>k</em>-nearest neighbors of a point in the input
@@ -69,10 +73,58 @@ space.</li>
 <li>Do the same in the output space.</li>
 <li>Count the overlap.</li>
 </ol>
-<p>This only requires calculating the Euclidean distance matrix in the
-input and output spaces, without any other assumptions about the type of
-dimensionality reduction carried out. This package provides some quality
-measures based around this concept.</p>
+<p><code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> does this from exact distance matrices.
+<code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code> work with
+nearest-neighbor graphs, which is the more practical route for larger
+datasets.</p>
+<p><code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> are also
+local-neighborhood metrics, but they use rank penalties rather than only
+counting shared neighbors. They are exact distance-matrix functions for
+small datasets. <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes rank-based
+neighborhood agreement over many neighborhood sizes.</p>
+</div>
+<div class="section level2">
+<h2 id="local-scale-preservation">Local Scale Preservation<a class="anchor" aria-label="anchor" href="#local-scale-preservation"></a>
+</h2>
+<p>Neighbor identity does not say whether dense and sparse regions keep
+their relative scale. <code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code> compares
+the local radius around each observation in the input data and output
+embedding, using either the distance to the <code>k</code>th neighbor or
+the mean distance to the first <code>k</code> neighbors.</p>
+</div>
+<div class="section level2">
+<h2 id="local-graph-diagnostics">Local Graph Diagnostics<a class="anchor" aria-label="anchor" href="#local-graph-diagnostics"></a>
+</h2>
+<p><code><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation()</a></code> compares the
+mutual-neighbor count pattern in the input and output nearest-neighbor
+graphs. It asks whether points with many or few reciprocal
+nearest-neighbor relationships in the input graph have similar counts in
+the output graph.</p>
+</div>
+<div class="section level2">
+<h2 id="global-distance-preservation">Global Distance Preservation<a class="anchor" aria-label="anchor" href="#global-distance-preservation"></a>
+</h2>
+<p><code>quadra</code> also contains random triplet and random pair
+distance methods for global structure preservation:</p>
+<ul>
+<li>
+<code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code> checks whether sampled
+distance orderings are preserved.</li>
+<li>
+<code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code> measures Pearson or
+Spearman correlation between sampled input and output distances.</li>
+<li>
+<code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code> compares sampled distance
+distributions using Earth Mover’s Distance.</li>
+<li>
+<code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares matched sampled
+distances with a root mean squared difference.</li>
+</ul>
+<p>See the global preservation article for those metrics.</p>
+</div>
+<div class="section level2">
+<h2 id="label-retrieval">Label Retrieval<a class="anchor" aria-label="anchor" href="#label-retrieval"></a>
+</h2>
 <p>Alternatively, if some sort of labelling is applied to the points,
 each point can be treated as the target in a retrieval procedure:</p>
 <ol style="list-style-type: decimal">
@@ -89,10 +141,9 @@ labeling usually reserved for data intended for supervised
 classification. Quadra can also provide some help with this, but
 requires the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC
 package</a> to be installed.</p>
-<p><code>quadra</code> also contains random triplet and random pair
-distance methods for global structure preservation. See the global
-preservation article for those metrics.</p>
-  </main>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
