@@ -1,4 +1,16 @@
-# quadra 0.2.0 (July 3 2026)
+
+## New features
+
+* Added `trustworthiness()` and `continuity()` for exact distance-matrix
+rank-penalty neighborhood preservation at a fixed `k`. Only useful for small
+datasets, though because it needs the full distance matrix.
+* Added `local_radius_correlation()` for comparing local radius or scale
+preservation from raw observations or nearest-neighbor graphs with distances.
+Possibly useful for dimensionality reduction methods that attempt to retain
+the density of the input data (which standard t-SNE and UMAP do not).
+* `random_triplet_accuracy()`, `rnx_auc()`, `nn_preservation()` and
+`nn_preservation()` are now implemented with C++ so should be faster to
+calculate.
 
 ## Bug fixes and minor improvements
 
@@ -7,6 +19,10 @@
 so we no longer need to install that from github.
 * `grain_size` for thread-handling has been removed from any API that exposed
 it.
+* Numeric `random_triplet_accuracy()` sampling uses a new sampler, so the exact
+sample sequence can differ from earlier versions. Set the seed and thread count
+for reproducible results within this version. Matrix triplet inputs are
+unchanged.
 * Fix for issue where index-only nearest neighbor graphs were not allowed for
 metrics that didn't need the distances.
 * `nn_preservation()` now excludes the "self"-neighbor (i.e. the item itself)

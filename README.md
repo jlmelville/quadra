@@ -100,6 +100,15 @@ random_pair_distance_emd(tiris, pca_iris2, is_transposed = TRUE, n_threads = 2)
 # neighbors
 nn_preservation(tiris, pca_iris2, k = c(15, 30), is_transposed = TRUE)
 
+# Compare local radius or scale preservation
+local_radius_correlation(
+  tiris,
+  pca_iris2,
+  k = c(15, 30),
+  is_transposed = TRUE,
+  nn_method_in = "brute"
+)
+
 # slower methods not recommended for large datasets
 
 din <- as.matrix(dist(iris[, -5]))
@@ -111,6 +120,10 @@ nbr_pres(din, dout, k = 5)
 # Area under the RNX curve. This is like a weighted average over neighborhood preservation for a range of k
 # with a bias towards smaller k: returns a single value
 rnx_auc(din, dout)
+
+# Exact rank-penalty neighborhood preservation at a fixed k
+trustworthiness(din, dout, k = 15)
+continuity(din, dout, k = 15)
 
 # Install the PRROC package
 install.packages("PRROC")
