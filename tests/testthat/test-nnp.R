@@ -168,6 +168,170 @@ test_that("cached self-excluded graphs reproduce raw-data values", {
   )
 })
 
+test_that("local radius correlation is one for preserved local scales", {
+  x <- matrix(c(0, 1, 4, 10, 20), ncol = 1)
+
+  expect_equal(
+    local_radius_correlation(
+      x,
+      x,
+      k = c(1, 2),
+      nn_method_in = "brute",
+      nn_method_out = "brute",
+      method = "pearson"
+    ),
+    c(lrc1 = 1, lrc2 = 1)
+  )
+
+  cached <- local_radius_correlation(
+    x,
+    x * 2,
+    k = 2,
+    nn_method_in = "brute",
+    nn_method_out = "brute",
+    ret_extra = TRUE
+  )
+
+  expect_equal(cached$lrc, c(lrc2 = 1))
+  expect_equal(
+    local_radius_correlation(cached$nn_in, cached$nn_out, k = 2),
+    cached$lrc
+  )
+  expect_equal(ncol(cached$scale_in), 1)
+  expect_equal(ncol(cached$scale_out), 1)
+})
+
+test_that("local radius correlation supports graph distances and statistics", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      2, 4,
+      3, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  # fmt: skip
+  dist_in <- matrix(
+    c(
+      1, 4,
+      1, 2,
+      2, 5,
+      3, 8
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  # fmt: skip
+  dist_out <- matrix(
+    c(
+      2, 2,
+      1, 3,
+      4, 4,
+      2, 6
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  graph_in <- list(idx = idx, dist = dist_in)
+  graph_out <- list(idx = idx, dist = dist_out)
+
+  expect_equal(
+    local_radius_correlation(
+      graph_in,
+      graph_out,
+      k = 1,
+      method = "pearson"
+    ),
+    c(lrc1 = unname(stats::cor(dist_in[, 1], dist_out[, 1])))
+  )
+  expect_equal(
+    local_radius_correlation(
+      graph_in,
+      graph_out,
+      k = 2,
+      statistic = "mean",
+      method = "pearson"
+    ),
+    c(
+      lrc2 = unname(
+        stats::cor(rowMeans(dist_in), rowMeans(dist_out))
+      )
+    )
+  )
+})
+
+test_that("local radius correlation validates graph distances", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      1, 2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  graph <- list(idx = idx, dist = matrix(1, nrow = 3, ncol = 2))
+
+  expect_error(
+    local_radius_correlation(list(idx = idx), graph, k = 1),
+    "dist"
+  )
+  expect_error(
+    local_radius_correlation(
+      list(idx = idx, dist = matrix(NA_real_, nrow = 3, ncol = 2)),
+      graph,
+      k = 1
+    ),
+    "finite distances"
+  )
+})
+
+test_that("local radius correlation handles constant and zero radii", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      1, 2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  constant_graph <- list(idx = idx, dist = matrix(1, nrow = 3, ncol = 2))
+
+  expect_equal(
+    local_radius_correlation(constant_graph, constant_graph, k = 1),
+    c(lrc1 = NA_real_)
+  )
+
+  x <- matrix(c(0, 0, 2, 5), ncol = 1)
+  expect_equal(
+    local_radius_correlation(
+      x,
+      x,
+      k = 1,
+      nn_method_in = "brute",
+      nn_method_out = "brute"
+    ),
+    c(lrc1 = 1)
+  )
+  expect_error(
+    local_radius_correlation(
+      x,
+      x,
+      k = 1,
+      log = TRUE,
+      nn_method_in = "brute",
+      nn_method_out = "brute"
+    ),
+    "positive"
+  )
+})
+
 test_that("old self-inclusive cached graphs are stripped with a warning", {
   old_graph <- rnndescent::brute_force_knn(m, k = 3, metric = "sqeuclidean")
   stripped_graph <- list(

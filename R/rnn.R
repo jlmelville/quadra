@@ -225,6 +225,210 @@ nn_preservation <- function(
   res
 }
 
+#' Local Radius Correlation
+#'
+#' Compares the local scale around each observation in the input data and output
+#' embedding. The local scale is summarized from nearest-neighbor distances,
+#' either as the distance to the `k`th nearest non-self neighbor or as the mean
+#' distance to the first `k` nearest non-self neighbors.
+#'
+#' This is a local scale diagnostic, not a density estimator. A high value means
+#' observations with small or large local radii in the input data tend to have
+#' small or large local radii in the output embedding. It complements
+#' [nn_preservation()], which measures whether neighbor identities are
+#' preserved.
+#'
+#' `Xin` and `Xout` can be raw observation matrices or pre-computed nearest
+#' neighbor graphs. Unlike [nn_preservation()], supplied nearest-neighbor graphs
+#' must contain a `dist` matrix as well as an `idx` matrix because this metric
+#' uses neighbor distances. Graphs calculated by this function are
+#' self-excluded. Older cached self-inclusive graphs are detected and stripped
+#' with a warning.
+#'
+#' If either local-radius vector is constant, the correlation is undefined and
+#' the corresponding result is `NA_real_`. If `log = TRUE`, all selected local
+#' radius values must be positive, so duplicate points that produce zero local
+#' radii should be handled before requesting a log-scale comparison.
+#'
+#' @param Xin the input data (usually high-dimensional), a matrix or data frame
+#'   with one observation per row, or if `is_transposed = TRUE`, one observation
+#'   per column. Alternatively, it can be a pre-computed nearest neighbor graph
+#'   with `idx` and `dist` matrix elements.
+#' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
+#'   or data frame with one observation per row, or if `is_transposed = TRUE`,
+#'   one observation per column. Alternatively, it can be a pre-computed nearest
+#'   neighbor graph with `idx` and `dist` matrix elements.
+#' @param k the number of nearest neighbors to use. Can be a numeric vector, in
+#'   which case the local radius correlation is calculated for each value
+#'   separately.
+#' @param statistic the local scale statistic. `"radius"` uses the distance to
+#'   the `k`th nearest neighbor. `"mean"` uses the mean distance to the first
+#'   `k` nearest neighbors.
+#' @param method correlation method, either `"spearman"` or `"pearson"`.
+#' @param log if `TRUE`, calculate the correlation on log local radii.
+#' @inheritParams nn_preservation
+#' @return A named numeric vector of local radius correlations, one value for
+#'   each `k`. Items are named `lrc<k>`, where `<k>` refers to the values
+#'   provided in the `k` parameter. If `ret_extra = TRUE`, then a list is
+#'   returned containing:
+#'
+#'   * `lrc`: the vector of local radius correlations.
+#'   * `nn_in`: the nearest neighbor graph for `Xin`.
+#'   * `nn_out`: the nearest neighbor graph for `Xout`.
+#'   * `scale_in`: a matrix of input local scale values, one column per `k`.
+#'   * `scale_out`: a matrix of output local scale values, one column per `k`.
+#'
+#' @seealso [nn_preservation()] for neighbor-identity preservation and
+#'   [trustworthiness()] for exact rank-penalty neighborhood preservation on
+#'   distance matrices.
+#' @examples
+#' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+#' local_radius_correlation(
+#'   iris[, -5],
+#'   iris_pca,
+#'   k = 15,
+#'   nn_method_in = "brute"
+#' )
+#'
+#' cached <- local_radius_correlation(
+#'   iris[, -5],
+#'   iris_pca,
+#'   k = c(15, 30),
+#'   nn_method_in = "brute",
+#'   ret_extra = TRUE
+#' )
+#' local_radius_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
+#' @export
+local_radius_correlation <- function(
+  Xin,
+  Xout,
+  k = 15,
+  statistic = c("radius", "mean"),
+  method = c("spearman", "pearson"),
+  log = FALSE,
+  nn_method_in = "nnd",
+  metric_in = "sqeuclidean",
+  nn_method_out = "brute",
+  metric_out = "sqeuclidean",
+  is_transposed = FALSE,
+  n_threads = 0,
+  verbose = FALSE,
+  ret_extra = FALSE,
+  nn_args_in = list(),
+  nn_args_out = list()
+) {
+  k <- validate_positive_integer_vector(k, "k")
+  statistic <- match.arg(statistic)
+  method <- match.arg(method)
+  if (!is.logical(log) || length(log) != 1L || is.na(log)) {
+    stop("log must be TRUE or FALSE", call. = FALSE)
+  }
+  if (!is.logical(ret_extra) || length(ret_extra) != 1L || is.na(ret_extra)) {
+    stop("ret_extra must be TRUE or FALSE", call. = FALSE)
+  }
+  max_k <- max(k)
+
+  tsmessage("Getting neighbor graph for Xin")
+  nn_in <-
+    do.call(
+      get_nn_graph,
+      list(
+        X = Xin,
+        k = max_k,
+        nn_method = nn_method_in,
+        metric = metric_in,
+        is_transposed = is_transposed,
+        n_threads = n_threads,
+        verbose = verbose,
+        nn_args = nn_args_in,
+        name = "Xin"
+      )
+    )
+  check_nn_graph_dist(nn_in, "Xin")
+
+  tsmessage("Getting neighbor graph for Xout")
+  nn_out <-
+    do.call(
+      get_nn_graph,
+      list(
+        X = Xout,
+        k = max_k,
+        nn_method = nn_method_out,
+        metric = metric_out,
+        is_transposed = is_transposed,
+        n_threads = n_threads,
+        verbose = verbose,
+        nn_args = nn_args_out,
+        name = "Xout"
+      )
+    )
+  check_nn_graph_dist(nn_out, "Xout")
+
+  if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
+    stop(
+      "Xin and Xout neighbor graphs must have the same number of rows",
+      call. = FALSE
+    )
+  }
+
+  scale_in <- local_radius_values(nn_in, k, statistic)
+  scale_out <- local_radius_values(nn_out, k, statistic)
+  colnames(scale_in) <- paste0("lrc", k)
+  colnames(scale_out) <- paste0("lrc", k)
+
+  if (log) {
+    if (any(scale_in <= 0) || any(scale_out <= 0)) {
+      stop(
+        "local radius values must be positive when log = TRUE",
+        call. = FALSE
+      )
+    }
+    scale_in <- base::log(scale_in)
+    scale_out <- base::log(scale_out)
+  }
+
+  lrc <- vapply(
+    seq_along(k),
+    function(i) local_scale_correlation(scale_in[, i], scale_out[, i], method),
+    numeric(1)
+  )
+  names(lrc) <- paste0("lrc", k)
+
+  if (ret_extra) {
+    list(
+      nn_in = nn_in,
+      nn_out = nn_out,
+      lrc = lrc,
+      scale_in = scale_in,
+      scale_out = scale_out
+    )
+  } else {
+    lrc
+  }
+}
+
+local_radius_values <- function(nn_graph, k, statistic) {
+  dist <- nn_graph$dist
+  vapply(
+    k,
+    function(ki) {
+      if (statistic == "radius") {
+        dist[, ki]
+      } else {
+        rowMeans(dist[, seq_len(ki), drop = FALSE])
+      }
+    },
+    numeric(nrow(dist))
+  )
+}
+
+local_scale_correlation <- function(x, y, method) {
+  if (length(unique(x)) < 2L || length(unique(y)) < 2L) {
+    return(NA_real_)
+  }
+  unname(stats::cor(x = x, y = y, method = method))
+}
+
 calc_nn_graph <-
   function(
     X,
@@ -279,7 +483,7 @@ get_nn_graph <-
         warning(
           "Ignoring 'k' in ",
           name,
-          " nn_args; use nn_preservation()'s k argument",
+          " nn_args; use the top-level k argument",
           call. = FALSE
         )
         nn_args$k <- NULL
@@ -351,6 +555,28 @@ check_nn_graph <- function(graph, name = "graph") {
       " idx values must be between 1 and the number of graph rows",
       call. = FALSE
     )
+  }
+  invisible(graph)
+}
+
+check_nn_graph_dist <- function(graph, name = "graph") {
+  check_nn_graph(graph, name)
+  dist <- graph$dist
+  if (is.null(dist)) {
+    stop(
+      name,
+      " must contain a 'dist' matrix for local radius correlation",
+      call. = FALSE
+    )
+  }
+  if (!is.numeric(dist)) {
+    stop(name, " dist must be a numeric matrix", call. = FALSE)
+  }
+  if (anyNA(dist) || any(!is.finite(dist))) {
+    stop(name, " dist must contain finite distances", call. = FALSE)
+  }
+  if (any(dist < 0)) {
+    stop(name, " dist must contain non-negative distances", call. = FALSE)
   }
   invisible(graph)
 }

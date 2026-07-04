@@ -13,6 +13,46 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 nn_preservation(iris_x, pca_iris, k = c(15, 30))
 ```
 
+## Local Radius Correlation
+
+Nearest neighbor preservation asks whether the same observations remain nearby.
+`local_radius_correlation()` asks a different local-scale question: do points in
+dense or sparse regions of the input data still have relatively small or large
+nearest-neighbor radii in the embedding?
+
+```R
+local_radius_correlation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute"
+)
+```
+
+By default, the metric uses Spearman correlation between the distance to the
+`k`th nearest non-self neighbor in the input data and output embedding. Set
+`statistic = "mean"` to use the mean distance to the first `k` neighbors, or
+`log = TRUE` to compare log radii when all selected radii are positive.
+
+If you already have nearest-neighbor graphs with distance matrices, you can
+reuse them:
+
+```R
+cached <- local_radius_correlation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute",
+  ret_extra = TRUE
+)
+
+local_radius_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
+```
+
+This metric is a radius or scale diagnostic. It does not estimate local density
+directly and should be interpreted alongside neighbor-identity metrics such as
+`nn_preservation()`.
+
 For larger datasets, `nn_preservation()` can use approximate nearest neighbors
 via [rnndescent](https://github.com/jlmelville/rnndescent). If you have
 nearest-neighbor matrices from another approximate nearest neighbor package,
@@ -82,3 +122,9 @@ Cooley, S. M., Hamilton, T., Deeds, E. J., & Ray, J. C. J. (2019).
 A novel metric reveals previously unrecognized distortion in dimensionality reduction of scRNA-Seq data.
 *BioRxiv*, 689851.
 <https://www.biorxiv.org/content/10.1101/689851v6>
+
+Narayan, A., Berger, B., & Cho, H. (2021).
+Assessing single-cell transcriptomic variability through density-preserving
+data visualization.
+*Nature Biotechnology*, *39*, 765-774.
+<https://doi.org/10.1038/s41587-020-00801-7>
