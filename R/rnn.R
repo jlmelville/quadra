@@ -198,20 +198,21 @@ nn_preservation <- function(
     )
   }
 
-  # use if ret_extra = TRUE
-  nnpvs <- list()
-  nnps <- rep(0, length(k))
-  for (i in seq_along(k)) {
-    ki <- k[i]
-    nnpv <- nn_accuracyv(nn_out, ref_idx = nn_in, k = ki)
-    nnps[i] <- sum(nnpv) / length(nnpv)
-    if (ret_extra) {
-      nnpvs[[paste0("nnp", as.character(ki))]] <- nnpv
-    }
-  }
+  overlap_counts <- nn_overlap_counts(
+    idx = nn_out,
+    ref_idx = nn_in,
+    k = k,
+    n_threads = n_threads
+  )
+  nnp_by_row <- sweep(overlap_counts, 2L, k, `/`)
+  nnps <- colMeans(nnp_by_row)
   names(nnps) <- paste0("nnp", k)
 
   if (ret_extra) {
+    nnpvs <- list()
+    for (i in seq_along(k)) {
+      nnpvs[[paste0("nnp", as.character(k[i]))]] <- nnp_by_row[, i]
+    }
     res <- list(
       nn_in = nn_in,
       nn_out = nn_out,
@@ -454,6 +455,38 @@ check_graph <- function(idx, dist = NULL, k = NULL) {
   }
   k <- validate_positive_integer(k, "k")
   list(idx = idx, dist = dist, k = k)
+}
+
+nn_overlap_counts <- function(idx, ref_idx, k, n_threads = 0) {
+  if (is.list(idx)) {
+    idx <- idx$idx
+  }
+  if (!methods::is(idx, "matrix")) {
+    stop("idx must be a matrix or nearest-neighbor graph", call. = FALSE)
+  }
+
+  if (is.list(ref_idx)) {
+    ref_idx <- ref_idx$idx
+  }
+  if (!methods::is(ref_idx, "matrix")) {
+    stop("ref_idx must be a matrix or nearest-neighbor graph", call. = FALSE)
+  }
+
+  k <- validate_positive_integer_vector(k, "k")
+  max_k <- max(k)
+
+  if (ncol(idx) < max_k) {
+    stop("Not enough columns in idx for max(k) = ", max_k, call. = FALSE)
+  }
+  if (ncol(ref_idx) < max_k) {
+    stop("Not enough columns in ref_idx for max(k) = ", max_k, call. = FALSE)
+  }
+
+  if (nrow(ref_idx) != nrow(idx)) {
+    stop("idx and ref_idx must have the same number of rows", call. = FALSE)
+  }
+
+  neighbor_overlap_counts(idx, ref_idx, k, n_threads)
 }
 
 nn_intersect <-

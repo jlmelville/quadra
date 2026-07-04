@@ -78,17 +78,21 @@ nbr_pres <- function(din, dout, k) {
 #' @return Vector of preservation values, one for each row of `kin`.
 #' @export
 nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
+  if (!methods::is(kin, "matrix")) {
+    stop("kin must be a matrix", call. = FALSE)
+  }
+  if (!methods::is(kout, "matrix")) {
+    stop("kout must be a matrix", call. = FALSE)
+  }
+  k <- validate_positive_integer(k, "k")
   if (k > ncol(kin) || k > ncol(kout)) {
     stop("k cannot be larger than the number of columns in kin or kout")
   }
-  preservations <- vector(mode = "numeric", length = nrow(kin))
-  for (i in seq_len(nrow(kin))) {
-    ki <- kin[i, 1:k]
-    kj <- kout[i, 1:k]
-    k_shared <- Reduce(intersect, list(ki, kj))
-    preservations[i] <- length(k_shared)
+  if (nrow(kin) != nrow(kout)) {
+    stop("kin and kout must have the same number of rows", call. = FALSE)
   }
-  preservations * (1 / k)
+  counts <- neighbor_overlap_counts(kin, kout, k)
+  counts[, 1] * (1 / k)
 }
 
 #' Area Under the RNX Curve

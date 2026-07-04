@@ -10,6 +10,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// neighbor_overlap_counts
+IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx, const NumericMatrix& ref_idx, const IntegerVector& k, std::size_t n_threads);
+RcppExport SEXP _quadra_neighbor_overlap_counts(SEXP idxSEXP, SEXP ref_idxSEXP, SEXP kSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type ref_idx(ref_idxSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(neighbor_overlap_counts(idx, ref_idx, k, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // random_distances
 List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_pairs, std::size_t n_threads, bool verbose);
 RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
@@ -73,6 +87,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_quadra_neighbor_overlap_counts", (DL_FUNC) &_quadra_neighbor_overlap_counts, 4},
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 7},
     {"_quadra_rnx_auc_direct", (DL_FUNC) &_quadra_rnx_auc_direct, 2},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},

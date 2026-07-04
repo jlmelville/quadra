@@ -207,33 +207,112 @@ test_that("nearest-neighbor preservation returns per-row values", {
   # fmt: skip
   idx <- matrix(
     c(
-      2, 3,
-      1, 3,
-      1, 2
+      3, 2, 4,
+      3, 4, 1,
+      1, 2, 4,
+      3, 1, 2
     ),
-    nrow = 3,
+    nrow = 4,
     byrow = TRUE
   )
   # fmt: skip
   ref_idx <- matrix(
     c(
-      2, 3,
-      3, 1,
-      1, 2
+      2, 3, 4,
+      1, 3, 4,
+      4, 1, 2,
+      3, 2, 1
     ),
-    nrow = 3,
+    nrow = 4,
     byrow = TRUE
   )
 
   res <- nn_preservation(
     list(idx = ref_idx),
     list(idx = idx),
-    k = 1,
+    k = c(2, 1, 2),
     ret_extra = TRUE
   )
 
-  expect_equal(res$nnp, c(nnp1 = 2 / 3))
-  expect_equal(res$nnpv$nnp1, c(1, 0, 1))
+  expect_equal(res$nnp, c(nnp2 = 0.625, nnp1 = 0.25, nnp2 = 0.625))
+  expect_equal(res$nnpv$nnp2, c(1, 0.5, 0.5, 0.5))
+  expect_equal(res$nnpv$nnp1, c(0, 0, 0, 1))
+})
+
+test_that("nearest-neighbor overlap counts preserve requested k order", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      3, 2, 4,
+      3, 4, 1,
+      1, 2, 4,
+      3, 1, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  # fmt: skip
+  ref_idx <- matrix(
+    c(
+      2, 3, 4,
+      1, 3, 4,
+      4, 1, 2,
+      3, 2, 1
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+
+  expect_equal(
+    nn_overlap_counts(idx, ref_idx, k = c(2, 1, 2)),
+    matrix(
+      c(
+        2,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        2,
+        1,
+        1,
+        1
+      ),
+      nrow = 4
+    )
+  )
+})
+
+test_that("nearest-neighbor overlap counts unique shared indices", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      2, 2, 3,
+      1, 1, 3,
+      1, 1, 2,
+      1, 1, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  # fmt: skip
+  ref_idx <- matrix(
+    c(
+      3, 4, 2,
+      3, 4, 1,
+      2, 4, 1,
+      2, 3, 1
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+
+  expect_equal(
+    nn_overlap_counts(idx, ref_idx, k = c(2, 3)),
+    matrix(c(0, 0, 0, 0, 2, 2, 2, 2), nrow = 4)
+  )
 })
 
 test_that("nearest-neighbor inputs are validated", {

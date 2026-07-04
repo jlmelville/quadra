@@ -36,6 +36,53 @@ test_that("nearest-neighbor matrix preservation uses the supplied neighbors", {
   expect_equal(nbr_pres_knn(kin, kout, k = 2), rep(0.5, 4))
 })
 
+test_that("nearest-neighbor matrix preservation counts unique shared indices", {
+  # fmt: skip
+  kin <- matrix(
+    c(
+      2, 2, 3,
+      1, 1, 3,
+      1, 1, 2,
+      1, 1, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  # fmt: skip
+  kout <- matrix(
+    c(
+      3, 4, 2,
+      3, 4, 1,
+      2, 4, 1,
+      2, 3, 1
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+
+  expect_equal(nbr_pres_knn(kin, kout, k = 2), rep(0, 4))
+  expect_equal(nbr_pres_knn(kin, kout, k = 3), rep(2 / 3, 4))
+})
+
+test_that("nearest-neighbor matrix preservation validates inputs", {
+  # fmt: skip
+  kin <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      2, 1,
+      3, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  kout <- kin
+
+  expect_error(nbr_pres_knn(kin, kout, k = 0), "positive integer")
+  expect_error(nbr_pres_knn(kin, kout, k = 3), "number of columns")
+  expect_error(nbr_pres_knn(kin, kout[-1, ], k = 1), "same number of rows")
+})
+
 test_that("co-ranking matrices exclude self-neighbors", {
   din <- distance_matrix(matrix(c(0, 1, 3, 10), ncol = 1))
   dout <- distance_matrix(matrix(c(0, 10, 3, 1), ncol = 1))
