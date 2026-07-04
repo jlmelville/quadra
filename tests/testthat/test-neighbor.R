@@ -87,3 +87,55 @@ test_that("QNX and RNX match hand calculations on tiny co-ranking matrices", {
   expect_equal(rnx_crm(crm, k = 2), -1 / 2)
   expect_equal(rnx_auc_crm(crm), -1 / 4)
 })
+
+test_that("direct RNX AUC matches co-ranking reference with tied ranks", {
+  # fmt: skip
+  din <- matrix(
+    c(
+      0, 1, 1, 2, 2,
+      1, 0, 3, 3, 2,
+      1, 3, 0, 2, 2,
+      2, 3, 2, 0, 1,
+      2, 2, 2, 1, 0
+    ),
+    nrow = 5,
+    byrow = TRUE
+  )
+  # fmt: skip
+  dout <- matrix(
+    c(
+      0, 2, 1, 1, 2,
+      2, 0, 2, 3, 3,
+      1, 2, 0, 3, 3,
+      1, 3, 3, 0, 2,
+      2, 3, 3, 2, 0
+    ),
+    nrow = 5,
+    byrow = TRUE
+  )
+
+  expect_equal(
+    rnx_auc(din, dout),
+    rnx_auc_crm(coranking_matrix(din, dout))
+  )
+})
+
+test_that("direct RNX AUC matches co-ranking reference with missing distances", {
+  # fmt: skip
+  din <- matrix(
+    c(
+       0,  1, NA,  2,
+       1,  0,  2, NA,
+      NA,  2,  0,  1,
+       2, NA,  1,  0
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  dout <- din
+
+  expect_equal(
+    rnx_auc(din, dout),
+    rnx_auc_crm(coranking_matrix(din, dout))
+  )
+})

@@ -114,7 +114,7 @@ rnx_auc <- function(din, dout) {
   if (nrow(din) < 3L) {
     stop("RNX AUC requires at least three observations", call. = FALSE)
   }
-  rnx_auc_crm(coranking_matrix(din, dout))
+  rnx_auc_direct(din, dout)
 }
 
 # Co-ranking Matrix

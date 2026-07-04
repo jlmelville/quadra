@@ -27,6 +27,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rnx_auc_direct
+double rnx_auc_direct(const NumericMatrix& din, const NumericMatrix& dout);
+RcppExport SEXP _quadra_rnx_auc_direct(SEXP dinSEXP, SEXP doutSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
+    rcpp_result_gen = Rcpp::wrap(rnx_auc_direct(din, dout));
+    return rcpp_result_gen;
+END_RCPP
+}
 // triplet_sample
 double triplet_sample(const IntegerMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_threads);
 RcppExport SEXP _quadra_triplet_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
@@ -62,6 +74,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 7},
+    {"_quadra_rnx_auc_direct", (DL_FUNC) &_quadra_rnx_auc_direct, 2},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 6},
     {NULL, NULL, 0}

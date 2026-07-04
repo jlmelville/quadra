@@ -5,6 +5,10 @@ random_distances <- function(xin, xout, metric_in = "euclidean", metric_out = "e
     .Call(`_quadra_random_distances`, xin, xout, metric_in, metric_out, n_pairs, n_threads, verbose)
 }
 
+rnx_auc_direct <- function(din, dout) {
+    .Call(`_quadra_rnx_auc_direct`, din, dout)
+}
+
 triplet_sample <- function(triplets, xin, xout, metric_in = "sqeuclidean", metric_out = "sqeuclidean", n_threads = 0L) {
     .Call(`_quadra_triplet_sample`, triplets, xin, xout, metric_in, metric_out, n_threads)
 }
