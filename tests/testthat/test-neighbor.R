@@ -186,3 +186,35 @@ test_that("direct RNX AUC matches co-ranking reference with missing distances", 
     rnx_auc_crm(coranking_matrix(din, dout))
   )
 })
+
+test_that("trustworthiness and continuity are one for exact rank preservation", {
+  din <- distance_matrix(matrix(c(0, 1, 4, 9, 16), ncol = 1))
+
+  expect_equal(trustworthiness(din, din, k = 1), 1)
+  expect_equal(continuity(din, din, k = 1), 1)
+  expect_equal(trustworthiness(din, din, k = 2), 1)
+  expect_equal(continuity(din, din, k = 2), 1)
+})
+
+test_that("trustworthiness and continuity match hand-computed rank penalties", {
+  din <- distance_matrix(matrix(c(0, 1, 4, 9, 16), ncol = 1))
+  dout <- distance_matrix(matrix(c(0, 4, 16, 1, 9), ncol = 1))
+
+  expect_equal(trustworthiness(din, dout, k = 1), 1 / 5)
+  expect_equal(continuity(din, dout, k = 1), 7 / 15)
+  expect_equal(trustworthiness(din, dout, k = 2), 7 / 15)
+  expect_equal(continuity(din, dout, k = 2), 1 / 3)
+  expect_equal(
+    continuity(din, dout, k = 1),
+    trustworthiness(dout, din, k = 1)
+  )
+})
+
+test_that("trustworthiness and continuity validate k and sample size", {
+  din <- distance_matrix(matrix(c(0, 1, 4, 9, 16), ncol = 1))
+  tiny <- distance_matrix(matrix(c(0, 1), ncol = 1))
+
+  expect_error(trustworthiness(din, din, k = 0), "positive integer")
+  expect_error(continuity(din, din, k = 3), "less than half")
+  expect_error(trustworthiness(tiny, tiny, k = 1), "at least three")
+})

@@ -95,6 +95,55 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
   counts[, 1] * (1 / k)
 }
 
+#' Trustworthiness and Continuity Between Distance Matrices
+#'
+#' `trustworthiness()` penalizes observations that appear among the `k` nearest
+#' neighbors in `dout` but have input-space rank greater than `k` in `din`.
+#' `continuity()` applies the dual penalty to input-space neighbors that are no
+#' longer among the `k` nearest neighbors in `dout`.
+#'
+#' Both functions use exact ranks from the supplied distance matrices and
+#' exclude the diagonal self-neighbor from each row. Tied distances are ranked in
+#' their original column order after self-neighbor exclusion, matching
+#' `rank(ties.method = "first")`.
+#'
+#' Because these functions require full `n` by `n` distance matrices, they are
+#' practical only for small datasets. For larger datasets, use nearest-neighbor
+#' preservation metrics such as [nn_preservation()] or [nbr_pres_knn()].
+#'
+#' Unlike [nbr_pres()], which only counts shared neighbors, these metrics weight
+#' each unexpected or missing neighbor by how far its rank lies outside the
+#' `k`-neighborhood. [rnx_auc()] also uses rank-based neighborhood agreement,
+#' but aggregates across neighborhood sizes; these functions report the standard
+#' trustworthiness or continuity score at one `k`.
+#'
+#' @param din Input distance matrix. The "ground truth" or reference distances.
+#' @param dout Output distance matrix. A set of distances to compare to the
+#'   reference distances.
+#' @param k The size of the neighborhood. Must be a positive integer less than
+#'   half the number of observations so the standard 0-1 normalization remains
+#'   bounded.
+#' @return A scalar score. A value of 1 indicates no rank-penalty errors at
+#'   neighborhood size `k`; lower values indicate worse preservation.
+#' @references
+#' Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
+#' projection methods: An experimental study. In *Artificial Neural Networks -
+#' ICANN 2001* (pp. 485-491).
+#' @export
+trustworthiness <- function(din, dout, k) {
+  validate_distance_matrix_pair(din, dout)
+  k <- validate_rank_penalty_k(k, nrow(din))
+  trustworthiness_exact(din, dout, k)
+}
+
+#' @rdname trustworthiness
+#' @export
+continuity <- function(din, dout, k) {
+  validate_distance_matrix_pair(din, dout)
+  k <- validate_rank_penalty_k(k, nrow(din))
+  continuity_exact(din, dout, k)
+}
+
 #' Area Under the RNX Curve
 #'
 #' The RNX curve is formed by calculating the `rnx_crm` metric for
@@ -352,6 +401,23 @@ validate_distance_matrix_pair <- function(din, dout) {
     stop("din and dout must be square distance matrices", call. = FALSE)
   }
   invisible(TRUE)
+}
+
+validate_rank_penalty_k <- function(k, n_obs) {
+  k <- validate_positive_integer(k, "k")
+  if (n_obs < 3L) {
+    stop(
+      "trustworthiness and continuity require at least three observations",
+      call. = FALSE
+    )
+  }
+  if ((2L * k) >= n_obs) {
+    stop(
+      "k must be less than half the number of observations",
+      call. = FALSE
+    )
+  }
+  k
 }
 
 
