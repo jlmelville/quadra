@@ -129,6 +129,12 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
 #' Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
 #' projection methods: An experimental study. In *Artificial Neural Networks -
 #' ICANN 2001* (pp. 485-491).
+#' @examples
+#' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+#' din <- as.matrix(stats::dist(iris[, -5]))
+#' dout <- as.matrix(stats::dist(iris_pca))
+#' trustworthiness(din, dout, k = 15)
+#' continuity(din, dout, k = 15)
 #' @export
 trustworthiness <- function(din, dout, k) {
   validate_distance_matrix_pair(din, dout)

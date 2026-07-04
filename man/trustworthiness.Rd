@@ -45,6 +45,13 @@ each unexpected or missing neighbor by how far its rank lies outside the
 but aggregates across neighborhood sizes; these functions report the standard
 trustworthiness or continuity score at one \code{k}.
 }
+\examples{
+iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+din <- as.matrix(stats::dist(iris[, -5]))
+dout <- as.matrix(stats::dist(iris_pca))
+trustworthiness(din, dout, k = 15)
+continuity(din, dout, k = 15)
+}
 \references{
 Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
 projection methods: An experimental study. In \emph{Artificial Neural Networks -
