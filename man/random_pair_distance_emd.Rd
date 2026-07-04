@@ -87,6 +87,7 @@ A quantitative framework for evaluating single-cell data structure preservation 
 \url{https://github.com/KenLauLab/DR-structure-preservation}
 }
 \seealso{
-\code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}} and \code{\link[=random_triplet_accuracy]{random_triplet_accuracy()}}
-for another measure of global structure preservation.
+\code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}},
+\code{\link[=random_pair_distance_stress]{random_pair_distance_stress()}}, and \code{\link[=random_triplet_accuracy]{random_triplet_accuracy()}} for
+another measure of global structure preservation.
 }

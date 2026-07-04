@@ -83,13 +83,17 @@ random_triplet_accuracy(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
 
 # Other ways to measure global preservation:
 
-# measure Pearson correlation between equivalent input and output distances
-# similar to the method used by Becht and co-workers
+# measure Pearson or Spearman correlation between equivalent input and output
+# distances, similar to the method used by Becht and co-workers
 random_pair_distance_correlation(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
+random_pair_distance_correlation(tiris, pca_iris3, method = "spearman", is_transposed = TRUE)
 
 # convert distances to an empirical distribution and compare them via Earth
 # Mover's Distance (1D Wasserstein) based on the method used by Heiser and Lau
 random_pair_distance_emd(tiris, pca_iris2, is_transposed = TRUE, n_threads = 2)
+
+# compare matched sampled distances with range-scaled stress
+random_pair_distance_stress(tiris, pca_iris2, is_transposed = TRUE, n_threads = 2)
 
 # For local preservation use nearest neighbor preservation
 # Pass a vector to k to get back the preservation for different numbers of
@@ -98,6 +102,15 @@ nn_preservation(tiris, pca_iris2, k = c(15, 30), is_transposed = TRUE)
 
 # Compare local radius or scale preservation
 local_radius_correlation(
+  tiris,
+  pca_iris2,
+  k = c(15, 30),
+  is_transposed = TRUE,
+  nn_method_in = "brute"
+)
+
+# Compare mutual-neighbor count patterns in the input and output graphs
+mutual_neighbor_correlation(
   tiris,
   pca_iris2,
   k = c(15, 30),

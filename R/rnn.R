@@ -407,6 +407,164 @@ local_radius_correlation <- function(
   }
 }
 
+#' Mutual Neighbor Correlation
+#'
+#' Compares the mutual-neighbor count pattern in the input data and output
+#' embedding. For each observation, its mutual-neighbor count is the number of
+#' its first `k` nearest non-self neighbors that also include the observation
+#' among their first `k` nearest non-self neighbors.
+#'
+#' This is a local graph diagnostic, not a replacement for nearest-neighbor
+#' preservation. A high value means observations with many or few mutual-neighbor
+#' relationships in the input graph tend to have many or few mutual-neighbor
+#' relationships in the output graph. It complements [nn_preservation()], which
+#' measures whether neighbor identities are preserved directly.
+#'
+#' `Xin` and `Xout` can be raw observation matrices or pre-computed nearest
+#' neighbor graphs. Unlike [local_radius_correlation()], supplied
+#' nearest-neighbor graphs only need an `idx` matrix because this metric uses
+#' neighbor identities, not distances. Graphs calculated by this function are
+#' self-excluded. Older cached self-inclusive graphs are detected and stripped
+#' with a warning.
+#'
+#' If either mutual-neighbor count vector is constant, the correlation is
+#' undefined and the corresponding result is `NA_real_`.
+#'
+#' @param k the number of nearest neighbors to use. Can be a numeric vector, in
+#'   which case the mutual neighbor correlation is calculated for each value
+#'   separately.
+#' @param method correlation method, either `"pearson"` or `"spearman"`.
+#' @inheritParams nn_preservation
+#' @return A named numeric vector of mutual neighbor correlations, one value for
+#'   each `k`. Items are named `mnc<k>`, where `<k>` refers to the values
+#'   provided in the `k` parameter. If `ret_extra = TRUE`, then a list is
+#'   returned containing:
+#'
+#'   * `mnc`: the vector of mutual neighbor correlations.
+#'   * `nn_in`: the nearest neighbor graph for `Xin`.
+#'   * `nn_out`: the nearest neighbor graph for `Xout`.
+#'   * `mutual_neighbor_in`: a matrix of input mutual-neighbor counts, one
+#'   column per `k`.
+#'   * `mutual_neighbor_out`: a matrix of output mutual-neighbor counts, one
+#'   column per `k`.
+#'
+#' @seealso [nn_preservation()] for neighbor-identity preservation and
+#'   [local_radius_correlation()] for local scale preservation.
+#' @examples
+#' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+#' mutual_neighbor_correlation(
+#'   iris[, -5],
+#'   iris_pca,
+#'   k = 15,
+#'   nn_method_in = "brute"
+#' )
+#'
+#' cached <- mutual_neighbor_correlation(
+#'   iris[, -5],
+#'   iris_pca,
+#'   k = c(15, 30),
+#'   nn_method_in = "brute",
+#'   ret_extra = TRUE
+#' )
+#' mutual_neighbor_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
+#' @export
+mutual_neighbor_correlation <- function(
+  Xin,
+  Xout,
+  k = 15,
+  method = c("pearson", "spearman"),
+  nn_method_in = "nnd",
+  metric_in = "sqeuclidean",
+  nn_method_out = "brute",
+  metric_out = "sqeuclidean",
+  is_transposed = FALSE,
+  n_threads = 0,
+  verbose = FALSE,
+  ret_extra = FALSE,
+  nn_args_in = list(),
+  nn_args_out = list()
+) {
+  k <- validate_positive_integer_vector(k, "k")
+  method <- match.arg(method)
+  if (!is.logical(ret_extra) || length(ret_extra) != 1L || is.na(ret_extra)) {
+    stop("ret_extra must be TRUE or FALSE", call. = FALSE)
+  }
+  max_k <- max(k)
+
+  tsmessage("Getting neighbor graph for Xin")
+  nn_in <-
+    do.call(
+      get_nn_graph,
+      list(
+        X = Xin,
+        k = max_k,
+        nn_method = nn_method_in,
+        metric = metric_in,
+        is_transposed = is_transposed,
+        n_threads = n_threads,
+        verbose = verbose,
+        nn_args = nn_args_in,
+        name = "Xin"
+      )
+    )
+  check_nn_graph(nn_in, "Xin")
+
+  tsmessage("Getting neighbor graph for Xout")
+  nn_out <-
+    do.call(
+      get_nn_graph,
+      list(
+        X = Xout,
+        k = max_k,
+        nn_method = nn_method_out,
+        metric = metric_out,
+        is_transposed = is_transposed,
+        n_threads = n_threads,
+        verbose = verbose,
+        nn_args = nn_args_out,
+        name = "Xout"
+      )
+    )
+  check_nn_graph(nn_out, "Xout")
+
+  if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
+    stop(
+      "Xin and Xout neighbor graphs must have the same number of rows",
+      call. = FALSE
+    )
+  }
+
+  mutual_neighbor_in <- mutual_neighbor_values(nn_in, k)
+  mutual_neighbor_out <- mutual_neighbor_values(nn_out, k)
+  colnames(mutual_neighbor_in) <- paste0("mnc", k)
+  colnames(mutual_neighbor_out) <- paste0("mnc", k)
+
+  mnc <- vapply(
+    seq_along(k),
+    function(i) {
+      local_scale_correlation(
+        mutual_neighbor_in[, i],
+        mutual_neighbor_out[, i],
+        method
+      )
+    },
+    numeric(1)
+  )
+  names(mnc) <- paste0("mnc", k)
+
+  if (ret_extra) {
+    list(
+      nn_in = nn_in,
+      nn_out = nn_out,
+      mnc = mnc,
+      mutual_neighbor_in = mutual_neighbor_in,
+      mutual_neighbor_out = mutual_neighbor_out
+    )
+  } else {
+    mnc
+  }
+}
+
 local_radius_values <- function(nn_graph, k, statistic) {
   dist <- nn_graph$dist
   vapply(
@@ -420,6 +578,31 @@ local_radius_values <- function(nn_graph, k, statistic) {
     },
     numeric(nrow(dist))
   )
+}
+
+mutual_neighbor_values <- function(nn_graph, k) {
+  idx <- nn_graph$idx
+  vapply(
+    k,
+    function(ki) mutual_neighbor_counts(idx, ki),
+    integer(nrow(idx))
+  )
+}
+
+mutual_neighbor_counts <- function(idx, k) {
+  if (ncol(idx) < k) {
+    stop("Not enough columns in idx for k = ", k, call. = FALSE)
+  }
+  idx_prefix <- idx[, seq_len(k), drop = FALSE]
+  counts <- integer(nrow(idx_prefix))
+  for (i in seq_len(nrow(idx_prefix))) {
+    counts[i] <- sum(vapply(
+      idx_prefix[i, ],
+      function(j) any(idx_prefix[j, ] == i),
+      logical(1)
+    ))
+  }
+  counts
 }
 
 local_scale_correlation <- function(x, y, method) {

@@ -12,17 +12,25 @@ Triplets with tied input-space distances are excluded from the denominator
 because they do not define a relative ordering. If no sampled input triplets
 define an ordering, the result is `NA_real_`.
 
-## Pearson Correlation for Distances
+## Random Pair Distance Correlation
 
 `random_pair_distance_correlation()` measures Pearson correlation between
-equivalent input and output distances, similar to the method used by Becht and
-co-workers.
+equivalent input and output distances by default, similar to the method used by
+Becht and co-workers. Set `method = "spearman"` to compare the sampled distance
+ranks instead of their linear agreement.
 
 ## Earth-Mover's Distance
 
 `random_pair_distance_emd()` converts distances to an empirical distribution
 and compares them via Earth Mover's Distance (1D Wasserstein), based on the
 method used by Heiser and Lau.
+
+## Random Pair Distance Stress
+
+`random_pair_distance_stress()` compares the matched sampled distances with a
+root mean squared difference. By default, each sampled distance vector is scaled
+to the range 0-1 first, so the value is most useful when comparing embeddings
+under the same sampling and scaling settings.
 
 ## RNX AUC
 
@@ -49,7 +57,7 @@ deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
 *J Mach. Learn. Res*, *22*, 1-73.
 <https://jmlr.org/papers/v22/20-1061.html>
 
-### Pearson Correlation for Distances
+### Random Pair Distance Correlation
 
 Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L. G., ... & Newell, E. W. (2019).
 Dimensionality reduction for visualizing single-cell data using UMAP.

@@ -29,6 +29,13 @@ relative scale. `local_radius_correlation()` compares the local radius around
 each observation in the input data and output embedding, using either the
 distance to the `k`th neighbor or the mean distance to the first `k` neighbors.
 
+## Local Graph Diagnostics
+
+`mutual_neighbor_correlation()` compares the mutual-neighbor count pattern in
+the input and output nearest-neighbor graphs. It asks whether points with many
+or few reciprocal nearest-neighbor relationships in the input graph have
+similar counts in the output graph.
+
 ## Global Distance Preservation
 
 `quadra` also contains random triplet and random pair distance methods for
@@ -36,10 +43,12 @@ global structure preservation:
 
 * `random_triplet_accuracy()` checks whether sampled distance orderings are
 preserved.
-* `random_pair_distance_correlation()` measures Pearson correlation between
-sampled input and output distances.
+* `random_pair_distance_correlation()` measures Pearson or Spearman correlation
+between sampled input and output distances.
 * `random_pair_distance_emd()` compares sampled distance distributions using
 Earth Mover's Distance.
+* `random_pair_distance_stress()` compares matched sampled distances with a
+root mean squared difference.
 
 See the global preservation article for those metrics.
 

@@ -73,6 +73,27 @@ This metric is a radius or scale diagnostic. It does not estimate local density
 directly and should be interpreted alongside neighbor-identity metrics such as
 `nn_preservation()`.
 
+## Mutual Neighbor Correlation
+
+`mutual_neighbor_correlation()` compares mutual-neighbor count patterns. For
+each observation, the mutual-neighbor count is the number of its first `k`
+nearest neighbors that also include the observation among their first `k`
+nearest neighbors.
+
+```R
+mutual_neighbor_correlation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute"
+)
+```
+
+This is a graph diagnostic. It does not require neighbor distances, so cached
+idx-only nearest-neighbor graphs are enough. It should be interpreted alongside
+neighbor-identity metrics such as `nn_preservation()` and scale metrics such as
+`local_radius_correlation()`.
+
 For larger datasets, `nn_preservation()` can use approximate nearest neighbors
 via [rnndescent](https://github.com/jlmelville/rnndescent). If you have
 nearest-neighbor matrices from another approximate nearest neighbor package,

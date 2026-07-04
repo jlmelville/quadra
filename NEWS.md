@@ -1,15 +1,26 @@
 
+# quadra 0.2.0
+
 ## New features
 
-* Added `trustworthiness()` and `continuity()` for exact distance-matrix
+* New metric: `trustworthiness()` and `continuity()` for exact distance-matrix
 rank-penalty neighborhood preservation at a fixed `k`. Only useful for small
 datasets, though because it needs the full distance matrix.
-* Added `local_radius_correlation()` for comparing local radius or scale
+* New metric: `local_radius_correlation()` for comparing local radius or scale
 preservation from raw observations or nearest-neighbor graphs with distances.
 Possibly useful for dimensionality reduction methods that attempt to retain
 the density of the input data (which standard t-SNE and UMAP do not).
+* Added Spearman rank-correlation support to
+`random_pair_distance_correlation()` via `method = "spearman"`.
+* New metric: `random_pair_distance_stress()` for sampled root mean squared
+differences between matched random-pair distances. This is like a traditional
+STRESS metric (basically the root mean square error between the input and
+output distances), but only sampling a subset of distances, so this can
+scale to larger datasets.
+* New metric: `mutual_neighbor_correlation()` for comparing mutual-neighbor
+count patterns between input and output nearest-neighbor graphs.
 * `random_triplet_accuracy()`, `rnx_auc()`, `nn_preservation()` and
-`nn_preservation()` are now implemented with C++ so should be faster to
+`nbr_pres_knn()` are now implemented with C++ so should be faster to
 calculate.
 
 ## Bug fixes and minor improvements

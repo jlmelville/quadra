@@ -12,7 +12,20 @@ test_that("README quick-start examples run", {
     1
   )
   expect_length(
+    random_pair_distance_correlation(
+      iris_x,
+      iris_pca2,
+      n_pairs = 20,
+      method = "spearman"
+    ),
+    1
+  )
+  expect_length(
     random_pair_distance_emd(iris_x, iris_pca2, n_pairs = 20),
+    1
+  )
+  expect_length(
+    random_pair_distance_stress(iris_x, iris_pca2, n_pairs = 20),
     1
   )
 
@@ -24,6 +37,15 @@ test_that("README quick-start examples run", {
     nn_method_out = "brute"
   )
   expect_named(nnp, c("nnp5", "nnp15"))
+
+  mnc <- mutual_neighbor_correlation(
+    iris_x,
+    iris_pca2,
+    k = c(5, 15),
+    nn_method_in = "brute",
+    nn_method_out = "brute"
+  )
+  expect_named(mnc, c("mnc5", "mnc15"))
 
   din <- as.matrix(stats::dist(iris_x))
   dout <- as.matrix(stats::dist(iris_pca2))

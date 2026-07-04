@@ -332,6 +332,138 @@ test_that("local radius correlation handles constant and zero radii", {
   )
 })
 
+test_that("mutual neighbor correlation matches hand-computed counts", {
+  # fmt: skip
+  idx_in <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      1, 4,
+      3, 5,
+      4, 2
+    ),
+    nrow = 5,
+    byrow = TRUE
+  )
+  # fmt: skip
+  idx_out <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      2, 5,
+      5, 1,
+      4, 3
+    ),
+    nrow = 5,
+    byrow = TRUE
+  )
+  graph_in <- list(idx = idx_in)
+  graph_out <- list(idx = idx_out)
+
+  res <- mutual_neighbor_correlation(
+    graph_in,
+    graph_out,
+    k = c(1, 2),
+    ret_extra = TRUE
+  )
+
+  s_in <- matrix(c(1, 1, 0, 0, 0, 2, 1, 2, 2, 1), nrow = 5)
+  s_out <- matrix(c(1, 1, 0, 1, 1, 1, 2, 2, 1, 2), nrow = 5)
+  colnames(s_in) <- c("mnc1", "mnc2")
+  colnames(s_out) <- c("mnc1", "mnc2")
+
+  expect_equal(res$mutual_neighbor_in, s_in)
+  expect_equal(res$mutual_neighbor_out, s_out)
+  expect_equal(
+    res$mnc,
+    c(
+      mnc1 = unname(stats::cor(s_in[, 1], s_out[, 1])),
+      mnc2 = unname(stats::cor(s_in[, 2], s_out[, 2]))
+    )
+  )
+})
+
+test_that("mutual neighbor correlation supports cached graphs and methods", {
+  raw_res <- mutual_neighbor_correlation(
+    m,
+    n,
+    k = c(2, 5),
+    nn_method_in = "brute",
+    nn_method_out = "brute",
+    ret_extra = TRUE
+  )
+
+  expect_named(raw_res$mnc, c("mnc2", "mnc5"))
+  expect_equal(
+    mutual_neighbor_correlation(raw_res$nn_in, raw_res$nn_out, k = c(2, 5)),
+    raw_res$mnc
+  )
+
+  expect_equal(
+    mutual_neighbor_correlation(
+      raw_res$nn_in,
+      raw_res$nn_in,
+      k = 2,
+      method = "spearman"
+    ),
+    c(mnc2 = 1)
+  )
+})
+
+test_that("mutual neighbor correlation handles constant count vectors", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      1, 2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  graph <- list(idx = idx)
+
+  expect_equal(
+    mutual_neighbor_correlation(graph, graph, k = 2),
+    c(mnc2 = NA_real_)
+  )
+})
+
+test_that("mutual neighbor correlation validates inputs", {
+  # fmt: skip
+  idx <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      1, 2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  graph <- list(idx = idx)
+
+  expect_error(
+    mutual_neighbor_correlation(graph, graph, k = 0),
+    "k must contain positive integers"
+  )
+  expect_error(
+    mutual_neighbor_correlation(graph, graph, k = 1, method = "kendall"),
+    "should be one of"
+  )
+  expect_error(
+    mutual_neighbor_correlation(graph, graph, k = 1, ret_extra = NA),
+    "ret_extra must be TRUE or FALSE"
+  )
+  expect_error(
+    mutual_neighbor_correlation(
+      graph,
+      list(idx = matrix(c(2, 1), nrow = 2, byrow = TRUE)),
+      k = 1
+    ),
+    "same number of rows"
+  )
+})
+
 test_that("old self-inclusive cached graphs are stripped with a warning", {
   old_graph <- rnndescent::brute_force_knn(m, k = 3, metric = "sqeuclidean")
   stripped_graph <- list(

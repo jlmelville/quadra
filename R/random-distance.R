@@ -1,15 +1,18 @@
 #' Random Pair Distance Correlation
 #'
 #' Evaluates the preservation of global structure of dimensionality reduction
-#' results using the Pearson correlation coefficient between randomly selected
-#' distances, similar to the method of Becht and co-workers (2019).
+#' results using the correlation coefficient between randomly selected
+#' distances. The default Pearson correlation is similar to the method of Becht
+#' and co-workers (2019).
 #'
-#' This function repeatedly samples random pairs of observation and calculates
+#' This function repeatedly samples random pairs of observations and calculates
 #' the distance between the points in both the original data and the embedding
-#' space. The Pearson correlation coefficient between the two sets of distances
-#' is reported. This differs slightly from the procedure in the Becht paper
-#' which randomly samples a subset of observations and then exhaustively
-#' calculates all pair-wise distances within that subset.
+#' space. The correlation coefficient between the two sets of distances is
+#' reported. Pearson correlation measures linear agreement in the sampled
+#' distances, while Spearman correlation measures rank agreement. This differs
+#' slightly from the procedure in the Becht paper which randomly samples a
+#' subset of observations and then exhaustively calculates all pair-wise
+#' distances within that subset.
 #'
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
 #'   with one observation per row, or if `is_transposed = TRUE`, one observation
@@ -24,6 +27,7 @@
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
 #'   details.
+#' @param method correlation method, either `"pearson"` or `"spearman"`.
 #' @param is_transposed if `TRUE` then `Xin` and `Xout` are assumed to have been
 #'   passed in transposed format, i.e. with one observation per column.
 #'   Otherwise, `Xin` and `Xout` will be transposed. For large datasets,
@@ -32,13 +36,14 @@
 #'   once outside of this function and set `is_transposed = TRUE`.
 #' @param n_threads the maximum number of threads to use. `0` or `1` runs
 #'   serially.
-#' @return The Pearson correlation between the distances in the input and output
-#' space. For randomly distributed data, the expected value is 0.
+#' @return The correlation between the distances in the input and output space.
+#'   For randomly distributed data, the expected value is 0.
 #' @references Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 #' Ng, L. G., ... & Newell, E. W. (2019).
 #' Dimensionality reduction for visualizing single-cell data using UMAP.
 #' *Nature biotechnology*, *37*(1), 38-44.
-#' @seealso [random_pair_distance_emd()] and [random_triplet_accuracy()] for
+#' @seealso [random_pair_distance_emd()], [random_pair_distance_stress()], and
+#'   [random_triplet_accuracy()] for
 #'   another measure of global structure preservation.
 #' @examples
 #' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
@@ -59,9 +64,11 @@ random_pair_distance_correlation <- function(
   n_pairs = 1000,
   metric_in = "sqeuclidean",
   metric_out = "sqeuclidean",
+  method = c("pearson", "spearman"),
   is_transposed = FALSE,
   n_threads = 0
 ) {
+  method <- match.arg(method)
   randlist <-
     random_pair_distances(
       Xin,
@@ -76,7 +83,7 @@ random_pair_distance_correlation <- function(
   stats::cor(
     x = randlist$din,
     y = randlist$dout,
-    method = "pearson"
+    method = method
   )
 }
 
@@ -125,8 +132,9 @@ random_pair_distance_correlation <- function(
 #' A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
 #' *Cell reports*, *31*(5), 107576.
 #' <https://github.com/KenLauLab/DR-structure-preservation>
-#' @seealso [random_pair_distance_correlation()] and [random_triplet_accuracy()]
-#'   for another measure of global structure preservation.
+#' @seealso [random_pair_distance_correlation()],
+#'   [random_pair_distance_stress()], and [random_triplet_accuracy()] for
+#'   another measure of global structure preservation.
 #' @examples
 #' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' random_pair_distance_emd(iris, iris_pca2)
@@ -177,6 +185,72 @@ random_pair_distance_emd <- function(
 # Earth-Mover's distance (equivalent to 1D Wasserstein with p = 1)
 emd <- function(x, y) {
   mean(abs(sort(x) - sort(y)))
+}
+
+#' Random Pair Distance Stress
+#'
+#' Evaluates global distance preservation with a sampled stress summary.
+#'
+#' This function repeatedly samples random pairs of observations and calculates
+#' the distance between the points in both the original data and the embedding
+#' space. The returned value is the root mean squared difference between the
+#' matched sampled distances.
+#'
+#' By default, each sampled distance vector is scaled to the range 0-1 before
+#' stress is calculated. This makes the result comparable across embeddings with
+#' different distance scales, but it also means the value is mainly useful for
+#' comparing methods under identical sampling and scaling settings.
+#'
+#' @inheritParams random_pair_distance_emd
+#' @param range_scale if `TRUE` (the default) then scale each sampled distance
+#'   vector to the range 0-1 before calculating stress.
+#' @return The sampled stress between the matched distances in the input and
+#'   output space.
+#' @seealso [random_pair_distance_correlation()],
+#'   [random_pair_distance_emd()], and [random_triplet_accuracy()] for other
+#'   measures of global structure preservation.
+#' @examples
+#' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+#' random_pair_distance_stress(iris, iris_pca2)
+#'
+#' # If you plan on comparing the results of multiple output methods, then
+#' # pre-transposing the input data can save time
+#' tiris <- t(iris[, -5])
+#' iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
+#' iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+#' random_pair_distance_stress(tiris, t(iris_pca1), is_transposed = TRUE)
+#' random_pair_distance_stress(tiris, t(iris_pca2), is_transposed = TRUE)
+#' random_pair_distance_stress(tiris, t(iris_pca3), is_transposed = TRUE)
+#' @export
+random_pair_distance_stress <- function(
+  Xin,
+  Xout,
+  n_pairs = 1000,
+  metric_in = "sqeuclidean",
+  metric_out = "sqeuclidean",
+  range_scale = TRUE,
+  is_transposed = FALSE,
+  n_threads = 0
+) {
+  randlist <-
+    random_pair_distances(
+      Xin,
+      Xout,
+      n_pairs = n_pairs,
+      metric_in = metric_in,
+      metric_out = metric_out,
+      n_threads = n_threads,
+      is_transposed = is_transposed
+    )
+
+  x <- randlist$din
+  y <- randlist$dout
+  if (range_scale) {
+    x <- scale01(x)
+    y <- scale01(y)
+  }
+
+  sqrt(mean((x - y)^2))
 }
 
 random_pair_distances <- function(

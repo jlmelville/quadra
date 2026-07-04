@@ -20,9 +20,38 @@ test_that("random pair distance correlation", {
   expect_gte(rdpct2, -1.0)
 })
 
+test_that("random pair distance correlation supports correlation methods", {
+  set.seed(987)
+  randlist <- random_pair_distances(m, n, n_pairs = 50)
+
+  set.seed(987)
+  expect_equal(
+    random_pair_distance_correlation(m, n, n_pairs = 50),
+    unname(stats::cor(randlist$din, randlist$dout, method = "pearson"))
+  )
+
+  set.seed(987)
+  expect_equal(
+    random_pair_distance_correlation(
+      m,
+      n,
+      n_pairs = 50,
+      method = "spearman"
+    ),
+    unname(stats::cor(randlist$din, randlist$dout, method = "spearman"))
+  )
+})
+
 test_that("unknown distance metrics error", {
   expect_error(
     random_pair_distance_correlation(m, n, metric_in = "not-a-metric"),
+    "should be one of"
+  )
+})
+
+test_that("unknown random pair correlation methods error", {
+  expect_error(
+    random_pair_distance_correlation(m, n, method = "kendall"),
     "should be one of"
   )
 })
@@ -84,4 +113,14 @@ test_that("random pair inputs are validated", {
     ),
     "at least one numeric column"
   )
+})
+
+test_that("constant random pair distances use stats cor behavior", {
+  x <- matrix(1, nrow = 4, ncol = 2)
+
+  expect_warning(
+    res <- random_pair_distance_correlation(x, x, n_pairs = 10),
+    "standard deviation is zero"
+  )
+  expect_true(is.na(res))
 })
