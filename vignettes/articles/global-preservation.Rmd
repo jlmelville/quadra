@@ -24,6 +24,21 @@ co-workers.
 and compares them via Earth Mover's Distance (1D Wasserstein), based on the
 method used by Heiser and Lau.
 
+## RNX AUC
+
+`rnx_auc()` summarizes exact rank-based neighborhood agreement over all
+neighborhood sizes from a pair of distance matrices. It gives more weight to
+smaller neighborhoods, so it is useful when you want one score for the
+local-to-global rank structure of a small or medium dataset.
+
+```R
+iris_x <- as.matrix(iris[, -5])
+pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
+din <- as.matrix(stats::dist(iris_x))
+dout <- as.matrix(stats::dist(pca_iris))
+rnx_auc(din, dout)
+```
+
 ## Further Reading
 
 ### Random Triplet Accuracy
@@ -47,3 +62,11 @@ Heiser, C. N., & Lau, K. S. (2020).
 A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
 *Cell reports*, *31*(5), 107576.
 <https://doi.org/10.1016/j.celrep.2020.107576>
+
+### RNX AUC
+
+Lee, J. A., Peluffo-Ordonez, D. H., & Verleysen, M. (2015).
+Multi-scale similarities in stochastic neighbour embedding: Reducing
+dimensionality while preserving both local and global structure.
+*Neurocomputing*, *169*, 246-261.
+<https://dx.doi.org/10.1016/j.neucom.2014.12.095>

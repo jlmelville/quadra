@@ -13,6 +13,26 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 nn_preservation(iris_x, pca_iris, k = c(15, 30))
 ```
 
+## Trustworthiness and Continuity
+
+`trustworthiness()` and `continuity()` are exact rank-penalty neighborhood
+metrics for distance matrices. Trustworthiness penalizes observations that
+appear as low-dimensional neighbors even though they are not close in the input
+space. Continuity applies the dual penalty to input-space neighbors that are no
+longer nearby in the embedding.
+
+```R
+din <- as.matrix(stats::dist(iris_x))
+dout <- as.matrix(stats::dist(pca_iris))
+trustworthiness(din, dout, k = 15)
+continuity(din, dout, k = 15)
+```
+
+These functions use full `n` by `n` distance matrices and require `k` to be
+less than half the number of observations, so they are intended for exact
+small-dataset checks. For larger datasets, use nearest-neighbor preservation
+metrics such as `nn_preservation()` or `nbr_pres_knn()`.
+
 ## Local Radius Correlation
 
 Nearest neighbor preservation asks whether the same observations remain nearby.
