@@ -175,17 +175,33 @@ coranking_matrix <- function(din, dout) {
 # dimensionality while preserving both local and global structure.
 # \emph{Neurocomputing}, \emph{169}, 246-261.
 rnx_auc_crm <- function(crm) {
-  n <- nrow(crm)
-  if (n < 2L) {
+  n_ranks <- nrow(crm)
+  if (n_ranks < 2L) {
     return(NA_real_)
   }
-  num <- 0
-  den <- 0
-  for (k in 1:(n - 1)) {
-    num <- num + rnx_crm(crm, k) / k
-    den <- den + (1 / k)
+  k <- seq_len(n_ranks - 1L)
+  top_left <- diag(cumulative_top_left_sums(crm))[k]
+  qnx <- top_left / (k * (n_ranks + 1L))
+  rnx <- ((qnx * n_ranks) - k) / (n_ranks - k)
+  sum(rnx / k) / sum(1 / k)
+}
+
+cumulative_top_left_sums <- function(crm) {
+  sums <- crm + 0
+  nr <- nrow(sums)
+  nc <- ncol(sums)
+
+  if (nc > 1L) {
+    for (j in 2:nc) {
+      sums[, j] <- sums[, j] + sums[, j - 1L]
+    }
   }
-  num / den
+  if (nr > 1L) {
+    for (i in 2:nr) {
+      sums[i, ] <- sums[i, ] + sums[i - 1L, ]
+    }
+  }
+  sums
 }
 
 # Rescaled Agreement Between K-ary Neighborhoods (RNX)

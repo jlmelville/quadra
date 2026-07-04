@@ -68,3 +68,22 @@ test_that("QNX and RNX use self-excluded co-ranking denominators", {
   expect_equal(rnx_crm(crm, k = 1), -0.5)
   expect_equal(rnx_auc(din, dout), -0.5)
 })
+
+test_that("QNX and RNX match hand calculations on tiny co-ranking matrices", {
+  # fmt: skip
+  crm <- matrix(
+    c(
+      1, 1, 2,
+      0, 2, 2,
+      3, 1, 0
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+
+  expect_equal(qnx_crm(crm, k = 1), 1 / 4)
+  expect_equal(qnx_crm(crm, k = 2), 1 / 2)
+  expect_equal(rnx_crm(crm, k = 1), -1 / 8)
+  expect_equal(rnx_crm(crm, k = 2), -1 / 2)
+  expect_equal(rnx_auc_crm(crm), -1 / 4)
+})
