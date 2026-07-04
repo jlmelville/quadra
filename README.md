@@ -4,37 +4,35 @@
 
 # Quadra: QUantitative Assessment of Dimensionality Reduction Algorithms
 
-An R Package for evaluating the success of embeddings from dimensionality
-reduction methods (e.g. Principal Component Analysis, Sammon Maps,
-t-Distributed Stochastic Neighbor Embedding).
+An R Package for evaluating the success of embeddings from dimensionality reduction methods (e.g. 
+Principal Component Analysis, Sammon Maps, t-Distributed Stochastic Neighbor Embedding).
 
 ## Description
 
-This package provides two ways to evaluate the performance of an embedding.
-The most generic is to consider "neighborhood preservation":
+This package provides two ways to evaluate the performance of an embedding. The most generic is to 
+consider "neighborhood preservation":
 
 1. Find the *k*-nearest neighbors of a point in the input space.
 1. Do the same in the output space.
 1. Count the overlap.
 
-This only requires calculating the Euclidean distance matrix in the input and
-output spaces, without any other assumptions about the type of dimensionality
-reduction carried out. This package provides some quality measures based
-around this concept.
+This only requires calculating the Euclidean distance matrix in the input and output spaces,
+without any other assumptions about the type of dimensionality reduction carried out. This package
+provides some quality measures based around this concept.
 
-Alternatively, if some sort of labelling is applied to the points, each point
-can be treated as the target in a retrieval procedure:
+Alternatively, if some sort of labelling is applied to the points, each point can be treated as the
+target in a retrieval procedure:
 
 1. Rank all the other points by distance to the target point.
 1. See how highly in the ranked list the points with the same label are found.
-1. Construct a Receiver Operating Characteristic (ROC) curve, or something like
-it (e.g. Precision-Recall curve)
+1. Construct a Receiver Operating Characteristic (ROC) curve, or something like it (e.g. 
+Precision-Recall curve)
 1. Calculate the Area Under the Curve (AUC).
 1. Average over all points.
 
-This only needs the output distance matrix, but requires the sort of labeling
-usually reserved for data intended for supervised classification. Quadra can
-also provide some help with this, but requires the [PRROC package](https://cran.r-project.org/package=PRROC) to be installed.
+This only needs the output distance matrix, but requires the sort of labeling usually reserved for
+data intended for supervised classification. Quadra can also provide some help with this, but
+requires the [PRROC package](https://cran.r-project.org/package=PRROC) to be installed.
 
 ## Install
 
@@ -43,20 +41,18 @@ install.packages("pak")
 pak::pak("jlmelville/quadra")
 ```
 
-`quadra` makes use of C++ code which must be compiled. You may have to carry out
-a few extra steps before being able to build this package:
+`quadra` makes use of C++ code which must be compiled. You may have to carry out a few extra steps
+before being able to build this package:
 
-**Windows**: install
-[Rtools](https://cran.r-project.org/bin/windows/Rtools/) and ensure
+**Windows**: install [Rtools](https://cran.r-project.org/bin/windows/Rtools/) and ensure
 `C:\Rtools\bin` is on your path.
 
-**macOS**: using a custom `~/.R/Makevars`
-[may cause linking errors](https://github.com/jlmelville/uwot/issues/1).
-This sort of thing is a potential problem on all platforms but seems to bite
-Mac owners more.
+**macOS**: using a custom `~/.R/Makevars` 
+[may cause linking errors](https://github.com/jlmelville/uwot/issues/1). This sort of thing is a
+potential problem on all platforms but seems to bite Mac owners more.
 [The R for Mac OS X FAQ](https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Installation-of-source-packages)
-may be helpful here to work out what you can get away with. To be on the safe
-side, I would advise building `quadra` without a custom `Makevars`.
+may be helpful here to work out what you can get away with. To be on the safe side, I would advise
+building `quadra` without a custom `Makevars`.
 
 ## Examples
 
@@ -117,8 +113,9 @@ dout <- as.matrix(dist(pca_iris))
 # Preservation of the 5-nearest neighbors for each point: returns a vector
 nbr_pres(din, dout, k = 5)
 
-# Area under the RNX curve. This is like a weighted average over neighborhood preservation for a range of k
-# with a bias towards smaller k: returns a single value
+# Area under the RNX curve. This is like a weighted average over neighborhood 
+# preservation for a range of k with a bias towards smaller k: returns a single 
+# value
 rnx_auc(din, dout)
 
 # Exact rank-penalty neighborhood preservation at a fixed k
@@ -138,8 +135,7 @@ pr_auc(dout, iris$Species)
 
 ## More Detail
 
-Longer metric notes, larger-dataset examples, and references have moved to the
-pkgdown articles:
+Please see the longer metric notes, larger-dataset examples, and references.
 
 * [Metric overview](https://jlmelville.github.io/quadra/articles/metrics-overview.html)
 * [Global preservation](https://jlmelville.github.io/quadra/articles/global-preservation.html)
@@ -155,7 +151,5 @@ pkgdown articles:
 Some other R packages I maintain that might come in handy:
 
 * [snedata](https://github.com/jlmelville/snedata) and
-  [coil20](https://github.com/jlmelville/coil20) provide ways to access some
-  datasets for embedding.
-* [vizier](https://github.com/jlmelville/vizier) for a... let's call it cheap
-and cheerful way to visualize the results of the embedding.
+[coil20](https://github.com/jlmelville/coil20) provide ways to access some datasets for embedding.
+* [vizier](https://github.com/jlmelville/vizier) to visualize the results of the embedding.
