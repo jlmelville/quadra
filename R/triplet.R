@@ -91,7 +91,7 @@ random_triplet_accuracy <-
 
     if (is.matrix(n_triplets)) {
       triplets <-
-        get_triplet_matrix(n_obs, n_triplets, zero_index = TRUE)
+        get_triplet_matrix(n_obs, n_triplets)
 
       return(
         triplet_sample(
@@ -116,72 +116,30 @@ random_triplet_accuracy <-
     )
   }
 
-# n_triplets might be a pre-generated triplets matrix
-get_triplet_matrix <- function(n_obs, n_triplets, zero_index) {
-  if (is.matrix(n_triplets)) {
-    triplets <- n_triplets
-    if (!is.numeric(triplets) || anyNA(triplets) || any(!is.finite(triplets))) {
-      stop("Triplets matrix must contain finite numeric indices", call. = FALSE)
-    }
-    if (any(triplets != floor(triplets))) {
-      stop("Triplets matrix must contain integer indices", call. = FALSE)
-    }
-    if (ncol(triplets) != n_obs) {
-      stop("Triplets matrix must have ", n_obs, " columns", call. = FALSE)
-    }
-    if (nrow(triplets) %% 2 != 0) {
-      stop("Triplets matrix must have even number of rows", call. = FALSE)
-    }
-    if (min(triplets) < 0) {
-      stop("Triplet matrix must have non-negative values", call. = FALSE)
-    }
-    max_trip_idx <- max(triplets)
-    if (max_trip_idx > n_obs - 1) {
-      stop(
-        "Triplet matrix elements must be between 0 and ",
-        n_obs - 1,
-        call. = FALSE
-      )
-    }
-  } else {
-    n_triplets <- validate_positive_integer(n_triplets, "n_triplets")
-    triplets <-
-      create_triplet_matrix(n_obs, n_triplets, zero_index = TRUE)
+# Validate a pre-generated zero-indexed triplet matrix.
+get_triplet_matrix <- function(n_obs, triplets) {
+  if (!is.numeric(triplets) || anyNA(triplets) || any(!is.finite(triplets))) {
+    stop("Triplets matrix must contain finite numeric indices", call. = FALSE)
+  }
+  if (any(triplets != floor(triplets))) {
+    stop("Triplets matrix must contain integer indices", call. = FALSE)
+  }
+  if (ncol(triplets) != n_obs) {
+    stop("Triplets matrix must have ", n_obs, " columns", call. = FALSE)
+  }
+  if (nrow(triplets) %% 2 != 0) {
+    stop("Triplets matrix must have even number of rows", call. = FALSE)
+  }
+  if (min(triplets) < 0) {
+    stop("Triplet matrix must have non-negative values", call. = FALSE)
+  }
+  max_trip_idx <- max(triplets)
+  if (max_trip_idx > n_obs - 1) {
+    stop(
+      "Triplet matrix elements must be between 0 and ",
+      n_obs - 1,
+      call. = FALSE
+    )
   }
   triplets
-}
-
-# triplet matrix is n_obs x (2 x triplets)
-# each column contains n_triplet pairs containing the indices of the other
-# points of the triangle
-# the other indices never contain i
-create_triplet_matrix <-
-  function(n, n_triplets, zero_index = FALSE) {
-    res <- replicate(n * n_triplets, {
-      sample.int(n - 1, size = 2, replace = FALSE)
-    })
-    dim(res) <- c(n_triplets * 2, n)
-    res <- avoid_self_matrix(res)
-    if (zero_index) {
-      res <- res - 1
-    }
-    res
-  }
-
-# Ensure we never create a triangle with two identical indices
-# Assumes that the triplet matrix contains indices in the range (1, nobs-1).
-# for each column add 1 to each element which is >= the column index
-avoid_self_matrix <- function(triplets) {
-  # add the column index as a new row (1:ncol)
-  tripi <- rbind(triplets, seq_len(ncol(triplets)))
-
-  # for each column, if the element >= the column index, add 1 to it
-  tripi <-
-    tripi +
-    apply(tripi, 2, function(x) {
-      x >= x[length(x)]
-    })
-
-  # undecorate the matrix
-  tripi[-nrow(tripi), ]
 }

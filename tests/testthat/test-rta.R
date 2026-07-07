@@ -141,6 +141,10 @@ test_that("random triplet inputs are validated", {
     "at least 3 observations"
   )
   expect_error(
+    random_triplet_accuracy(m, n[-1, ]),
+    "same number of observations"
+  )
+  expect_error(
     random_triplet_accuracy(m, n, n_triplets = 0),
     "n_triplets must be a positive integer"
   )
@@ -151,5 +155,57 @@ test_that("random triplet inputs are validated", {
   expect_error(
     random_triplet_accuracy(data.frame(label = letters[1:3]), n[1:3, ]),
     "at least one numeric column"
+  )
+})
+
+test_that("triplet matrix inputs are validated before C++ evaluation", {
+  xin <- matrix(c(0, 0, 1, 0, 0, 1), nrow = 3, byrow = TRUE)
+  xout <- xin
+
+  # fmt: skip
+  valid_shape <- matrix(
+    c(
+      1, 0, 0,
+      2, 2, 1
+    ),
+    nrow = 2,
+    byrow = TRUE
+  )
+
+  nonfinite <- valid_shape
+  nonfinite[1, 1] <- NA
+  expect_error(
+    random_triplet_accuracy(xin, xout, nonfinite),
+    "finite numeric indices"
+  )
+
+  noninteger <- valid_shape
+  noninteger[1, 1] <- 1.5
+  expect_error(
+    random_triplet_accuracy(xin, xout, noninteger),
+    "integer indices"
+  )
+
+  expect_error(
+    random_triplet_accuracy(xin, xout, matrix(0, nrow = 2, ncol = 2)),
+    "3 columns"
+  )
+  expect_error(
+    random_triplet_accuracy(xin, xout, matrix(0, nrow = 3, ncol = 3)),
+    "even number of rows"
+  )
+
+  negative <- valid_shape
+  negative[1, 1] <- -1
+  expect_error(
+    random_triplet_accuracy(xin, xout, negative),
+    "non-negative"
+  )
+
+  out_of_range <- valid_shape
+  out_of_range[1, 1] <- 3
+  expect_error(
+    random_triplet_accuracy(xin, xout, out_of_range),
+    "between 0 and 2"
   )
 })

@@ -217,4 +217,25 @@ test_that("trustworthiness and continuity validate k and sample size", {
   expect_error(trustworthiness(din, din, k = 0), "positive integer")
   expect_error(continuity(din, din, k = 3), "less than half")
   expect_error(trustworthiness(tiny, tiny, k = 1), "at least three")
+  expect_error(rnx_auc(tiny, tiny), "at least three")
+})
+
+test_that("distance-matrix metrics validate public input shapes", {
+  din <- diag(3)
+  dout <- diag(3)
+
+  expect_error(nbr_pres(data.frame(x = 1:3), dout, k = 1), "numeric matrix")
+  expect_error(
+    nbr_pres(din, matrix("x", nrow = 3, ncol = 3), k = 1),
+    "numeric matrix"
+  )
+  expect_error(rnx_auc(din, dout[-1, ]), "same dimensions")
+  expect_error(
+    trustworthiness(
+      matrix(1, nrow = 2, ncol = 3),
+      matrix(1, nrow = 2, ncol = 3),
+      k = 1
+    ),
+    "square distance matrices"
+  )
 })

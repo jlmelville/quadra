@@ -42,6 +42,45 @@ test_that("random pair distance correlation supports correlation methods", {
   )
 })
 
+test_that("random pair distance correlation supports documented distance metrics", {
+  # fmt: skip
+  x <- matrix(
+    c(
+      1, 2, 4,
+      1, 2, 5,
+      1, 3, 5,
+      2, 3, 6,
+      2, 4, 6,
+      3, 4, 7
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+
+  for (metric in c(
+    "sqeuclidean",
+    "euclidean",
+    "cosine",
+    "hamming",
+    "manhattan",
+    "correlation"
+  )) {
+    set.seed(2468)
+    expect_equal(
+      random_pair_distance_correlation(
+        x,
+        x,
+        n_pairs = 200,
+        metric_in = metric,
+        metric_out = metric
+      ),
+      1,
+      tolerance = 1e-12,
+      info = metric
+    )
+  }
+})
+
 test_that("unknown distance metrics error", {
   expect_error(
     random_pair_distance_correlation(m, n, metric_in = "not-a-metric"),
@@ -97,6 +136,10 @@ test_that("random pair inputs are validated", {
       n[1, , drop = FALSE]
     ),
     "at least 2 observations"
+  )
+  expect_error(
+    random_pair_distance_correlation(m, n[-1, ]),
+    "same number of observations"
   )
   expect_error(
     random_pair_distance_correlation(m, n, n_pairs = 0),

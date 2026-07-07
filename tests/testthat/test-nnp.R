@@ -261,6 +261,16 @@ test_that("local radius correlation supports graph distances and statistics", {
       )
     )
   )
+  expect_equal(
+    local_radius_correlation(
+      graph_in,
+      graph_out,
+      k = 1,
+      method = "pearson",
+      log = TRUE
+    ),
+    c(lrc1 = unname(stats::cor(log(dist_in[, 1]), log(dist_out[, 1]))))
+  )
 })
 
 test_that("local radius correlation validates graph distances", {
@@ -287,6 +297,30 @@ test_that("local radius correlation validates graph distances", {
       k = 1
     ),
     "finite distances"
+  )
+  expect_error(
+    local_radius_correlation(
+      list(idx = idx, dist = matrix("x", nrow = 3, ncol = 2)),
+      graph,
+      k = 1
+    ),
+    "numeric matrix"
+  )
+  expect_error(
+    local_radius_correlation(
+      list(idx = idx, dist = matrix(-1, nrow = 3, ncol = 2)),
+      graph,
+      k = 1
+    ),
+    "non-negative distances"
+  )
+  expect_error(
+    local_radius_correlation(graph, graph, k = 1, log = NA),
+    "log must be TRUE or FALSE"
+  )
+  expect_error(
+    local_radius_correlation(graph, graph, k = 1, ret_extra = NA),
+    "ret_extra must be TRUE or FALSE"
   )
 })
 
@@ -478,6 +512,23 @@ test_that("old self-inclusive cached graphs are stripped with a warning", {
   expect_equal(res, c(nnp2 = 1))
 })
 
+test_that("top-level k controls generated graph size", {
+  x <- matrix(c(0, 1, 3, 10), ncol = 1)
+
+  expect_warning(
+    res <- nn_preservation(
+      x,
+      x,
+      k = 1,
+      nn_method_in = "brute",
+      nn_method_out = "brute",
+      nn_args_in = list(k = 2)
+    ),
+    "Ignoring 'k'"
+  )
+  expect_equal(res, c(nnp1 = 1))
+})
+
 test_that("idx-only nearest-neighbor graphs are accepted", {
   named <- function(x, name) {
     names(x) <- name
@@ -643,6 +694,31 @@ test_that("nearest-neighbor inputs are validated", {
   expect_error(
     nn_preservation(list(idx = 1), graph, k = 1),
     "nearest-neighbor graph"
+  )
+  bad_idx <- idx[, 1, drop = FALSE]
+  bad_idx[1, 1] <- NA_real_
+  expect_error(
+    nn_preservation(list(idx = bad_idx), graph, k = 1),
+    "finite integer indices"
+  )
+  bad_idx <- idx[, 1, drop = FALSE]
+  bad_idx[1, 1] <- 4
+  expect_error(
+    nn_preservation(list(idx = bad_idx), graph, k = 1),
+    "between 1 and the number of graph rows"
+  )
+  short_idx <- matrix(c(2, 1, 4, 3), ncol = 1)
+  expect_error(
+    nn_preservation(list(idx = short_idx), list(idx = short_idx), k = 2),
+    "enough columns"
+  )
+  self_only_graph <- list(idx = matrix(1:3, ncol = 1))
+  expect_warning(
+    expect_error(
+      nn_preservation(self_only_graph, graph, k = 1),
+      "at least 1 non-self neighbors"
+    ),
+    "contains self-neighbors"
   )
   expect_error(
     nn_preservation(
