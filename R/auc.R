@@ -27,6 +27,7 @@ roc_auc <- function(dm, labels) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("roc_auc function requires 'PRROC' package")
   }
+  validate_auc_inputs(dm, labels)
   auc_mat(dm, labels, roc_auc_row)
 }
 
@@ -73,7 +74,44 @@ pr_auc <- function(dm, labels) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("pr_auc function requires 'PRROC' package")
   }
+  validate_auc_inputs(dm, labels)
   auc_mat(dm, labels, pr_auc_row)
+}
+
+validate_auc_inputs <- function(dm, labels) {
+  if (!is.matrix(dm)) {
+    stop("`dm` must be a matrix", call. = FALSE)
+  }
+  if (!is.numeric(dm)) {
+    stop("`dm` must be numeric", call. = FALSE)
+  }
+  if (length(dm) == 0L) {
+    stop("`dm` must be nonempty", call. = FALSE)
+  }
+  if (nrow(dm) != ncol(dm)) {
+    stop("`dm` must be square", call. = FALSE)
+  }
+  if (!all(is.finite(dm))) {
+    stop("`dm` must contain only finite values", call. = FALSE)
+  }
+  if (nrow(dm) < 3L) {
+    stop("`dm` must have at least 3 rows and columns", call. = FALSE)
+  }
+
+  if (!is.atomic(labels) || !is.null(dim(labels))) {
+    stop("`labels` must be a one-dimensional vector", call. = FALSE)
+  }
+  if (length(labels) == 0L) {
+    stop("`labels` must be nonempty", call. = FALSE)
+  }
+  if (length(labels) != nrow(dm)) {
+    stop("`labels` length must equal the number of rows in `dm`", call. = FALSE)
+  }
+  if (anyNA(labels)) {
+    stop("`labels` must not contain missing values", call. = FALSE)
+  }
+
+  invisible(NULL)
 }
 
 # Area Under the PR Curve of an Observation
@@ -116,15 +154,14 @@ pr_auc <- function(dm, labels) {
 # learning}
 # (pp. 233-240). ACM.
 pr_auc_row <- function(dm, labels, i) {
-  if (!requireNamespace("PRROC", quietly = TRUE)) {
-    stop("pr_auc_row function requires 'PRROC' package")
+  other_ind <- seq_len(nrow(dm))[-i]
+  is_positive <- labels[other_ind] == labels[i]
+  if (!any(is_positive) || all(is_positive)) {
+    return(NA_real_)
   }
-  pos_ind <- which(labels == labels[i], arr.ind = TRUE)
-  pos_ind <- pos_ind[pos_ind != i]
-  pos_dist <- dm[i, pos_ind]
 
-  neg_ind <- which(labels != labels[i], arr.ind = TRUE)
-  neg_dist <- dm[i, neg_ind]
+  pos_dist <- dm[i, other_ind[is_positive]]
+  neg_dist <- dm[i, other_ind[!is_positive]]
 
   as.numeric(
     PRROC::pr.curve(
@@ -157,15 +194,14 @@ pr_auc_row <- function(dm, labels, i) {
 # @param i The row of the distance matrix to use in the ROC calculation.
 # @return Area Under the curve.
 roc_auc_row <- function(dm, labels, i) {
-  if (!requireNamespace("PRROC", quietly = TRUE)) {
-    stop("roc_auc_row function requires 'PRROC' package")
+  other_ind <- seq_len(nrow(dm))[-i]
+  is_positive <- labels[other_ind] == labels[i]
+  if (!any(is_positive) || all(is_positive)) {
+    return(NA_real_)
   }
-  pos_ind <- which(labels == labels[i], arr.ind = TRUE)
-  pos_ind <- pos_ind[pos_ind != i]
-  pos_dist <- dm[i, pos_ind]
 
-  neg_ind <- which(labels != labels[i], arr.ind = TRUE)
-  neg_dist <- dm[i, neg_ind]
+  pos_dist <- dm[i, other_ind[is_positive]]
+  neg_dist <- dm[i, other_ind[!is_positive]]
 
   as.numeric(
     PRROC::roc.curve(
@@ -207,32 +243,29 @@ auc_mat <- function(dm, labels, auc_row_fn) {
   av_auc <- 0
   av_n <- 0
   n <- nrow(dm)
-  ns <- list()
-  result <- list()
-  label_av <- list()
-  for (i in 1:n) {
-    label <- as.character(labels[[i]])
-    if (is.null(label_av[[label]])) {
-      label_av[[label]] <- 0
-      ns[[label]] <- 0
-    }
+  label_names <- unique(as.character(labels))
+  ns <- setNames(as.list(integer(length(label_names))), label_names)
+  label_av <- setNames(as.list(numeric(length(label_names))), label_names)
+  for (i in seq_len(n)) {
+    label_index <- match(as.character(labels[i]), label_names)
 
     auc <- auc_row_fn(dm, labels, i)
-    if (!is.nan(auc)) {
+    if (is.numeric(auc) && length(auc) == 1L && isTRUE(is.finite(auc))) {
       av_auc <- av_auc + auc
       av_n <- av_n + 1
-      label_av[[label]] <- label_av[[label]] + auc
-      ns[[label]] <- ns[[label]] + 1
+      label_av[[label_index]] <- label_av[[label_index]] + auc
+      ns[[label_index]] <- ns[[label_index]] + 1L
     }
   }
-  for (label in names(ns)) {
-    if (ns[[label]] == 0) {
-      label_av[[label]] <- NA_real_
+  for (label_index in seq_along(ns)) {
+    if (ns[[label_index]] == 0L) {
+      label_av[[label_index]] <- NA_real_
     } else {
-      label_av[[label]] <- label_av[[label]] / ns[[label]]
+      label_av[[label_index]] <- label_av[[label_index]] / ns[[label_index]]
     }
   }
-  result$av_auc <- if (av_n == 0) NA_real_ else av_auc / av_n
-  result$label_av <- label_av
-  result
+  list(
+    av_auc = if (av_n == 0L) NA_real_ else av_auc / av_n,
+    label_av = label_av
+  )
 }
