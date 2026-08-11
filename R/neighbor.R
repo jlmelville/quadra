@@ -84,13 +84,22 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
   if (!methods::is(kout, "matrix")) {
     stop("kout must be a matrix", call. = FALSE)
   }
-  k <- validate_positive_integer(k, "k")
-  if (k > ncol(kin) || k > ncol(kout)) {
-    stop("k cannot be larger than the number of columns in kin or kout")
-  }
   if (nrow(kin) != nrow(kout)) {
     stop("kin and kout must have the same number of rows", call. = FALSE)
   }
+  k <- validate_positive_integer(k, "k")
+  kin <- prepare_supplied_nn_graph(
+    list(idx = kin),
+    k = k,
+    name = "kin",
+    warn_self = FALSE
+  )$idx
+  kout <- prepare_supplied_nn_graph(
+    list(idx = kout),
+    k = k,
+    name = "kout",
+    warn_self = FALSE
+  )$idx
   counts <- neighbor_overlap_counts(kin, kout, k)
   counts[, 1] * (1 / k)
 }

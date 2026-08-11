@@ -77,6 +77,9 @@ validate_positive_integer_vector <- function(x, name) {
   ) {
     stop(name, " must contain positive integers", call. = FALSE)
   }
+  if (anyDuplicated(x)) {
+    stop(name, " must contain unique values", call. = FALSE)
+  }
   as.integer(x)
 }
 

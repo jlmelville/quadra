@@ -171,8 +171,6 @@ nn_preservation <- function(
         name = "Xin"
       )
     )
-  check_nn_graph(nn_in, "Xin")
-
   tsmessage("Getting neighbor graph for Xout")
   nn_out <-
     do.call(
@@ -189,8 +187,6 @@ nn_preservation <- function(
         name = "Xout"
       )
     )
-  check_nn_graph(nn_out, "Xout")
-
   if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
     stop(
       "Xin and Xout neighbor graphs must have the same number of rows",
@@ -198,11 +194,11 @@ nn_preservation <- function(
     )
   }
 
-  overlap_counts <- nn_overlap_counts(
-    idx = nn_out,
-    ref_idx = nn_in,
-    k = k,
-    n_threads = n_threads
+  overlap_counts <- neighbor_overlap_counts(
+    nn_out$idx,
+    nn_in$idx,
+    k,
+    n_threads
   )
   nnp_by_row <- sweep(overlap_counts, 2L, k, `/`)
   nnps <- colMeans(nnp_by_row)
@@ -341,10 +337,10 @@ local_radius_correlation <- function(
         n_threads = n_threads,
         verbose = verbose,
         nn_args = nn_args_in,
-        name = "Xin"
+        name = "Xin",
+        require_dist = TRUE
       )
     )
-  check_nn_graph_dist(nn_in, "Xin")
 
   tsmessage("Getting neighbor graph for Xout")
   nn_out <-
@@ -359,10 +355,10 @@ local_radius_correlation <- function(
         n_threads = n_threads,
         verbose = verbose,
         nn_args = nn_args_out,
-        name = "Xout"
+        name = "Xout",
+        require_dist = TRUE
       )
     )
-  check_nn_graph_dist(nn_out, "Xout")
 
   if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
     stop(
@@ -507,8 +503,6 @@ mutual_neighbor_correlation <- function(
         name = "Xin"
       )
     )
-  check_nn_graph(nn_in, "Xin")
-
   tsmessage("Getting neighbor graph for Xout")
   nn_out <-
     do.call(
@@ -525,8 +519,6 @@ mutual_neighbor_correlation <- function(
         name = "Xout"
       )
     )
-  check_nn_graph(nn_out, "Xout")
-
   if (graph_dim(nn_in)[1] != graph_dim(nn_out)[1]) {
     stop(
       "Xin and Xout neighbor graphs must have the same number of rows",
@@ -652,12 +644,17 @@ get_nn_graph <-
     n_threads,
     verbose,
     nn_args,
-    name = "Nearest-neighbor graph"
+    name = "Nearest-neighbor graph",
+    require_dist = FALSE
   ) {
-    if (is_nn_graph(X)) {
-      prepare_supplied_nn_graph(X, k = k, name = name)
-    } else if (is.list(X) && !is.data.frame(X)) {
-      check_nn_graph(X, "Nearest-neighbor graph")
+    if (is.list(X) && !is.data.frame(X)) {
+      prepare_supplied_nn_graph(
+        X,
+        k = k,
+        name = name,
+        require_dist = require_dist,
+        warn_self = TRUE
+      )
     } else {
       X <- x2m(X)
       n_obs <- if (is_transposed) ncol(X) else nrow(X)
@@ -686,7 +683,13 @@ get_nn_graph <-
           nn_args
         )
       )
-      strip_self_neighbors(nn_graph, k = k, name = name)
+      prepare_supplied_nn_graph(
+        nn_graph,
+        k = k,
+        name = name,
+        require_dist = require_dist,
+        warn_self = FALSE
+      )
     }
   }
 
@@ -717,13 +720,21 @@ is_nn_graph <- function(graph) {
 }
 
 check_nn_graph <- function(graph, name = "graph") {
-  if (!is_nn_graph(graph)) {
+  if (!is.list(graph) || is.null(graph$idx) || !is.matrix(graph$idx)) {
     stop(
       name,
       " must be a nearest-neighbor graph: a list with matrix element 'idx' ",
       "and optional matrix element 'dist' with matching dimensions",
       call. = FALSE
     )
+  }
+  if (!is.null(graph$dist)) {
+    if (!is.matrix(graph$dist)) {
+      stop(name, " dist must be a matrix", call. = FALSE)
+    }
+    if (!all(dim(graph$idx) == dim(graph$dist))) {
+      stop(name, " idx and dist must have matching dimensions", call. = FALSE)
+    }
   }
   idx <- graph$idx
   if (!is.numeric(idx)) {
@@ -739,6 +750,15 @@ check_nn_graph <- function(graph, name = "graph") {
       call. = FALSE
     )
   }
+  for (i in seq_len(nrow(idx))) {
+    if (anyDuplicated(idx[i, ])) {
+      stop(
+        name,
+        " idx must not contain duplicate indices within a row",
+        call. = FALSE
+      )
+    }
+  }
   invisible(graph)
 }
 
@@ -752,6 +772,11 @@ check_nn_graph_dist <- function(graph, name = "graph") {
       call. = FALSE
     )
   }
+  check_nn_graph_dist_values(dist, name)
+  invisible(graph)
+}
+
+check_nn_graph_dist_values <- function(dist, name) {
   if (!is.numeric(dist)) {
     stop(name, " dist must be a numeric matrix", call. = FALSE)
   }
@@ -761,7 +786,14 @@ check_nn_graph_dist <- function(graph, name = "graph") {
   if (any(dist < 0)) {
     stop(name, " dist must contain non-negative distances", call. = FALSE)
   }
-  invisible(graph)
+  if (ncol(dist) > 1L && any(t(apply(dist, 1L, diff)) < 0)) {
+    stop(
+      name,
+      " dist must be non-decreasing within each row",
+      call. = FALSE
+    )
+  }
+  invisible(dist)
 }
 
 check_k_for_n_obs <- function(k, n_obs) {
@@ -782,31 +814,30 @@ has_self_neighbors <- function(graph) {
 prepare_supplied_nn_graph <- function(
   graph,
   k,
-  name = "Nearest-neighbor graph"
+  name = "Nearest-neighbor graph",
+  require_dist = FALSE,
+  warn_self = TRUE
 ) {
   check_nn_graph(graph, name)
   check_k_for_n_obs(k, nrow(graph$idx))
-  if (has_self_neighbors(graph)) {
+  if (require_dist && is.null(graph$dist)) {
+    stop(
+      name,
+      " must contain a 'dist' matrix for local radius correlation",
+      call. = FALSE
+    )
+  }
+  if (require_dist) {
+    check_nn_graph_dist_values(graph$dist, name)
+  }
+  if (has_self_neighbors(graph) && warn_self) {
     warning(
       name,
       " contains self-neighbors; stripping row self-indices. ",
       "Provide self-excluded graphs to avoid this warning.",
       call. = FALSE
     )
-    return(strip_self_neighbors(graph, k = k, name = name))
   }
-  if (graph_k(graph) < k) {
-    stop(
-      "Nearest-neighbor graph does not contain enough columns for requested k",
-      call. = FALSE
-    )
-  }
-  graph
-}
-
-strip_self_neighbors <- function(graph, k, name = "Nearest-neighbor graph") {
-  check_nn_graph(graph, name)
-  check_k_for_n_obs(k, nrow(graph$idx))
 
   idx <- graph$idx
   dist <- graph$dist
@@ -841,6 +872,15 @@ strip_self_neighbors <- function(graph, k, name = "Nearest-neighbor graph") {
   graph
 }
 
+strip_self_neighbors <- function(graph, k, name = "Nearest-neighbor graph") {
+  prepare_supplied_nn_graph(
+    graph,
+    k = k,
+    name = name,
+    warn_self = FALSE
+  )
+}
+
 nn_overlap_counts <- function(idx, ref_idx, k, n_threads = 0) {
   if (is.list(idx)) {
     idx <- idx$idx
@@ -858,17 +898,22 @@ nn_overlap_counts <- function(idx, ref_idx, k, n_threads = 0) {
 
   k <- validate_positive_integer_vector(k, "k")
   max_k <- max(k)
-
-  if (ncol(idx) < max_k) {
-    stop("Not enough columns in idx for max(k) = ", max_k, call. = FALSE)
-  }
-  if (ncol(ref_idx) < max_k) {
-    stop("Not enough columns in ref_idx for max(k) = ", max_k, call. = FALSE)
-  }
-
   if (nrow(ref_idx) != nrow(idx)) {
     stop("idx and ref_idx must have the same number of rows", call. = FALSE)
   }
+
+  idx <- prepare_supplied_nn_graph(
+    list(idx = idx),
+    k = max_k,
+    name = "idx",
+    warn_self = FALSE
+  )$idx
+  ref_idx <- prepare_supplied_nn_graph(
+    list(idx = ref_idx),
+    k = max_k,
+    name = "ref_idx",
+    warn_self = FALSE
+  )$idx
 
   neighbor_overlap_counts(idx, ref_idx, k, n_threads)
 }

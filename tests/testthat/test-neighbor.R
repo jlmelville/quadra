@@ -36,7 +36,7 @@ test_that("nearest-neighbor matrix preservation uses the supplied neighbors", {
   expect_equal(nbr_pres_knn(kin, kout, k = 2), rep(0.5, 4))
 })
 
-test_that("nearest-neighbor matrix preservation counts unique shared indices", {
+test_that("nearest-neighbor matrix preservation rejects duplicate indices", {
   # fmt: skip
   kin <- matrix(
     c(
@@ -60,8 +60,8 @@ test_that("nearest-neighbor matrix preservation counts unique shared indices", {
     byrow = TRUE
   )
 
-  expect_equal(nbr_pres_knn(kin, kout, k = 2), rep(0, 4))
-  expect_equal(nbr_pres_knn(kin, kout, k = 3), rep(2 / 3, 4))
+  expect_error(nbr_pres_knn(kin, kout, k = 2), "duplicate indices")
+  expect_error(nbr_pres_knn(kin, kout, k = 3), "duplicate indices")
 })
 
 test_that("nearest-neighbor matrix preservation validates inputs", {
@@ -79,8 +79,53 @@ test_that("nearest-neighbor matrix preservation validates inputs", {
   kout <- kin
 
   expect_error(nbr_pres_knn(kin, kout, k = 0), "positive integer")
-  expect_error(nbr_pres_knn(kin, kout, k = 3), "number of columns")
+  expect_error(nbr_pres_knn(kin, kout, k = 3), "at least 3 non-self neighbors")
   expect_error(nbr_pres_knn(kin, kout[-1, ], k = 1), "same number of rows")
+  expect_error(nbr_pres_knn(kin, kout, k = 4), "non-self observations")
+
+  bad_values <- list(NA_real_, Inf, 1.5, 5)
+  for (bad_value in bad_values) {
+    bad_kin <- kin
+    bad_kin[1, 1] <- bad_value
+    expect_error(nbr_pres_knn(bad_kin, kout, k = 1), "idx")
+  }
+})
+
+test_that("nearest-neighbor matrix preservation normalizes self-neighbors", {
+  self_only <- matrix(seq_len(4), ncol = 1)
+  expect_error(
+    nbr_pres_knn(self_only, self_only, k = 1),
+    "does not contain at least 1 non-self neighbors"
+  )
+
+  # fmt: skip
+  self_inclusive <- matrix(
+    c(
+      1, 2, 3,
+      2, 1, 3,
+      3, 2, 1,
+      4, 3, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  # fmt: skip
+  self_excluded <- matrix(
+    c(
+      2, 3,
+      1, 3,
+      2, 1,
+      3, 2
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+
+  expect_equal(
+    nbr_pres_knn(self_inclusive, self_excluded, k = 2),
+    rep(1, 4)
+  )
+  expect_equal(nbr_pres_knn(self_excluded, self_excluded, k = 2), rep(1, 4))
 })
 
 test_that("co-ranking matrices exclude self-neighbors", {

@@ -300,6 +300,14 @@ test_that("local radius correlation validates graph distances", {
   )
   expect_error(
     local_radius_correlation(
+      list(idx = idx, dist = matrix(Inf, nrow = 3, ncol = 2)),
+      graph,
+      k = 1
+    ),
+    "finite distances"
+  )
+  expect_error(
+    local_radius_correlation(
       list(idx = idx, dist = matrix("x", nrow = 3, ncol = 2)),
       graph,
       k = 1
@@ -313,6 +321,23 @@ test_that("local radius correlation validates graph distances", {
       k = 1
     ),
     "non-negative distances"
+  )
+  unsorted_dist <- matrix(c(2, 1, 1, 2, 1, 2), nrow = 3, byrow = TRUE)
+  expect_error(
+    local_radius_correlation(
+      list(idx = idx, dist = unsorted_dist),
+      graph,
+      k = 2
+    ),
+    "non-decreasing"
+  )
+  expect_error(
+    local_radius_correlation(
+      list(idx = idx, dist = matrix(1, nrow = 2, ncol = 3)),
+      graph,
+      k = 1
+    ),
+    "matching dimensions"
   )
   expect_error(
     local_radius_correlation(graph, graph, k = 1, log = NA),
@@ -506,10 +531,12 @@ test_that("old self-inclusive cached graphs are stripped with a warning", {
   )
 
   expect_warning(
-    res <- nn_preservation(old_graph, stripped_graph, k = 2),
+    res <- nn_preservation(old_graph, stripped_graph, k = 2, ret_extra = TRUE),
     "contains self-neighbors"
   )
-  expect_equal(res, c(nnp2 = 1))
+  expect_equal(res$nnp, c(nnp2 = 1))
+  expect_equal(res$nn_in$idx, stripped_graph$idx)
+  expect_equal(res$nn_in$dist, stripped_graph$dist)
 })
 
 test_that("top-level k controls generated graph size", {
@@ -577,11 +604,11 @@ test_that("nearest-neighbor preservation returns per-row values", {
   res <- nn_preservation(
     list(idx = ref_idx),
     list(idx = idx),
-    k = c(2, 1, 2),
+    k = c(2, 1),
     ret_extra = TRUE
   )
 
-  expect_equal(res$nnp, c(nnp2 = 0.625, nnp1 = 0.25, nnp2 = 0.625))
+  expect_equal(res$nnp, c(nnp2 = 0.625, nnp1 = 0.25))
   expect_equal(res$nnpv$nnp2, c(1, 0.5, 0.5, 0.5))
   expect_equal(res$nnpv$nnp1, c(0, 0, 0, 1))
 })
@@ -611,7 +638,7 @@ test_that("nearest-neighbor overlap counts preserve requested k order", {
   )
 
   expect_equal(
-    nn_overlap_counts(idx, ref_idx, k = c(2, 1, 2)),
+    nn_overlap_counts(idx, ref_idx, k = c(2, 1)),
     matrix(
       c(
         2,
@@ -621,10 +648,6 @@ test_that("nearest-neighbor overlap counts preserve requested k order", {
         0,
         0,
         0,
-        1,
-        2,
-        1,
-        1,
         1
       ),
       nrow = 4
@@ -632,7 +655,7 @@ test_that("nearest-neighbor overlap counts preserve requested k order", {
   )
 })
 
-test_that("nearest-neighbor overlap counts unique shared indices", {
+test_that("nearest-neighbor preservation rejects duplicate indices", {
   # fmt: skip
   idx <- matrix(
     c(
@@ -656,9 +679,9 @@ test_that("nearest-neighbor overlap counts unique shared indices", {
     byrow = TRUE
   )
 
-  expect_equal(
-    nn_overlap_counts(idx, ref_idx, k = c(2, 3)),
-    matrix(c(0, 0, 0, 0, 2, 2, 2, 2), nrow = 4)
+  expect_error(
+    nn_preservation(list(idx = idx), list(idx = ref_idx), k = 2),
+    "duplicate indices"
   )
 })
 
@@ -682,6 +705,10 @@ test_that("nearest-neighbor inputs are validated", {
   expect_error(
     nn_preservation(graph, graph, k = 1.5),
     "k must contain positive integers"
+  )
+  expect_error(
+    nn_preservation(graph, graph, k = c(1, 1)),
+    "k must contain unique values"
   )
   expect_error(
     nn_preservation(graph, graph, k = 3),
@@ -710,7 +737,7 @@ test_that("nearest-neighbor inputs are validated", {
   short_idx <- matrix(c(2, 1, 4, 3), ncol = 1)
   expect_error(
     nn_preservation(list(idx = short_idx), list(idx = short_idx), k = 2),
-    "enough columns"
+    "at least 2 non-self neighbors"
   )
   self_only_graph <- list(idx = matrix(1:3, ncol = 1))
   expect_warning(
@@ -726,6 +753,6 @@ test_that("nearest-neighbor inputs are validated", {
       graph,
       k = 1
     ),
-    "nearest-neighbor graph"
+    "matching dimensions"
   )
 })
