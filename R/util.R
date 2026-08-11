@@ -25,7 +25,21 @@ tsmessage <- function(
 }
 
 # convert data frame to matrix using numeric columns
-x2m <- function(X) {
+x2m <- function(
+  X,
+  name = "Input data",
+  allow_sparse = FALSE,
+  require_finite = FALSE
+) {
+  sparse_input <- methods::is(X, "sparseMatrix")
+  if (sparse_input && !allow_sparse) {
+    stop(
+      name,
+      " must be dense; sparse matrices are not supported",
+      call. = FALSE
+    )
+  }
+
   if (is.data.frame(X)) {
     numeric_cols <- vapply(X, is.numeric, logical(1))
     if (!any(numeric_cols)) {
@@ -35,12 +49,14 @@ x2m <- function(X) {
       )
     }
     m <- as.matrix(X[, numeric_cols, drop = FALSE])
+  } else if (sparse_input) {
+    m <- X
   } else if (!methods::is(X, "matrix")) {
     m <- as.matrix(X)
   } else {
     m <- X
   }
-  if (!is.numeric(m)) {
+  if (!sparse_input && !is.numeric(m)) {
     stop("Input data must be numeric", call. = FALSE)
   }
   if (nrow(m) == 0 || ncol(m) == 0) {
@@ -48,6 +64,9 @@ x2m <- function(X) {
       "Input data must contain at least one row and one column",
       call. = FALSE
     )
+  }
+  if (require_finite && (anyNA(m) || any(!is.finite(m)))) {
+    stop(name, " must contain only finite values", call. = FALSE)
   }
   m
 }

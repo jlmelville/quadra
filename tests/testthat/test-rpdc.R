@@ -171,3 +171,114 @@ test_that("constant random pair distances use stats cor behavior", {
   )
   expect_true(is.na(res))
 })
+
+test_that("dense-only sampled metrics reject sparse top-level inputs", {
+  sampled_metrics <- list(
+    correlation = function(Xin, Xout) {
+      random_pair_distance_correlation(Xin, Xout, n_pairs = 10)
+    },
+    emd = function(Xin, Xout) {
+      random_pair_distance_emd(Xin, Xout, n_pairs = 10)
+    },
+    stress = function(Xin, Xout) {
+      random_pair_distance_stress(Xin, Xout, n_pairs = 10)
+    },
+    triplet = function(Xin, Xout) {
+      random_triplet_accuracy(Xin, Xout, n_triplets = 2)
+    }
+  )
+
+  for (metric_name in names(sampled_metrics)) {
+    metric <- sampled_metrics[[metric_name]]
+    for (input_name in c("Xin", "Xout")) {
+      inputs <- list(Xin = m, Xout = n)
+      inputs[[input_name]] <- sparse_m
+      expect_error(
+        do.call(metric, inputs),
+        paste0(input_name, ".*sparse"),
+        info = paste(metric_name, input_name)
+      )
+    }
+  }
+})
+
+test_that("dense-only sampled metrics reject nonfinite top-level inputs", {
+  explicit_triplets <- matrix(0, nrow = 2, ncol = nrow(m))
+  cases <- list(
+    list(
+      metric = random_pair_distance_correlation,
+      input = "Xin",
+      value = NA_real_,
+      args = list(n_pairs = 10)
+    ),
+    list(
+      metric = random_pair_distance_correlation,
+      input = "Xout",
+      value = NaN,
+      args = list(n_pairs = 10)
+    ),
+    list(
+      metric = random_pair_distance_emd,
+      input = "Xin",
+      value = Inf,
+      args = list(n_pairs = 10)
+    ),
+    list(
+      metric = random_pair_distance_emd,
+      input = "Xout",
+      value = -Inf,
+      args = list(n_pairs = 10)
+    ),
+    list(
+      metric = random_pair_distance_stress,
+      input = "Xin",
+      value = NaN,
+      args = list(n_pairs = 10)
+    ),
+    list(
+      metric = random_pair_distance_stress,
+      input = "Xout",
+      value = Inf,
+      args = list(n_pairs = 10)
+    ),
+    list(
+      metric = random_triplet_accuracy,
+      input = "Xin",
+      value = -Inf,
+      args = list(n_triplets = 2)
+    ),
+    list(
+      metric = random_triplet_accuracy,
+      input = "Xout",
+      value = NA_real_,
+      args = list(n_triplets = explicit_triplets)
+    )
+  )
+
+  for (case in cases) {
+    inputs <- list(Xin = m, Xout = n)
+    inputs[[case$input]][1, 1] <- case$value
+    expect_error(
+      do.call(case$metric, c(inputs, case$args)),
+      paste0(case$input, ".*finite values"),
+      info = case$input
+    )
+  }
+})
+
+test_that("sampled input checks ignore nonnumeric data-frame columns", {
+  xin <- data.frame(value = m[, 1], ignored = NA_character_)
+  xout <- data.frame(value = n[, 1], ignored = NA_character_)
+
+  set.seed(20260810)
+  expected <- random_pair_distance_correlation(
+    m[, 1, drop = FALSE],
+    n[, 1, drop = FALSE],
+    n_pairs = 20
+  )
+  set.seed(20260810)
+  expect_equal(
+    random_pair_distance_correlation(xin, xout, n_pairs = 20),
+    expected
+  )
+})

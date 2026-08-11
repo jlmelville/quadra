@@ -33,3 +33,5 @@ m <- matrix(
   byrow = TRUE,
   nrow = 10
 )
+
+sparse_m <- Matrix::Matrix(m, sparse = TRUE)

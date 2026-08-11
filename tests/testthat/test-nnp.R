@@ -152,6 +152,35 @@ test_that("generated nearest-neighbor graphs exclude self-neighbors", {
   expect_equal(ncol(nnd_res$nn_out$idx), 2)
 })
 
+test_that("sparse raw inputs remain sparse through graph preparation", {
+  # Allocation safety requires checking the private preparation boundary:
+  # graph results alone cannot reveal an intermediate dense conversion.
+  prepared <- x2m(sparse_m, allow_sparse = TRUE)
+
+  expect_identical(prepared, sparse_m)
+  expect_true(methods::is(prepared, "sparseMatrix"))
+})
+
+test_that("sparse raw inputs support graph-search routes", {
+  for (nn_method in c("brute", "nnd")) {
+    set.seed(20260810)
+    result <- nn_preservation(
+      sparse_m,
+      sparse_m,
+      k = 2,
+      nn_method_in = nn_method,
+      nn_method_out = nn_method,
+      ret_extra = TRUE
+    )
+
+    expect_equal(result$nnp, c(nnp2 = 1), info = nn_method)
+    for (graph in list(result$nn_in, result$nn_out)) {
+      expect_equal(dim(graph$idx), c(nrow(sparse_m), 2L), info = nn_method)
+      expect_false(any(graph$idx == row(graph$idx)), info = nn_method)
+    }
+  }
+})
+
 test_that("cached self-excluded graphs reproduce raw-data values", {
   raw_res <- nn_preservation(
     m,

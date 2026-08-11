@@ -17,6 +17,7 @@ RoxygenNote: 8.0.0
 Suggests:
     covr,
     lintr,
+    Matrix,
     pkgdown,
     PRROC,
     testthat (>= 3.0.0)
