@@ -153,6 +153,17 @@ nn_preservation <- function(
   nn_args_out = list()
 ) {
   k <- validate_positive_integer_vector(k, "k")
+  is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
+  verbose <- validate_scalar_logical(verbose, "verbose")
+  ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
+  nn_args_in <- validate_nn_args(nn_args_in, "nn_args_in")
+  nn_args_out <- validate_nn_args(nn_args_out, "nn_args_out")
+  if (!is.list(Xin) || is.data.frame(Xin)) {
+    validate_nn_backend_args(nn_args_in, nn_method_in, "nn_args_in")
+  }
+  if (!is.list(Xout) || is.data.frame(Xout)) {
+    validate_nn_backend_args(nn_args_out, nn_method_out, "nn_args_out")
+  }
   max_k <- max(k)
 
   tsmessage("Getting neighbor graph for Xin")
@@ -316,11 +327,17 @@ local_radius_correlation <- function(
   k <- validate_positive_integer_vector(k, "k")
   statistic <- match.arg(statistic)
   method <- match.arg(method)
-  if (!is.logical(log) || length(log) != 1L || is.na(log)) {
-    stop("log must be TRUE or FALSE", call. = FALSE)
+  log <- validate_scalar_logical(log, "log")
+  is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
+  verbose <- validate_scalar_logical(verbose, "verbose")
+  ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
+  nn_args_in <- validate_nn_args(nn_args_in, "nn_args_in")
+  nn_args_out <- validate_nn_args(nn_args_out, "nn_args_out")
+  if (!is.list(Xin) || is.data.frame(Xin)) {
+    validate_nn_backend_args(nn_args_in, nn_method_in, "nn_args_in")
   }
-  if (!is.logical(ret_extra) || length(ret_extra) != 1L || is.na(ret_extra)) {
-    stop("ret_extra must be TRUE or FALSE", call. = FALSE)
+  if (!is.list(Xout) || is.data.frame(Xout)) {
+    validate_nn_backend_args(nn_args_out, nn_method_out, "nn_args_out")
   }
   max_k <- max(k)
 
@@ -482,8 +499,16 @@ mutual_neighbor_correlation <- function(
 ) {
   k <- validate_positive_integer_vector(k, "k")
   method <- match.arg(method)
-  if (!is.logical(ret_extra) || length(ret_extra) != 1L || is.na(ret_extra)) {
-    stop("ret_extra must be TRUE or FALSE", call. = FALSE)
+  is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
+  verbose <- validate_scalar_logical(verbose, "verbose")
+  ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
+  nn_args_in <- validate_nn_args(nn_args_in, "nn_args_in")
+  nn_args_out <- validate_nn_args(nn_args_out, "nn_args_out")
+  if (!is.list(Xin) || is.data.frame(Xin)) {
+    validate_nn_backend_args(nn_args_in, nn_method_in, "nn_args_in")
+  }
+  if (!is.list(Xout) || is.data.frame(Xout)) {
+    validate_nn_backend_args(nn_args_out, nn_method_out, "nn_args_out")
   }
   max_k <- max(k)
 
@@ -604,6 +629,48 @@ local_scale_correlation <- function(x, y, method) {
   unname(stats::cor(x = x, y = y, method = method))
 }
 
+get_nn_provider <- function(nn_method) {
+  switch(
+    nn_method,
+    brute = rnndescent::brute_force_knn,
+    nnd = rnndescent::nnd_knn,
+    stop("unknown method '", nn_method, "'")
+  )
+}
+
+validate_nn_backend_args <- function(nn_args, nn_method, name) {
+  nn_provider <- get_nn_provider(nn_method)
+  provider_args <- c(
+    list(
+      data = quote(data),
+      k = quote(k),
+      metric = quote(metric),
+      n_threads = quote(n_threads),
+      verbose = quote(verbose),
+      obs = quote(obs)
+    ),
+    nn_args
+  )
+  tryCatch(
+    match.call(
+      definition = nn_provider,
+      call = as.call(c(list(quote(nn_provider)), provider_args)),
+      expand.dots = FALSE
+    ),
+    error = function(error) {
+      stop(
+        name,
+        " contains a control not accepted by nn_method '",
+        nn_method,
+        "': ",
+        conditionMessage(error),
+        call. = FALSE
+      )
+    }
+  )
+  invisible(nn_args)
+}
+
 calc_nn_graph <-
   function(
     X,
@@ -612,26 +679,24 @@ calc_nn_graph <-
     metric = "sqeuclidean",
     n_threads = 0,
     verbose = FALSE,
-    ...
+    obs = "R",
+    nn_args = list()
   ) {
-    varargs <- lmerge(
-      list(
-        data = X,
-        k = k,
-        verbose = verbose,
-        n_threads = n_threads,
-        metric = metric
-      ),
-      list(...)
+    nnfun <- get_nn_provider(nn_method)
+    do.call(
+      nnfun,
+      c(
+        list(
+          data = X,
+          k = k,
+          metric = metric,
+          n_threads = n_threads,
+          verbose = verbose,
+          obs = obs
+        ),
+        nn_args
+      )
     )
-
-    nnfun <- switch(
-      nn_method,
-      brute = rnndescent::brute_force_knn,
-      nnd = rnndescent::nnd_knn,
-      stop("unknown method '", nn_method, "'")
-    )
-    do.call(nnfun, varargs)
   }
 
 get_nn_graph <-
@@ -659,29 +724,15 @@ get_nn_graph <-
       X <- x2m(X)
       n_obs <- if (is_transposed) ncol(X) else nrow(X)
       check_k_for_n_obs(k, n_obs)
-      if ("k" %in% names(nn_args)) {
-        warning(
-          "Ignoring 'k' in ",
-          name,
-          " nn_args; use the top-level k argument",
-          call. = FALSE
-        )
-        nn_args$k <- NULL
-      }
-      nn_graph <- do.call(
-        calc_nn_graph,
-        lmerge(
-          list(
-            X = X,
-            k = k + 1L,
-            nn_method = nn_method,
-            metric = metric,
-            n_threads = n_threads,
-            verbose = verbose,
-            obs = ifelse(is_transposed, "C", "R")
-          ),
-          nn_args
-        )
+      nn_graph <- calc_nn_graph(
+        X = X,
+        k = k + 1L,
+        nn_method = nn_method,
+        metric = metric,
+        n_threads = n_threads,
+        verbose = verbose,
+        obs = if (is_transposed) "C" else "R",
+        nn_args = nn_args
       )
       prepare_supplied_nn_graph(
         nn_graph,

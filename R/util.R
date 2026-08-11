@@ -83,13 +83,54 @@ validate_positive_integer_vector <- function(x, name) {
   as.integer(x)
 }
 
-# Add the (named) values in l2 to l1.
-# Use to override default values in l1 with user-supplied values in l2
-lmerge <- function(l1, l2) {
-  for (name in names(l2)) {
-    l1[[name]] <- l2[[name]]
+validate_scalar_logical <- function(x, name) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    stop(name, " must be TRUE or FALSE", call. = FALSE)
   }
-  l1
+  x
+}
+
+validate_nn_args <- function(x, name) {
+  if (!is.list(x)) {
+    stop(name, " must be a list", call. = FALSE)
+  }
+  if (length(x) == 0L) {
+    return(x)
+  }
+
+  argument_names <- names(x)
+  if (
+    is.null(argument_names) ||
+      anyNA(argument_names) ||
+      any(!nzchar(argument_names))
+  ) {
+    stop(name, " must have nonempty, nonmissing names", call. = FALSE)
+  }
+  if (anyDuplicated(argument_names)) {
+    stop(name, " must have unique names", call. = FALSE)
+  }
+
+  package_controls <- c(
+    "X",
+    "data",
+    "k",
+    "metric",
+    "nn_method",
+    "n_threads",
+    "verbose",
+    "obs"
+  )
+  collision <- intersect(argument_names, package_controls)
+  if (length(collision) > 0L) {
+    stop(
+      name,
+      " must not include package-owned control '",
+      collision[1L],
+      "'",
+      call. = FALSE
+    )
+  }
+  x
 }
 
 supported_distances <- function() {

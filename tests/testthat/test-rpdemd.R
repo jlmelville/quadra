@@ -36,6 +36,17 @@ test_that("constant random pair distances have zero EMD", {
   expect_equal(random_pair_distance_emd(x, x, n_pairs = 10), 0)
 })
 
+test_that("random pair EMD validates scalar logical controls", {
+  expect_error(
+    random_pair_distance_emd(m, n, range_scale = NA),
+    "range_scale must be TRUE or FALSE"
+  )
+  expect_error(
+    random_pair_distance_emd(m, n, is_transposed = 0),
+    "is_transposed must be TRUE or FALSE"
+  )
+})
+
 test_that("random pair distance stress matches sampled distances", {
   set.seed(987)
   randlist <- random_pair_distances(m, n, n_pairs = 50)
@@ -105,5 +116,13 @@ test_that("random pair distance stress validates inputs", {
   expect_error(
     random_pair_distance_stress(m, n, metric_out = "not-a-metric"),
     "should be one of"
+  )
+  expect_error(
+    random_pair_distance_stress(m, n, range_scale = "yes"),
+    "range_scale must be TRUE or FALSE"
+  )
+  expect_error(
+    random_pair_distance_stress(m, n, is_transposed = c(FALSE, TRUE)),
+    "is_transposed must be TRUE or FALSE"
   )
 })

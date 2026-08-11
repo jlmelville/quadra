@@ -156,6 +156,10 @@ test_that("random pair inputs are validated", {
     ),
     "at least one numeric column"
   )
+  expect_error(
+    random_pair_distance_correlation(m, n, is_transposed = NA),
+    "is_transposed must be TRUE or FALSE"
+  )
 })
 
 test_that("constant random pair distances use stats cor behavior", {

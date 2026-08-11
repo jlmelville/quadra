@@ -66,6 +66,7 @@ random_triplet_accuracy <-
     is_transposed = FALSE,
     n_threads = 0
   ) {
+    is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
     metric_in <- validate_distance(metric_in)
     metric_out <- validate_distance(metric_out)
 

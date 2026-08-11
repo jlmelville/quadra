@@ -539,21 +539,210 @@ test_that("old self-inclusive cached graphs are stripped with a warning", {
   expect_equal(res$nn_in$dist, stripped_graph$dist)
 })
 
-test_that("top-level k controls generated graph size", {
+test_that("package-owned controls are rejected in nearest-neighbor arguments", {
   x <- matrix(c(0, 1, 3, 10), ncol = 1)
+  base_args <- list(
+    Xin = x,
+    Xout = x,
+    k = 1,
+    nn_method_in = "brute",
+    nn_method_out = "brute"
+  )
 
-  expect_warning(
-    res <- nn_preservation(
-      x,
+  for (argument in c("nn_args_in", "nn_args_out")) {
+    for (control in c(
+      "X",
+      "data",
+      "k",
+      "metric",
+      "nn_method",
+      "n_threads",
+      "verbose",
+      "obs"
+    )) {
+      call_args <- c(
+        base_args,
+        setNames(list(setNames(list(NULL), control)), argument)
+      )
+      expect_error(
+        do.call(nn_preservation, call_args),
+        paste0(argument, ".*'", control, "'")
+      )
+    }
+  }
+})
+
+test_that("nearest-neighbor argument lists require unique nonempty names", {
+  x <- matrix(c(0, 1, 3, 10), ncol = 1)
+  base_args <- list(
+    Xin = x,
+    Xout = x,
+    k = 1,
+    nn_method_in = "brute",
+    nn_method_out = "brute"
+  )
+  invalid_args <- list(
+    list(1),
+    structure(list(1), names = ""),
+    list(use_alt_metric = FALSE, TRUE),
+    structure(list(1), names = NA_character_),
+    structure(
+      list(FALSE, TRUE),
+      names = c("use_alt_metric", "use_alt_metric")
+    ),
+    FALSE
+  )
+
+  for (argument in c("nn_args_in", "nn_args_out")) {
+    for (value in invalid_args) {
+      call_args <- c(base_args, setNames(list(value), argument))
+      expect_error(do.call(nn_preservation, call_args), argument)
+    }
+  }
+
+  expect_equal(do.call(nn_preservation, base_args), c(nnp1 = 1))
+})
+
+test_that("nearest-neighbor backend arguments pass through to the selected route", {
+  x <- matrix(c(0, 1, 3, 10, 15, 21), ncol = 1)
+
+  brute <- nn_preservation(
+    x,
+    x,
+    k = 1,
+    nn_method_in = "brute",
+    nn_method_out = "brute",
+    nn_args_in = list(use_alt_metric = FALSE),
+    ret_extra = TRUE
+  )
+  expect_equal(ncol(brute$nn_in$idx), 1)
+
+  set.seed(20260810)
+  nnd <- nn_preservation(
+    x,
+    x,
+    k = 1,
+    nn_method_in = "nnd",
+    nn_method_out = "brute",
+    nn_args_in = list(n_iters = 1),
+    ret_extra = TRUE
+  )
+  expect_equal(ncol(nnd$nn_in$idx), 1)
+
+  wrong_backend_error <- tryCatch(
+    nn_preservation(
+      data.frame(label = letters[1:6]),
       x,
       k = 1,
       nn_method_in = "brute",
       nn_method_out = "brute",
-      nn_args_in = list(k = 2)
+      nn_args_out = list(n_iters = 1)
     ),
-    "Ignoring 'k'"
+    error = identity
   )
-  expect_equal(res, c(nnp1 = 1))
+  expect_s3_class(wrong_backend_error, "error")
+  expect_match(
+    conditionMessage(wrong_backend_error),
+    "nn_args_out",
+    fixed = TRUE
+  )
+})
+
+test_that("invalid nearest-neighbor methods retain selector diagnostics", {
+  x <- matrix(c(0, 1, 3, 10), ncol = 1)
+  base_args <- list(
+    Xin = x,
+    Xout = x,
+    k = 1,
+    nn_method_in = "brute",
+    nn_method_out = "brute"
+  )
+
+  for (method_argument in c("nn_method_in", "nn_method_out")) {
+    call_args <- base_args
+    call_args[[method_argument]] <- "unknown"
+    method_error <- tryCatch(
+      do.call(nn_preservation, call_args),
+      error = identity
+    )
+
+    expect_s3_class(method_error, "error")
+    expect_match(conditionMessage(method_error), "unknown method 'unknown'")
+    expect_false(grepl("nn_args_", conditionMessage(method_error)))
+  }
+})
+
+test_that("cached graphs validate then ignore nearest-neighbor arguments", {
+  idx <- matrix(c(2, 1, 4, 3), ncol = 1)
+  graph <- list(idx = idx)
+
+  expect_error(
+    nn_preservation(graph, graph, k = 1, nn_args_in = list(1)),
+    "nn_args_in"
+  )
+  expect_error(
+    nn_preservation(graph, graph, k = 1, nn_args_out = list(k = 1)),
+    "nn_args_out.*'k'"
+  )
+  expect_equal(
+    nn_preservation(
+      graph,
+      graph,
+      k = 1,
+      nn_args_in = list(n_iters = 0),
+      nn_args_out = list(use_alt_metric = FALSE)
+    ),
+    c(nnp1 = 1)
+  )
+})
+
+test_that("all nearest-neighbor graph metrics share argument-list validation", {
+  idx <- matrix(c(2, 1, 4, 3), ncol = 1)
+  graph <- list(idx = idx)
+  distance_graph <- list(idx = idx, dist = matrix(1, nrow = 4, ncol = 1))
+
+  expect_error(
+    local_radius_correlation(
+      distance_graph,
+      distance_graph,
+      k = 1,
+      nn_args_out = list(metric = "cosine")
+    ),
+    "nn_args_out.*'metric'"
+  )
+  expect_error(
+    mutual_neighbor_correlation(graph, graph, k = 1, nn_args_in = list(1)),
+    "nn_args_in"
+  )
+})
+
+test_that("nearest-neighbor metrics validate scalar logical controls", {
+  x <- matrix(c(0, 1, 3, 10), ncol = 1)
+
+  expect_error(
+    nn_preservation(x, x, k = 1, is_transposed = NA),
+    "is_transposed must be TRUE or FALSE"
+  )
+  expect_error(
+    nn_preservation(x, x, k = 1, verbose = c(TRUE, FALSE)),
+    "verbose must be TRUE or FALSE"
+  )
+  expect_error(
+    nn_preservation(x, x, k = 1, ret_extra = 1),
+    "ret_extra must be TRUE or FALSE"
+  )
+  expect_error(
+    local_radius_correlation(x, x, k = 1, log = 1),
+    "log must be TRUE or FALSE"
+  )
+  expect_error(
+    local_radius_correlation(x, x, k = 1, verbose = NA),
+    "verbose must be TRUE or FALSE"
+  )
+  expect_error(
+    mutual_neighbor_correlation(x, x, k = 1, is_transposed = "no"),
+    "is_transposed must be TRUE or FALSE"
+  )
 })
 
 test_that("idx-only nearest-neighbor graphs are accepted", {

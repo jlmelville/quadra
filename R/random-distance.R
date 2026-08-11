@@ -69,6 +69,7 @@ random_pair_distance_correlation <- function(
   n_threads = 0
 ) {
   method <- match.arg(method)
+  is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
   randlist <-
     random_pair_distances(
       Xin,
@@ -158,6 +159,8 @@ random_pair_distance_emd <- function(
   is_transposed = FALSE,
   n_threads = 0
 ) {
+  range_scale <- validate_scalar_logical(range_scale, "range_scale")
+  is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
   randlist <-
     random_pair_distances(
       Xin,
@@ -232,6 +235,8 @@ random_pair_distance_stress <- function(
   is_transposed = FALSE,
   n_threads = 0
 ) {
+  range_scale <- validate_scalar_logical(range_scale, "range_scale")
+  is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
   randlist <-
     random_pair_distances(
       Xin,

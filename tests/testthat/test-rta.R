@@ -156,6 +156,10 @@ test_that("random triplet inputs are validated", {
     random_triplet_accuracy(data.frame(label = letters[1:3]), n[1:3, ]),
     "at least one numeric column"
   )
+  expect_error(
+    random_triplet_accuracy(m, n, is_transposed = 1),
+    "is_transposed must be TRUE or FALSE"
+  )
 })
 
 test_that("triplet matrix inputs are validated before C++ evaluation", {
