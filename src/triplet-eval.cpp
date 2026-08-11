@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -11,12 +12,60 @@
 #include "tdoann/distance.h"
 
 #include "distance.h"
+#include "native-validation.h"
 #include "pforr.h"
 
 using namespace Rcpp;
 using It = typename std::vector<double>::const_iterator;
 using Dfun = double(It, It, It);
 using TripIt = typename std::vector<std::size_t>::const_iterator;
+
+std::size_t validate_observation_matrices(const NumericMatrix& xin,
+                                          const NumericMatrix& xout) {
+  if (xin.ncol() != xout.ncol()) {
+    stop("xin and xout must have the same number of observations");
+  }
+  if (xin.nrow() < 1 || xout.nrow() < 1 || xin.ncol() < 3) {
+    stop("xin and xout must each have at least one feature and three "
+         "observations");
+  }
+  return static_cast<std::size_t>(xin.ncol());
+}
+
+std::vector<std::size_t> validate_triplets(const NumericMatrix& triplets,
+                                           std::size_t n_obs) {
+  if (triplets.nrow() < 1 || triplets.ncol() < 1) {
+    stop("triplets must be nonempty");
+  }
+  if (triplets.ncol() != static_cast<int>(n_obs)) {
+    stop("triplets must have one column per observation");
+  }
+  if ((triplets.nrow() % 2) != 0) {
+    stop("triplets must have an even number of rows");
+  }
+
+  std::vector<std::size_t> copied;
+  copied.reserve(triplets.size());
+  for (int col = 0; col < triplets.ncol(); ++col) {
+    for (int row = 0; row < triplets.nrow(); row += 2) {
+      const double first = triplets(row, col);
+      const double second = triplets(row + 1, col);
+      const bool invalid = !R_finite(first) || !R_finite(second) ||
+                           first != std::floor(first) ||
+                           second != std::floor(second) || first < 0 ||
+                           second < 0 || first >= static_cast<double>(n_obs) ||
+                           second >= static_cast<double>(n_obs) ||
+                           first == col || second == col || first == second;
+      if (invalid) {
+        stop("triplets must contain distinct anchor and endpoint indices in "
+             "range");
+      }
+      copied.push_back(static_cast<std::size_t>(first));
+      copied.push_back(static_cast<std::size_t>(second));
+    }
+  }
+  return copied;
+}
 
 struct TripletCounts {
   std::size_t agreements{0};
@@ -195,32 +244,38 @@ double random_triplet_sample(std::size_t ntriplets_per_obs, std::size_t nobs,
 }
 
 // [[Rcpp::export]]
-double triplet_sample(const IntegerMatrix& triplets, const NumericMatrix& xin,
+double triplet_sample(const NumericMatrix& triplets, const NumericMatrix& xin,
                       const NumericMatrix& xout,
                       const std::string& metric_in = "sqeuclidean",
                       const std::string& metric_out = "sqeuclidean",
-                      std::size_t n_threads = 0) {
+                      double n_threads = 0) {
+
+  const std::size_t n_obs = validate_observation_matrices(xin, xout);
+  const auto triplets_cpp = validate_triplets(triplets, n_obs);
+  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
 
-  auto triplets_cpp = Rcpp::as<std::vector<std::size_t>>(triplets);
   auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 
-  return triplet_sample(triplets_cpp.begin(), triplets_cpp.end(),
-                        triplets.ncol(), xin_cpp.begin(), xin_cpp.end(),
-                        xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout,
-                        n_threads);
+  return triplet_sample(triplets_cpp.begin(), triplets_cpp.end(), n_obs,
+                        xin_cpp.begin(), xin_cpp.end(), xout_cpp.begin(),
+                        xout_cpp.end(), dfunin, dfunout, thread_count);
 }
 
 // [[Rcpp::export]]
 double random_triplet_sample(const NumericMatrix& xin,
-                             const NumericMatrix& xout,
-                             std::size_t n_triplets = 5,
+                             const NumericMatrix& xout, double n_triplets = 5,
                              const std::string& metric_in = "sqeuclidean",
                              const std::string& metric_out = "sqeuclidean",
-                             std::size_t n_threads = 0) {
+                             double n_threads = 0) {
+
+  const std::size_t n_obs = validate_observation_matrices(xin, xout);
+  const std::size_t triplet_count =
+      quadra::validate_positive_count(n_triplets, "n_triplets");
+  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
@@ -228,7 +283,7 @@ double random_triplet_sample(const NumericMatrix& xin,
   auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 
-  return random_triplet_sample(n_triplets, xin.ncol(), xin_cpp.begin(),
+  return random_triplet_sample(triplet_count, n_obs, xin_cpp.begin(),
                                xin_cpp.end(), xout_cpp.begin(), xout_cpp.end(),
-                               dfunin, dfunout, n_threads);
+                               dfunin, dfunout, thread_count);
 }

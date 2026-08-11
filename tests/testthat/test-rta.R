@@ -198,6 +198,10 @@ test_that("triplet matrix inputs are validated before C++ evaluation", {
     random_triplet_accuracy(xin, xout, matrix(0, nrow = 3, ncol = 3)),
     "even number of rows"
   )
+  expect_error(
+    random_triplet_accuracy(xin, xout, matrix(numeric(), nrow = 0, ncol = 3)),
+    "must be nonempty"
+  )
 
   negative <- valid_shape
   negative[1, 1] <- -1
@@ -211,5 +215,19 @@ test_that("triplet matrix inputs are validated before C++ evaluation", {
   expect_error(
     random_triplet_accuracy(xin, xout, out_of_range),
     "between 0 and 2"
+  )
+
+  anchor_endpoint <- valid_shape
+  anchor_endpoint[1, 1] <- 0
+  expect_error(
+    random_triplet_accuracy(xin, xout, anchor_endpoint),
+    "distinct from its anchor"
+  )
+
+  duplicate_endpoints <- valid_shape
+  duplicate_endpoints[2, 1] <- duplicate_endpoints[1, 1]
+  expect_error(
+    random_triplet_accuracy(xin, xout, duplicate_endpoints),
+    "distinct endpoints"
   )
 })

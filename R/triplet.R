@@ -67,6 +67,7 @@ random_triplet_accuracy <-
     n_threads = 0
   ) {
     is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
+    n_threads <- validate_n_threads(n_threads)
     metric_in <- validate_distance(metric_in)
     metric_out <- validate_distance(metric_out)
 
@@ -131,6 +132,9 @@ get_triplet_matrix <- function(n_obs, triplets) {
   if (nrow(triplets) %% 2 != 0) {
     stop("Triplets matrix must have even number of rows", call. = FALSE)
   }
+  if (nrow(triplets) == 0L) {
+    stop("Triplets matrix must be nonempty", call. = FALSE)
+  }
   if (min(triplets) < 0) {
     stop("Triplet matrix must have non-negative values", call. = FALSE)
   }
@@ -141,6 +145,18 @@ get_triplet_matrix <- function(n_obs, triplets) {
       n_obs - 1,
       call. = FALSE
     )
+  }
+  anchors <- rep(seq_len(n_obs) - 1L, each = nrow(triplets))
+  if (any(triplets == anchors)) {
+    stop(
+      "Each triplet endpoint must be distinct from its anchor",
+      call. = FALSE
+    )
+  }
+  first_endpoints <- seq.int(1L, nrow(triplets), by = 2L)
+  second_endpoints <- first_endpoints + 1L
+  if (any(triplets[first_endpoints, ] == triplets[second_endpoints, ])) {
+    stop("Each triplet must contain distinct endpoints", call. = FALSE)
   }
   triplets
 }

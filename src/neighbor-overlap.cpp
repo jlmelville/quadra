@@ -5,6 +5,7 @@
 
 #include <Rcpp.h>
 
+#include "native-validation.h"
 #include "pforr.h"
 
 using namespace Rcpp;
@@ -113,15 +114,19 @@ void overlap_counts_inner(std::size_t begin, std::size_t end,
 IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx,
                                       const NumericMatrix& ref_idx,
                                       const IntegerVector& k,
-                                      std::size_t n_threads = 0) {
+                                      double n_threads = 0) {
   if (idx.nrow() != ref_idx.nrow()) {
     stop("idx and ref_idx must have the same number of rows");
+  }
+  if (idx.nrow() < 2 || idx.ncol() < 1 || ref_idx.ncol() < 1) {
+    stop("idx and ref_idx must each have at least two rows and one column");
   }
 
   const auto queries =
       prepare_k_queries(k, std::min(idx.ncol(), ref_idx.ncol()));
   const std::size_t n_obs = idx.nrow();
   const std::size_t max_k = queries.back().value;
+  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
 
   const auto idx_cpp = copy_neighbor_indices(idx, max_k, "idx");
   const auto ref_idx_cpp = copy_neighbor_indices(ref_idx, max_k, "ref_idx");
@@ -132,7 +137,7 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx,
                          counts);
   };
 
-  pforr::parallel_for(0, n_obs, worker, n_threads);
+  pforr::parallel_for(0, n_obs, worker, thread_count);
 
   IntegerMatrix result(n_obs, k.size());
   std::copy(counts.begin(), counts.end(), result.begin());

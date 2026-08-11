@@ -4,7 +4,7 @@
 \alias{nbr_pres_knn}
 \title{Neighborhood Preservation Between Nearest Neighbor Matrices}
 \usage{
-nbr_pres_knn(kin, kout, k = ncol(kin))
+nbr_pres_knn(kin, kout, k = ncol(kin), n_threads = 0)
 }
 \arguments{
 \item{kin}{Nearest neighbor matrix. The "ground truth" or reference indices.}
@@ -14,6 +14,9 @@ indices.}
 
 \item{k}{The size of the neighborhood, where k is the number of neighbors to
 include in the neighborhood.}
+
+\item{n_threads}{the maximum number of threads to use. \code{0} or \code{1} runs
+serially.}
 }
 \value{
 Vector of preservation values, one for each row of \code{kin}.

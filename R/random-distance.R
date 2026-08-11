@@ -268,6 +268,7 @@ random_pair_distances <- function(
   n_threads = 0
 ) {
   n_pairs <- validate_positive_integer(n_pairs, "n_pairs")
+  n_threads <- validate_n_threads(n_threads)
   metric_in <- validate_distance(metric_in)
   metric_out <- validate_distance(metric_out)
 

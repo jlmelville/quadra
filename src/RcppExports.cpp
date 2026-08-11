@@ -11,7 +11,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // neighbor_overlap_counts
-IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx, const NumericMatrix& ref_idx, const IntegerVector& k, std::size_t n_threads);
+IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx, const NumericMatrix& ref_idx, const IntegerVector& k, double n_threads);
 RcppExport SEXP _quadra_neighbor_overlap_counts(SEXP idxSEXP, SEXP ref_idxSEXP, SEXP kSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -19,14 +19,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericMatrix& >::type idx(idxSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type ref_idx(ref_idxSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
     rcpp_result_gen = Rcpp::wrap(neighbor_overlap_counts(idx, ref_idx, k, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // random_distances
-List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_pairs, std::size_t n_threads, bool verbose);
-RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
+List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, double n_pairs, double n_threads);
+RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,10 +34,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type xout(xoutSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type n_pairs(n_pairsSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(random_distances(xin, xout, metric_in, metric_out, n_pairs, n_threads, verbose));
+    Rcpp::traits::input_parameter< double >::type n_pairs(n_pairsSEXP);
+    Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(random_distances(xin, xout, metric_in, metric_out, n_pairs, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -80,33 +79,33 @@ BEGIN_RCPP
 END_RCPP
 }
 // triplet_sample
-double triplet_sample(const IntegerMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, std::size_t n_threads);
+double triplet_sample(const NumericMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, double n_threads);
 RcppExport SEXP _quadra_triplet_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type triplets(tripletsSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type triplets(tripletsSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
     rcpp_result_gen = Rcpp::wrap(triplet_sample(triplets, xin, xout, metric_in, metric_out, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // random_triplet_sample
-double random_triplet_sample(const NumericMatrix& xin, const NumericMatrix& xout, std::size_t n_triplets, const std::string& metric_in, const std::string& metric_out, std::size_t n_threads);
+double random_triplet_sample(const NumericMatrix& xin, const NumericMatrix& xout, double n_triplets, const std::string& metric_in, const std::string& metric_out, double n_threads);
 RcppExport SEXP _quadra_random_triplet_sample(SEXP xinSEXP, SEXP xoutSEXP, SEXP n_tripletsSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type n_triplets(n_tripletsSEXP);
+    Rcpp::traits::input_parameter< double >::type n_triplets(n_tripletsSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
     rcpp_result_gen = Rcpp::wrap(random_triplet_sample(xin, xout, n_triplets, metric_in, metric_out, n_threads));
     return rcpp_result_gen;
 END_RCPP
@@ -114,7 +113,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_quadra_neighbor_overlap_counts", (DL_FUNC) &_quadra_neighbor_overlap_counts, 4},
-    {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 7},
+    {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 6},
     {"_quadra_rnx_auc_direct", (DL_FUNC) &_quadra_rnx_auc_direct, 2},
     {"_quadra_trustworthiness_exact", (DL_FUNC) &_quadra_trustworthiness_exact, 3},
     {"_quadra_continuity_exact", (DL_FUNC) &_quadra_continuity_exact, 3},

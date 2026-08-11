@@ -75,9 +75,11 @@ nbr_pres <- function(din, dout, k) {
 #'  indices.
 #' @param k The size of the neighborhood, where k is the number of neighbors to
 #'  include in the neighborhood.
+#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#'   serially.
 #' @return Vector of preservation values, one for each row of `kin`.
 #' @export
-nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
+nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
   if (!methods::is(kin, "matrix")) {
     stop("kin must be a matrix", call. = FALSE)
   }
@@ -88,6 +90,7 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
     stop("kin and kout must have the same number of rows", call. = FALSE)
   }
   k <- validate_positive_integer(k, "k")
+  n_threads <- validate_n_threads(n_threads)
   kin <- prepare_supplied_nn_graph(
     list(idx = kin),
     k = k,
@@ -100,7 +103,7 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin)) {
     name = "kout",
     warn_self = FALSE
   )$idx
-  counts <- neighbor_overlap_counts(kin, kout, k)
+  counts <- neighbor_overlap_counts(kin, kout, k, n_threads)
   counts[, 1] * (1 / k)
 }
 
@@ -185,13 +188,14 @@ rnx_auc <- function(din, dout) {
   rnx_auc_direct(din, dout)
 }
 
+# Co-ranking reference implementations used as test oracles.
+#
 # Co-ranking Matrix
 #
 # Calculates the co-ranking matrix for an embedding.
 #
 # The co-ranking matrix is the basic data structure used for calculating
-# various quality metrics, such as \code{qnx_crm},
-# \code{rnx_crm} and \code{bnx_crm}.
+# various quality metrics, such as \code{qnx_crm} and \code{rnx_crm}.
 #
 # The co-ranking matrix is an (N - 1) x (N - 1) matrix where N is the number of
 # observations. The diagonal self-neighbor is excluded. The element (i, j) is the
@@ -321,25 +325,6 @@ qnx_crm <- function(crm, k) {
   sum(crm[1:k, 1:k]) / (k * n_obs)
 }
 
-
-# Intrusions and Extrusions for K-ary Neighborhoods (BNX)
-#
-# BNX measures the degree of intrusions versus extrusions that contributes
-# to the QNX measure of embedding error. If BNX > 0 this means that intrusions
-# dominate over extrusions: i.e. non-neighbors in the input space are neighbors
-# in the output space. BNX < 0 means that extrusions dominate over intrusions:
-# neighbors in the input space tend to be non-neighbors in the output space.
-#
-# @param crm Co-ranking matrix. Create from a pair of distance matrices with
-# \code{coranking_matrix}.
-# @param k Neighborhood size.
-# @return BNX for \code{k}.
-bnx_crm <- function(crm, k) {
-  kcrm <- crm[1:k, 1:k]
-  intrusions <- sum(kcrm[lower.tri(kcrm)])
-  extrusions <- sum(kcrm[upper.tri(kcrm)])
-  (intrusions - extrusions) / (k * (nrow(crm) + 1L))
-}
 
 # Indexes of the k-largest numbers.
 #

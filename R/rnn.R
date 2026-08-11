@@ -153,6 +153,7 @@ nn_preservation <- function(
   nn_args_out = list()
 ) {
   k <- validate_positive_integer_vector(k, "k")
+  n_threads <- validate_n_threads(n_threads)
   is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
   verbose <- validate_scalar_logical(verbose, "verbose")
   ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
@@ -325,6 +326,7 @@ local_radius_correlation <- function(
   nn_args_out = list()
 ) {
   k <- validate_positive_integer_vector(k, "k")
+  n_threads <- validate_n_threads(n_threads)
   statistic <- match.arg(statistic)
   method <- match.arg(method)
   log <- validate_scalar_logical(log, "log")
@@ -498,6 +500,7 @@ mutual_neighbor_correlation <- function(
   nn_args_out = list()
 ) {
   k <- validate_positive_integer_vector(k, "k")
+  n_threads <- validate_n_threads(n_threads)
   method <- match.arg(method)
   is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
   verbose <- validate_scalar_logical(verbose, "verbose")
@@ -948,6 +951,7 @@ nn_overlap_counts <- function(idx, ref_idx, k, n_threads = 0) {
   }
 
   k <- validate_positive_integer_vector(k, "k")
+  n_threads <- validate_n_threads(n_threads)
   max_k <- max(k)
   if (nrow(ref_idx) != nrow(idx)) {
     stop("idx and ref_idx must have the same number of rows", call. = FALSE)

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #include <Rcpp.h>
@@ -8,6 +7,7 @@
 #include "rnndescent/random.h"
 
 #include "distance.h"
+#include "native-validation.h"
 
 using namespace Rcpp;
 
@@ -25,6 +25,8 @@ void distance_sample_inner(std::size_t begin, std::size_t end,
                            std::vector<double>& dout) {
 
   for (std::size_t i = begin; i < end; i++) {
+    // DQIntSampler::sample(n_obs, 2) draws distinct indices without
+    // replacement.
     auto idxs = int_sampler.sample(n_obs, 2);
 
     const It xin_i_begin = xin_begin + idxs[0] * xin_ncol;
@@ -65,21 +67,31 @@ void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
 List random_distances(NumericMatrix xin, NumericMatrix xout,
                       const std::string& metric_in = "euclidean",
                       const std::string& metric_out = "euclidean",
-                      std::size_t n_pairs = 10000, std::size_t n_threads = 0,
-                      bool verbose = false) {
+                      double n_pairs = 10000, double n_threads = 0) {
+  if (xin.ncol() != xout.ncol()) {
+    stop("xin and xout must have the same number of observations");
+  }
+  if (xin.nrow() < 1 || xout.nrow() < 1 || xin.ncol() < 2) {
+    stop("xin and xout must each have at least one feature and two "
+         "observations");
+  }
+
+  const std::size_t pair_count =
+      quadra::validate_positive_count(n_pairs, "n_pairs");
+  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
 
-  std::vector<double> din(n_pairs);
-  std::vector<double> dout(n_pairs);
+  std::vector<double> din(pair_count);
+  std::vector<double> dout(pair_count);
 
   auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 
-  random_distances(n_pairs, xin.ncol(), xin_cpp.begin(), xin_cpp.end(),
+  random_distances(pair_count, xin.ncol(), xin_cpp.begin(), xin_cpp.end(),
                    xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout, din, dout,
-                   n_threads);
+                   thread_count);
 
   NumericVector res_in(din.begin(), din.end());
   NumericVector res_out(dout.begin(), dout.end());

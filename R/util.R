@@ -109,6 +109,28 @@ validate_scalar_logical <- function(x, name) {
   x
 }
 
+validate_n_threads <- function(n_threads) {
+  if (
+    !is.numeric(n_threads) ||
+      is.complex(n_threads) ||
+      length(n_threads) != 1L ||
+      is.na(n_threads) ||
+      !is.finite(n_threads) ||
+      n_threads < 0 ||
+      n_threads != floor(n_threads) ||
+      n_threads > .Machine$integer.max
+  ) {
+    stop(
+      paste(
+        "n_threads must be one finite, whole, nonnegative value within",
+        "the supported integer range"
+      ),
+      call. = FALSE
+    )
+  }
+  as.integer(n_threads)
+}
+
 validate_nn_args <- function(x, name) {
   if (!is.list(x)) {
     stop(name, " must be a list", call. = FALSE)

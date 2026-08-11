@@ -34,6 +34,10 @@ test_that("nearest-neighbor matrix preservation uses the supplied neighbors", {
   expect_equal(nbr_pres_knn(kin, kin, k = 1), rep(1, 4))
   expect_equal(nbr_pres_knn(kin, kout, k = 1), rep(0, 4))
   expect_equal(nbr_pres_knn(kin, kout, k = 2), rep(0.5, 4))
+  expect_equal(
+    nbr_pres_knn(kin, kout, k = 2, n_threads = 0),
+    nbr_pres_knn(kin, kout, k = 2, n_threads = 2)
+  )
 })
 
 test_that("nearest-neighbor matrix preservation rejects duplicate indices", {

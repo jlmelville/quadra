@@ -129,6 +129,16 @@ test_that("random pair sampling is reproducible for same thread count", {
   expect_equal(parallel_2, parallel_1)
 })
 
+test_that("random pair sampling excludes self-pairs", {
+  x <- matrix(c(0, 1), ncol = 1)
+
+  set.seed(20260811)
+  sampled <- random_pair_distances(x, x, n_pairs = 20)
+
+  expect_equal(sampled$din, rep(1, 20))
+  expect_equal(sampled$dout, rep(1, 20))
+})
+
 test_that("random pair inputs are validated", {
   expect_error(
     random_pair_distance_correlation(

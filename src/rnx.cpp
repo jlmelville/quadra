@@ -6,6 +6,20 @@
 
 using namespace Rcpp;
 
+std::size_t validate_exact_distance_matrices(const NumericMatrix& din,
+                                             const NumericMatrix& dout) {
+  if (din.nrow() != dout.nrow() || din.ncol() != dout.ncol()) {
+    stop("din and dout must have the same dimensions");
+  }
+  if (din.nrow() != din.ncol()) {
+    stop("din and dout must be square distance matrices");
+  }
+  if (din.nrow() < 3) {
+    stop("exact rank metrics require at least three observations");
+  }
+  return static_cast<std::size_t>(din.nrow());
+}
+
 bool rank_value_less(double lhs, double rhs) {
   const bool lhs_missing = ISNAN(lhs);
   const bool rhs_missing = ISNAN(rhs);
@@ -90,20 +104,12 @@ double rank_penalty_score(const NumericMatrix& din, const NumericMatrix& dout,
 double exact_rank_penalty_metric(const NumericMatrix& din,
                                  const NumericMatrix& dout, int k,
                                  bool continuity) {
-  if (din.nrow() != dout.nrow() || din.ncol() != dout.ncol() ||
-      din.nrow() != din.ncol()) {
-    stop("din and dout must be square distance matrices with the same "
-         "dimensions");
-  }
+  const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
   if (k < 1) {
     stop("k must be a positive integer");
   }
 
-  const std::size_t n_obs = din.nrow();
   const std::size_t rank_k = static_cast<std::size_t>(k);
-  if (n_obs < 3) {
-    stop("trustworthiness and continuity require at least three observations");
-  }
   if ((2 * rank_k) >= n_obs) {
     stop("k must be less than half the number of observations");
   }
@@ -113,7 +119,7 @@ double exact_rank_penalty_metric(const NumericMatrix& din,
 
 // [[Rcpp::export]]
 double rnx_auc_direct(const NumericMatrix& din, const NumericMatrix& dout) {
-  const std::size_t n_obs = din.nrow();
+  const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
   const std::size_t n_ranks = n_obs - 1;
 
   std::vector<double> max_rank_histogram(n_ranks + 1, 0);
