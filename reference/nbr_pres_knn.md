@@ -10,7 +10,7 @@ the kth nearest neighbor of `i`.
 ## Usage
 
 ``` r
-nbr_pres_knn(kin, kout, k = ncol(kin))
+nbr_pres_knn(kin, kout, k = ncol(kin), n_threads = 0)
 ```
 
 ## Arguments
@@ -28,6 +28,10 @@ nbr_pres_knn(kin, kout, k = ncol(kin))
 
   The size of the neighborhood, where k is the number of neighbors to
   include in the neighborhood.
+
+- n_threads:
+
+  the maximum number of threads to use. `0` or `1` runs serially.
 
 ## Value
 
