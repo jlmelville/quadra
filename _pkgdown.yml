@@ -6,6 +6,6 @@ articles:
 - title: Guides
   contents:
   - articles/metrics-overview
-  - articles/global-preservation
   - articles/local-preservation
+  - articles/global-preservation
   - articles/label-retrieval

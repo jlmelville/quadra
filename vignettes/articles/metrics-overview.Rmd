@@ -5,6 +5,19 @@ title: "Metric overview"
 This package provides several ways to evaluate the performance of an
 embedding. They fall into four broad families.
 
+## Choosing a Starting Metric
+
+| User question | Reasonable starting metric | Decision supported by the result |
+|---|---|---|
+| Are the same nearby observations retained? | `nn_preservation()` | Whether local-neighborhood identity is preserved well enough for the intended use. |
+| Do dense and sparse regions keep their relative local scale? | `local_radius_correlation()` | Whether scale distortion needs attention even when neighbor identities look acceptable. |
+| Are broad distance orderings retained? | `random_triplet_accuracy()` | Whether the embedding preserves enough global ordering for the intended use. |
+| Do known labels remain retrievable? | `roc_auc()` or `pr_auc()` | Whether same-label observations remain separated from other labels in the embedding. |
+
+These are starting points rather than interchangeable scores. The sections
+below explain the related metrics and the input conventions that affect their
+interpretation.
+
 ## Local Neighborhood Preservation
 
 The most generic approach is to consider "neighborhood preservation":
@@ -21,6 +34,9 @@ route for larger datasets.
 they use rank penalties rather than only counting shared neighbors. They are
 exact distance-matrix functions for small datasets. `rnx_auc()` summarizes
 rank-based neighborhood agreement over many neighborhood sizes.
+
+See the [local preservation](local-preservation.html) article for examples and
+related local diagnostics.
 
 ## Local Scale Preservation
 
@@ -50,7 +66,8 @@ Earth Mover's Distance.
 * `random_pair_distance_stress()` compares matched sampled distances with a
 root mean squared difference.
 
-See the global preservation article for those metrics.
+See the [global preservation](global-preservation.html) article for those
+metrics.
 
 ## Current input and ordering conventions
 
@@ -84,3 +101,6 @@ it (e.g. Precision-Recall curve)
 This only needs the output distance matrix, but requires the sort of labeling
 usually reserved for data intended for supervised classification. Quadra can
 also provide some help with this, but requires the [PRROC package](https://cran.r-project.org/package=PRROC) to be installed.
+
+See the [label retrieval](label-retrieval.html) article for examples and return
+value details.
