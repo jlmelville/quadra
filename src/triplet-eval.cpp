@@ -20,8 +20,8 @@ using It = typename std::vector<double>::const_iterator;
 using Dfun = double(It, It, It);
 using TripIt = typename std::vector<std::size_t>::const_iterator;
 
-std::size_t validate_observation_matrices(const NumericMatrix& xin,
-                                          const NumericMatrix& xout) {
+std::size_t validate_observation_matrices(const NumericMatrix &xin,
+                                          const NumericMatrix &xout) {
   if (xin.ncol() != xout.ncol()) {
     stop("xin and xout must have the same number of observations");
   }
@@ -32,7 +32,7 @@ std::size_t validate_observation_matrices(const NumericMatrix& xin,
   return static_cast<std::size_t>(xin.ncol());
 }
 
-std::vector<std::size_t> validate_triplets(const NumericMatrix& triplets,
+std::vector<std::size_t> validate_triplets(const NumericMatrix &triplets,
                                            std::size_t n_obs) {
   if (triplets.nrow() < 1 || triplets.ncol() < 1) {
     stop("triplets must be nonempty");
@@ -83,14 +83,14 @@ std::size_t n_parallel_chunks(std::size_t begin, std::size_t end,
   return std::max<std::size_t>(ranges.size(), 1);
 }
 
-void update_triplet_counts(TripletCounts& counts, std::size_t p1,
+void update_triplet_counts(TripletCounts &counts, std::size_t p1,
                            std::size_t p2, const It xin_i_begin,
                            const It xin_i_end, const It xin_begin,
                            std::size_t xin_ncol,
-                           const std::function<Dfun>& dfunin,
+                           const std::function<Dfun> &dfunin,
                            const It xout_i_begin, const It xout_i_end,
                            const It xout_begin, std::size_t xout_ncol,
-                           const std::function<Dfun>& dfunout) {
+                           const std::function<Dfun> &dfunout) {
 
   auto din_ip1 = dfunin(xin_i_begin, xin_i_end, xin_begin + p1 * xin_ncol);
   auto din_ip2 = dfunin(xin_i_begin, xin_i_end, xin_begin + p2 * xin_ncol);
@@ -112,9 +112,9 @@ void update_triplet_counts(TripletCounts& counts, std::size_t p1,
   }
 }
 
-double summarize_triplet_counts(const std::vector<TripletCounts>& counts) {
+double summarize_triplet_counts(const std::vector<TripletCounts> &counts) {
   TripletCounts total_counts;
-  for (const auto& chunk_counts : counts) {
+  for (const auto &chunk_counts : counts) {
     total_counts.agreements += chunk_counts.agreements;
     total_counts.comparisons += chunk_counts.comparisons;
   }
@@ -130,9 +130,9 @@ TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
                                    std::size_t nobs,
                                    const TripIt triplets_begin,
                                    const It xin_begin, std::size_t xin_ncol,
-                                   const std::function<Dfun>& dfunin,
+                                   const std::function<Dfun> &dfunin,
                                    const It xout_begin, std::size_t xout_ncol,
-                                   const std::function<Dfun>& dfunout) {
+                                   const std::function<Dfun> &dfunout) {
 
   TripletCounts counts;
   const std::size_t nt2 = ntriplets_per_obs * 2;
@@ -163,10 +163,10 @@ std::size_t avoid_anchor_index(std::size_t idx, std::size_t anchor) {
 
 TripletCounts random_triplet_sample_inner(
     std::size_t begin, std::size_t end, std::size_t ntriplets_per_obs,
-    std::size_t nobs, tdoann::RandomIntGenerator<uint64_t>& int_sampler,
-    const It xin_begin, std::size_t xin_ncol, const std::function<Dfun>& dfunin,
+    std::size_t nobs, tdoann::RandomIntGenerator<uint64_t> &int_sampler,
+    const It xin_begin, std::size_t xin_ncol, const std::function<Dfun> &dfunin,
     const It xout_begin, std::size_t xout_ncol,
-    const std::function<Dfun>& dfunout) {
+    const std::function<Dfun> &dfunout) {
 
   TripletCounts counts;
   for (std::size_t i = begin; i < end; i++) {
@@ -191,8 +191,8 @@ TripletCounts random_triplet_sample_inner(
 
 double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
                       std::size_t nobs, It xin_begin, It xin_end, It xout_begin,
-                      It xout_end, const std::function<Dfun>& dfunin,
-                      const std::function<Dfun>& dfunout,
+                      It xout_end, const std::function<Dfun> &dfunin,
+                      const std::function<Dfun> &dfunout,
                       std::size_t n_threads) {
 
   const std::size_t ntriplets_per_obs =
@@ -217,8 +217,8 @@ double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
 
 double random_triplet_sample(std::size_t ntriplets_per_obs, std::size_t nobs,
                              It xin_begin, It xin_end, It xout_begin,
-                             It xout_end, const std::function<Dfun>& dfunin,
-                             const std::function<Dfun>& dfunout,
+                             It xout_end, const std::function<Dfun> &dfunin,
+                             const std::function<Dfun> &dfunout,
                              std::size_t n_threads) {
   const std::size_t xin_nfeat = (xin_end - xin_begin) / nobs;
   const std::size_t xout_nfeat = (xout_end - xout_begin) / nobs;
@@ -244,10 +244,10 @@ double random_triplet_sample(std::size_t ntriplets_per_obs, std::size_t nobs,
 }
 
 // [[Rcpp::export]]
-double triplet_sample(const NumericMatrix& triplets, const NumericMatrix& xin,
-                      const NumericMatrix& xout,
-                      const std::string& metric_in = "sqeuclidean",
-                      const std::string& metric_out = "sqeuclidean",
+double triplet_sample(const NumericMatrix &triplets, const NumericMatrix &xin,
+                      const NumericMatrix &xout,
+                      const std::string &metric_in = "sqeuclidean",
+                      const std::string &metric_out = "sqeuclidean",
                       double n_threads = 0) {
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);
@@ -266,10 +266,10 @@ double triplet_sample(const NumericMatrix& triplets, const NumericMatrix& xin,
 }
 
 // [[Rcpp::export]]
-double random_triplet_sample(const NumericMatrix& xin,
-                             const NumericMatrix& xout, double n_triplets = 5,
-                             const std::string& metric_in = "sqeuclidean",
-                             const std::string& metric_out = "sqeuclidean",
+double random_triplet_sample(const NumericMatrix &xin,
+                             const NumericMatrix &xout, double n_triplets = 5,
+                             const std::string &metric_in = "sqeuclidean",
+                             const std::string &metric_out = "sqeuclidean",
                              double n_threads = 0) {
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);

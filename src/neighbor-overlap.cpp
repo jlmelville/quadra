@@ -19,7 +19,7 @@ std::size_t matrix_offset(std::size_t row, std::size_t col, std::size_t nrow) {
   return row + (col * nrow);
 }
 
-std::vector<KQuery> prepare_k_queries(const IntegerVector& k,
+std::vector<KQuery> prepare_k_queries(const IntegerVector &k,
                                       std::size_t max_cols) {
   if (k.size() < 1) {
     stop("k must contain positive integers");
@@ -39,14 +39,14 @@ std::vector<KQuery> prepare_k_queries(const IntegerVector& k,
   }
 
   std::stable_sort(queries.begin(), queries.end(),
-                   [](const KQuery& lhs, const KQuery& rhs) {
+                   [](const KQuery &lhs, const KQuery &rhs) {
                      return lhs.value < rhs.value;
                    });
   return queries;
 }
 
 std::size_t checked_neighbor_index(double value, std::size_t n_obs,
-                                   const char* name) {
+                                   const char *name) {
   if (!R_finite(value) || value < 1.0 || value > static_cast<double>(n_obs) ||
       value != std::floor(value)) {
     stop("%s must contain finite integer indices between 1 and the number of "
@@ -56,9 +56,9 @@ std::size_t checked_neighbor_index(double value, std::size_t n_obs,
   return static_cast<std::size_t>(value);
 }
 
-std::vector<std::size_t> copy_neighbor_indices(const NumericMatrix& idx,
+std::vector<std::size_t> copy_neighbor_indices(const NumericMatrix &idx,
                                                std::size_t n_cols,
-                                               const char* name) {
+                                               const char *name) {
   const std::size_t n_obs = idx.nrow();
   std::vector<std::size_t> copied(n_obs * n_cols);
 
@@ -72,10 +72,10 @@ std::vector<std::size_t> copy_neighbor_indices(const NumericMatrix& idx,
 }
 
 void overlap_counts_inner(std::size_t begin, std::size_t end,
-                          const std::vector<std::size_t>& idx,
-                          const std::vector<std::size_t>& ref_idx,
-                          std::size_t n_obs, const std::vector<KQuery>& queries,
-                          std::vector<int>& counts) {
+                          const std::vector<std::size_t> &idx,
+                          const std::vector<std::size_t> &ref_idx,
+                          std::size_t n_obs, const std::vector<KQuery> &queries,
+                          std::vector<int> &counts) {
   std::vector<std::size_t> idx_seen(n_obs, 0);
   std::vector<std::size_t> ref_seen(n_obs, 0);
   std::size_t row_token = 1;
@@ -111,9 +111,9 @@ void overlap_counts_inner(std::size_t begin, std::size_t end,
 }
 
 // [[Rcpp::export]]
-IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx,
-                                      const NumericMatrix& ref_idx,
-                                      const IntegerVector& k,
+IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
+                                      const NumericMatrix &ref_idx,
+                                      const IntegerVector &k,
                                       double n_threads = 0) {
   if (idx.nrow() != ref_idx.nrow()) {
     stop("idx and ref_idx must have the same number of rows");

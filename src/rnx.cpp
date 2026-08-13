@@ -6,8 +6,8 @@
 
 using namespace Rcpp;
 
-std::size_t validate_exact_distance_matrices(const NumericMatrix& din,
-                                             const NumericMatrix& dout) {
+std::size_t validate_exact_distance_matrices(const NumericMatrix &din,
+                                             const NumericMatrix &dout) {
   if (din.nrow() != dout.nrow() || din.ncol() != dout.ncol()) {
     stop("din and dout must have the same dimensions");
   }
@@ -29,7 +29,7 @@ bool rank_value_less(double lhs, double rhs) {
   return lhs < rhs;
 }
 
-std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix& distances,
+std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
                                               std::size_t row) {
   const std::size_t n_obs = distances.nrow();
 
@@ -53,7 +53,7 @@ std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix& distances,
   return ranks;
 }
 
-double rnx_auc_from_max_rank_histogram(const std::vector<double>& histogram,
+double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
                                        std::size_t n_obs) {
   const std::size_t n_ranks = n_obs - 1;
   if (n_ranks < 2) {
@@ -73,7 +73,7 @@ double rnx_auc_from_max_rank_histogram(const std::vector<double>& histogram,
   return num / den;
 }
 
-double rank_penalty_score(const NumericMatrix& din, const NumericMatrix& dout,
+double rank_penalty_score(const NumericMatrix &din, const NumericMatrix &dout,
                           std::size_t k, bool continuity) {
   const std::size_t n_obs = din.nrow();
   double penalty = 0;
@@ -101,8 +101,8 @@ double rank_penalty_score(const NumericMatrix& din, const NumericMatrix& dout,
   return 1.0 - ((2.0 * penalty) / normalization);
 }
 
-double exact_rank_penalty_metric(const NumericMatrix& din,
-                                 const NumericMatrix& dout, int k,
+double exact_rank_penalty_metric(const NumericMatrix &din,
+                                 const NumericMatrix &dout, int k,
                                  bool continuity) {
   const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
   if (k < 1) {
@@ -118,7 +118,7 @@ double exact_rank_penalty_metric(const NumericMatrix& din,
 }
 
 // [[Rcpp::export]]
-double rnx_auc_direct(const NumericMatrix& din, const NumericMatrix& dout) {
+double rnx_auc_direct(const NumericMatrix &din, const NumericMatrix &dout) {
   const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
   const std::size_t n_ranks = n_obs - 1;
 
@@ -140,13 +140,13 @@ double rnx_auc_direct(const NumericMatrix& din, const NumericMatrix& dout) {
 }
 
 // [[Rcpp::export]]
-double trustworthiness_exact(const NumericMatrix& din,
-                             const NumericMatrix& dout, int k) {
+double trustworthiness_exact(const NumericMatrix &din,
+                             const NumericMatrix &dout, int k) {
   return exact_rank_penalty_metric(din, dout, k, false);
 }
 
 // [[Rcpp::export]]
-double continuity_exact(const NumericMatrix& din, const NumericMatrix& dout,
+double continuity_exact(const NumericMatrix &din, const NumericMatrix &dout,
                         int k) {
   return exact_rank_penalty_metric(din, dout, k, true);
 }

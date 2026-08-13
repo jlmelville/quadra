@@ -20,8 +20,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 // USA.
 
-#ifndef PFORR
-#define PFORR
+#ifndef PFORR_PFORR_H
+#define PFORR_PFORR_H
 
 #include <algorithm>
 #include <cstddef>
@@ -34,31 +34,35 @@
 
 namespace pforr {
 
+// Maintainers: rnndescent's installed header is canonical; downstream copies
+// must remain byte-for-byte identical.
 using IndexRange = std::pair<std::size_t, std::size_t>;
+
+namespace detail {
 
 class ThreadJoiner {
 public:
-  explicit ThreadJoiner(std::vector<std::thread>& threads) : threads(threads) {}
+  explicit ThreadJoiner(std::vector<std::thread> &threads) : threads(threads) {}
 
   ~ThreadJoiner() {
-    for (auto& thread : threads) {
+    for (auto &thread : threads) {
       if (thread.joinable()) {
         thread.join();
       }
     }
   }
 
-  ThreadJoiner(const ThreadJoiner&) = delete;
-  auto operator=(const ThreadJoiner&) -> ThreadJoiner& = delete;
+  ThreadJoiner(const ThreadJoiner &) = delete;
+  auto operator=(const ThreadJoiner &) -> ThreadJoiner & = delete;
 
 private:
-  std::vector<std::thread>& threads;
+  std::vector<std::thread> &threads;
 };
 
 template <typename Worker>
-auto worker_thread(Worker& worker, const IndexRange& range,
-                   std::exception_ptr& worker_exception,
-                   std::mutex& worker_exception_mutex) -> void {
+auto worker_thread(Worker &worker, const IndexRange &range,
+                   std::exception_ptr &worker_exception,
+                   std::mutex &worker_exception_mutex) -> void {
   try {
     worker(range.first, range.second);
   } catch (...) {
@@ -70,10 +74,10 @@ auto worker_thread(Worker& worker, const IndexRange& range,
 }
 
 template <typename Worker>
-auto worker_thread_indexed(Worker& worker, const IndexRange& range,
+auto worker_thread_indexed(Worker &worker, const IndexRange &range,
                            std::size_t chunk_id,
-                           std::exception_ptr& worker_exception,
-                           std::mutex& worker_exception_mutex) -> void {
+                           std::exception_ptr &worker_exception,
+                           std::mutex &worker_exception_mutex) -> void {
   try {
     worker(range.first, range.second, chunk_id);
   } catch (...) {
@@ -85,7 +89,7 @@ auto worker_thread_indexed(Worker& worker, const IndexRange& range,
 }
 
 // Function to calculate the ranges for a given input
-inline auto effective_grain_size(const IndexRange& range, std::size_t n_threads,
+inline auto effective_grain_size(const IndexRange &range, std::size_t n_threads,
                                  std::size_t grain_size) -> std::size_t {
   if (range.first >= range.second) {
     return 0;
@@ -103,13 +107,15 @@ inline auto effective_grain_size(const IndexRange& range, std::size_t n_threads,
   return (std::max)(grain_size, even_chunk);
 }
 
-inline auto split_input_range(const IndexRange& range, std::size_t n_threads,
+} // namespace detail
+
+inline auto split_input_range(const IndexRange &range, std::size_t n_threads,
                               std::size_t grain_size)
     -> std::vector<IndexRange> {
   if (range.first >= range.second) {
     return {};
   }
-  grain_size = effective_grain_size(range, n_threads, grain_size);
+  grain_size = detail::effective_grain_size(range, n_threads, grain_size);
 
   // allocate ranges
   std::vector<IndexRange> ranges;
@@ -128,7 +134,7 @@ inline auto split_input_range(const IndexRange& range, std::size_t n_threads,
 
 // Execute the Worker over the IndexRange in parallel.
 template <typename Worker>
-inline void parallel_for(std::size_t begin, std::size_t end, Worker& worker,
+inline void parallel_for(std::size_t begin, std::size_t end, Worker &worker,
                          std::size_t n_threads, std::size_t grain_size = 1) {
   if (begin >= end) {
     return;
@@ -150,14 +156,14 @@ inline void parallel_for(std::size_t begin, std::size_t end, Worker& worker,
   std::mutex worker_exception_mutex;
   std::vector<std::thread> threads;
   threads.reserve(ranges.size());
-  ThreadJoiner thread_joiner(threads);
-  for (auto& range : ranges) {
-    threads.emplace_back(&worker_thread<Worker>, std::ref(worker), range,
-                         std::ref(worker_exception),
+  detail::ThreadJoiner thread_joiner(threads);
+  for (auto &range : ranges) {
+    threads.emplace_back(&detail::worker_thread<Worker>, std::ref(worker),
+                         range, std::ref(worker_exception),
                          std::ref(worker_exception_mutex));
   }
 
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     if (thread.joinable()) {
       thread.join();
     }
@@ -171,7 +177,7 @@ inline void parallel_for(std::size_t begin, std::size_t end, Worker& worker,
 }
 
 template <typename Worker>
-inline void parallel_for(std::size_t end, Worker& worker, std::size_t n_threads,
+inline void parallel_for(std::size_t end, Worker &worker, std::size_t n_threads,
                          std::size_t grain_size = 1) {
   parallel_for(0, end, worker, n_threads, grain_size);
 }
@@ -180,7 +186,7 @@ inline void parallel_for(std::size_t end, Worker& worker, std::size_t n_threads,
 // chunk index as the third worker argument.
 template <typename Worker>
 inline void parallel_for_indexed(std::size_t begin, std::size_t end,
-                                 Worker& worker, std::size_t n_threads,
+                                 Worker &worker, std::size_t n_threads,
                                  std::size_t grain_size = 1) {
   if (begin >= end) {
     return;
@@ -201,14 +207,15 @@ inline void parallel_for_indexed(std::size_t begin, std::size_t end,
   std::mutex worker_exception_mutex;
   std::vector<std::thread> threads;
   threads.reserve(ranges.size());
-  ThreadJoiner thread_joiner(threads);
+  detail::ThreadJoiner thread_joiner(threads);
   for (std::size_t chunk_id = 0; chunk_id < ranges.size(); ++chunk_id) {
-    threads.emplace_back(&worker_thread_indexed<Worker>, std::ref(worker),
-                         ranges[chunk_id], chunk_id, std::ref(worker_exception),
+    threads.emplace_back(&detail::worker_thread_indexed<Worker>,
+                         std::ref(worker), ranges[chunk_id], chunk_id,
+                         std::ref(worker_exception),
                          std::ref(worker_exception_mutex));
   }
 
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     if (thread.joinable()) {
       thread.join();
     }
@@ -222,7 +229,7 @@ inline void parallel_for_indexed(std::size_t begin, std::size_t end,
 }
 
 template <typename Worker>
-inline void parallel_for_indexed(std::size_t end, Worker& worker,
+inline void parallel_for_indexed(std::size_t end, Worker &worker,
                                  std::size_t n_threads,
                                  std::size_t grain_size = 1) {
   parallel_for_indexed(0, end, worker, n_threads, grain_size);
@@ -230,4 +237,4 @@ inline void parallel_for_indexed(std::size_t end, Worker& worker,
 
 } // namespace pforr
 
-#endif // PFORR
+#endif // PFORR_PFORR_H

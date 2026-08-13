@@ -22,7 +22,7 @@ inline std::size_t validate_n_threads(double n_threads) {
   return static_cast<std::size_t>(n_threads);
 }
 
-inline std::size_t validate_positive_count(double value, const char* name) {
+inline std::size_t validate_positive_count(double value, const char *name) {
   if (!std::isfinite(value) || value < 1 || value != std::floor(value)) {
     Rcpp::stop("%s must be a positive integer", name);
   }
