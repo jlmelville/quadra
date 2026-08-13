@@ -18,11 +18,12 @@ random_pair_distance_stress(
 \arguments{
 \item{Xin}{the input data (usually high-dimensional), a matrix or data frame
 with one observation per row, or if \code{is_transposed = TRUE}, one observation
-per column.}
+per column. Nonnumeric data-frame columns are ignored; sparse matrices are
+unsupported and retained values must be finite.}
 
 \item{Xout}{the output data (usually lower dimensional than \code{Xin}), a matrix
 or data frame with one observation per row, or if \code{is_transposed = TRUE},
-one observation per column.}
+one observation per column, with the same input requirements as \code{Xin}.}
 
 \item{n_pairs}{the number of random pairs of observations to calculate
 distances for in the input and output space.}
@@ -64,18 +65,28 @@ By default, each sampled distance vector is scaled to the range 0-1 before
 stress is calculated. This makes the result comparable across embeddings with
 different distance scales, but it also means the value is mainly useful for
 comparing methods under identical sampling and scaling settings.
+
+Reset the R seed and keep \code{n_threads} fixed to reuse the same sampled pairs
+across calls. Changing the thread count can change the sample.
+
+Squared Euclidean preserves pair-distance ordering but changes distance
+magnitudes. It can therefore produce a different stress value from Euclidean
+distance, even when \code{range_scale = TRUE}.
 }
 \examples{
 iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_stress(iris, iris_pca2)
 
-# If you plan on comparing the results of multiple output methods, then
-# pre-transposing the input data can save time
+# For fair comparisons, reset the seed and keep n_threads fixed before each
+# call. Pre-transposing the input data can also save time.
 tiris <- t(iris[, -5])
 iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+set.seed(42)
 random_pair_distance_stress(tiris, t(iris_pca1), is_transposed = TRUE)
+set.seed(42)
 random_pair_distance_stress(tiris, t(iris_pca2), is_transposed = TRUE)
+set.seed(42)
 random_pair_distance_stress(tiris, t(iris_pca3), is_transposed = TRUE)
 }
 \seealso{

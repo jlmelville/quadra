@@ -52,6 +52,23 @@ root mean squared difference.
 
 See the global preservation article for those metrics.
 
+## Current input and ordering conventions
+
+Sampled pair and triplet metrics require dense, finite inputs; graph metrics can
+pass supported sparse inputs to `rnndescent`. Nonnumeric data-frame columns are
+ignored. Exact distance-matrix metrics do not screen nonfinite values.
+
+Tie handling differs by representation. `nbr_pres()` includes every item tied
+at the `k`th distance boundary and caps the overlap at `k`. Trustworthiness,
+continuity, and RNX break distance ties by original column order. Supplied-graph
+metrics use the first `k` indices in the provider or caller's fixed order.
+
+Euclidean and squared Euclidean preserve neighbor, triplet, and Spearman
+ordering. Squaring changes distance magnitudes, so it can change Pearson
+distance or local-radius correlations, EMD, stress, and local radius/mean
+summaries. The `"sqeuclidean"` default is therefore part of those magnitude
+statistics, not merely a faster spelling of Euclidean distance.
+
 ## Label Retrieval
 
 Alternatively, if some sort of labelling is applied to the points, each point

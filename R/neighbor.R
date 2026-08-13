@@ -16,13 +16,21 @@
 #' Self-neighbors on the diagonal are excluded from each row before the
 #' neighborhood overlap is calculated.
 #'
+#' If the `k`th-smallest distance is tied, every observation at that distance
+#' is treated as a neighbor. The shared count is capped at `k` before it is
+#' divided by `k`. This differs from exact-rank metrics such as
+#' [trustworthiness()] and [rnx_auc()], which break ties by original column
+#' order, and from supplied-graph metrics, which use the first `k` indices.
+#'
+#' Distance matrices are used as supplied without a finite-value check.
+#'
 #' @note This is not a very efficient way to calculate the preservation if you
 #'  want to calculate the value for multiple values of `k`. For more global
 #'  measures of preservation, see [rnx_auc()].
 #'
 #' @param din Distance matrix. The "ground truth" or reference distances.
 #' @param dout Distance matrix. A set of distances to compare to the reference
-#'  distances.
+#'   distances.
 #' @param k The size of the neighborhood, where k is the number of neighbors to
 #'  include in the neighborhood.
 #' @return Vector of preservation values, one for each row of the distance
@@ -70,9 +78,15 @@ nbr_pres <- function(din, dout, k) {
 #' where k is the size of the neighborhood and n is the number of observations
 #' or items in the dataset.
 #'
-#' @param kin Nearest neighbor matrix. The "ground truth" or reference indices.
-#' @param kout Nearest neighbor matrix. A set of distances to compare to the reference
-#'  indices.
+#' Rows contain distinct one-based indices in nearest-first order. All supplied
+#' columns are checked before self-indices are removed and the first `k`
+#' non-self neighbors are retained. Self-inclusive inputs therefore need at
+#' least `k + 1` columns. Supplied order resolves ties.
+#'
+#' @param kin Nearest-neighbor index matrix. The "ground truth" or reference
+#'   indices, with observations in rows and neighbors in nearest-first order.
+#' @param kout Nearest-neighbor index matrix to compare with `kin`, using the
+#'   same row and ordering conventions.
 #' @param k The size of the neighborhood, where k is the number of neighbors to
 #'  include in the neighborhood.
 #' @param n_threads the maximum number of threads to use. `0` or `1` runs
@@ -118,6 +132,8 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' exclude the diagonal self-neighbor from each row. Tied distances are ranked in
 #' their original column order after self-neighbor exclusion, matching
 #' `rank(ties.method = "first")`.
+#'
+#' Distance matrices are used as supplied without a finite-value check.
 #'
 #' Because these functions require full `n` by `n` distance matrices, they are
 #' practical only for small datasets. For larger datasets, use nearest-neighbor
@@ -167,13 +183,19 @@ continuity <- function(din, dout, k) {
 #' The RNX curve is formed by calculating the `rnx_crm` metric for
 #' different sizes of neighborhood. Each value of RNX is scaled according to
 #' the natural log of the neighborhood size, to give a higher weight to smaller
-#' neighborhoods. An AUC of 1 indicates perfect neighborhood preservation, an
-#' AUC of 0 is due to random results. Self-neighbors on the distance-matrix
-#' diagonal are excluded before the co-ranking matrix is calculated.
+#' neighborhoods. An AUC of 1 indicates perfect neighborhood preservation and
+#' an AUC of 0 is the random-neighborhood baseline. Zero is not a lower bound:
+#' worse-than-random rank agreement can produce negative RNX values and a
+#' negative RNX AUC. Self-neighbors on the distance-matrix diagonal are excluded
+#' before the co-ranking matrix is calculated. Tied distances are ranked by
+#' first occurrence in original column order after self-neighbor exclusion.
+#'
+#' Distance matrices are used as supplied without a finite-value check.
 #'
 #' @param din Input distance matrix.
 #' @param dout Output distance matrix.
-#' @return Area under the RNX curve.
+#' @return Area under the RNX curve. A value of 1 is perfect, 0 is the random
+#'   baseline, and negative values indicate worse-than-random rank agreement.
 #' @references
 #' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
 #' Multi-scale similarities in stochastic neighbour embedding: Reducing

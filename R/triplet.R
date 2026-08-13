@@ -13,13 +13,25 @@
 #' the denominator because they do not define a relative ordering. If no sampled
 #' input triplets define an ordering, the result is `NA_real_`.
 #'
+#' Reset the R seed and keep `n_threads` fixed to reuse the same sampled
+#' triplets across calls. A matrix-valued `n_triplets` performs no internal
+#' sampling.
+#'
+#' Euclidean and squared Euclidean give the same distance ordering and therefore
+#' the same triplet comparisons, apart from numerical ties.
+#'
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
 #'   with one observation per row, or if `is_transposed = TRUE`, one observation
-#'   per column.
+#'   per column. Nonnumeric data-frame columns are ignored; sparse matrices are
+#'   unsupported and retained values must be finite.
 #' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
 #'   or data frame with one observation per row, or if `is_transposed = TRUE`,
-#'   one observation per column.
-#' @param n_triplets the number of triplets per observation to generate.
+#'   one observation per column, with the same input requirements as `Xin`.
+#' @param n_triplets Either a positive integer number of triplets to sample per
+#'   observation, or an explicit zero-based endpoint matrix. An explicit matrix
+#'   has one column per observation (anchor); successive row pairs contain the
+#'   endpoints for each triplet. Endpoints are integers in `[0, n - 1]`, distinct
+#'   from each other and their zero-based anchor.
 #' @param metric_in the distance calculation to apply to `Xin`. One of
 #'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
@@ -47,13 +59,16 @@
 #' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' random_triplet_accuracy(iris, iris_pca2)
 #'
-#' # If you plan on comparing the results of multiple output methods, then
-#' # pre-transposing the input data can save time
+#' # For fair comparisons, reset the seed and keep n_threads fixed before each
+#' # call. Pre-transposing the input data can also save time.
 #' tiris <- t(iris[, -5])
 #' iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 #' iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+#' set.seed(42)
 #' random_triplet_accuracy(tiris, t(iris_pca1), is_transposed = TRUE)
+#' set.seed(42)
 #' random_triplet_accuracy(tiris, t(iris_pca2), is_transposed = TRUE)
+#' set.seed(42)
 #' random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
 #' @export
 random_triplet_accuracy <-

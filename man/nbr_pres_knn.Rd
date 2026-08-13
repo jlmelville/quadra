@@ -7,10 +7,11 @@
 nbr_pres_knn(kin, kout, k = ncol(kin), n_threads = 0)
 }
 \arguments{
-\item{kin}{Nearest neighbor matrix. The "ground truth" or reference indices.}
+\item{kin}{Nearest-neighbor index matrix. The "ground truth" or reference
+indices, with observations in rows and neighbors in nearest-first order.}
 
-\item{kout}{Nearest neighbor matrix. A set of distances to compare to the reference
-indices.}
+\item{kout}{Nearest-neighbor index matrix to compare with \code{kin}, using the
+same row and ordering conventions.}
 
 \item{k}{The size of the neighborhood, where k is the number of neighbors to
 include in the neighborhood.}
@@ -40,4 +41,9 @@ and 1 (perfect preservation). For nearest-neighbor matrices that exclude
 self-neighbors, random performance gives an approximate value of k / (n - 1),
 where k is the size of the neighborhood and n is the number of observations
 or items in the dataset.
+
+Rows contain distinct one-based indices in nearest-first order. All supplied
+columns are checked before self-indices are removed and the first \code{k}
+non-self neighbors are retained. Self-inclusive inputs therefore need at
+least \code{k + 1} columns. Supplied order resolves ties.
 }

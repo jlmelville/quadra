@@ -35,6 +35,8 @@ exclude the diagonal self-neighbor from each row. Tied distances are ranked in
 their original column order after self-neighbor exclusion, matching
 \code{rank(ties.method = "first")}.
 
+Distance matrices are used as supplied without a finite-value check.
+
 Because these functions require full \code{n} by \code{n} distance matrices, they are
 practical only for small datasets. For larger datasets, use nearest-neighbor
 preservation metrics such as \code{\link[=nn_preservation]{nn_preservation()}} or \code{\link[=nbr_pres_knn]{nbr_pres_knn()}}.

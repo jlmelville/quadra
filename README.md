@@ -2,14 +2,14 @@
 [![R-CMD-check](https://github.com/jlmelville/quadra/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jlmelville/quadra/actions/workflows/R-CMD-check.yaml)
 [![codecov](https://codecov.io/github/jlmelville/quadra/graph/badge.svg?token=HxTB6T6KmW)](https://codecov.io/github/jlmelville/quadra)
 
-# Quadra: QUantitative Assessment of Dimensionality Reduction Algorithms
+# Quadra: QUality Assessment of Dimensionality Reduction Algorithms
 
 An R Package for evaluating the success of embeddings from dimensionality reduction methods (e.g. 
 Principal Component Analysis, Sammon Maps, t-Distributed Stochastic Neighbor Embedding).
 
 ## Description
 
-This package provides two ways to evaluate the performance of an embedding. The most generic is to 
+This package provides several ways to evaluate the performance of an embedding. One generic approach is to
 consider "neighborhood preservation":
 
 1. Find the *k*-nearest neighbors of a point in the input space.
@@ -20,7 +20,7 @@ This only requires calculating the Euclidean distance matrix in the input and ou
 without any other assumptions about the type of dimensionality reduction carried out. This package
 provides some quality measures based around this concept.
 
-Alternatively, if some sort of labelling is applied to the points, each point can be treated as the
+If some sort of labelling is applied to the points, each point can instead be treated as the
 target in a retrieval procedure:
 
 1. Rank all the other points by distance to the target point.
@@ -63,6 +63,7 @@ pca_iris <- stats::prcomp(iris[, -5], retx = TRUE, rank. = 2)$x
 # Random triplet accuracy: proportion of triangle distances where the relative
 # ordering is retained. Used by Wang et al (2021) to measure global structure
 # preservation
+set.seed(42)
 random_triplet_accuracy(iris, pca_iris)
 
 # For large datasets, you can set the number of threads to use
@@ -71,14 +72,18 @@ random_triplet_accuracy(iris, pca_iris, n_threads = 2)
 
 # If you plan to carry out multiple comparisons with the same (high dimensional)
 # data, transpose once outside the function and set is_transposed = TRUE for a
-# slight speed-up
+# slight speed-up. For fair internally sampled comparisons, also reset the seed
+# and keep n_threads fixed for every call.
 tiris <- t(iris[, -5])
 
 pca_iris2 <- t(pca_iris)
 pca_iris1 <- t(stats::prcomp(iris[, -5], retx = TRUE, rank. = 1)$x)
 pca_iris3 <- t(stats::prcomp(iris[, -5], retx = TRUE, rank. = 3)$x)
+set.seed(42)
 random_triplet_accuracy(tiris, pca_iris2, n_threads = 2, is_transposed = TRUE)
+set.seed(42)
 random_triplet_accuracy(tiris, pca_iris1, is_transposed = TRUE, n_threads = 2)
+set.seed(42)
 random_triplet_accuracy(tiris, pca_iris3, is_transposed = TRUE, n_threads = 2)
 
 # Other ways to measure global preservation:
@@ -128,7 +133,8 @@ nbr_pres(din, dout, k = 5)
 
 # Area under the RNX curve. This is like a weighted average over neighborhood 
 # preservation for a range of k with a bias towards smaller k: returns a single 
-# value
+# value. Zero is the random baseline, and worse-than-random results can be
+# negative.
 rnx_auc(din, dout)
 
 # Exact rank-penalty neighborhood preservation at a fixed k
@@ -138,8 +144,8 @@ continuity(din, dout, k = 15)
 # Install the PRROC package
 install.packages("PRROC")
 
-# ROC AUC using Species as the label: returns a list with one AUC per factor level
-# Also the average over all levels
+# ROC AUC using Species as the label. Returns av_auc, the average over defined
+# observation rows, and label_av, the per-label averages.
 roc_auc(dout, iris$Species)
 
 # Precision-Recall AUC which some people prefer over ROC

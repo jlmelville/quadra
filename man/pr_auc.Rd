@@ -7,14 +7,18 @@
 pr_auc(dm, labels)
 }
 \arguments{
-\item{dm}{Distance matrix of an embedding.}
+\item{dm}{A finite square numeric distance matrix. The diagonal is excluded
+from each retrieval problem.}
 
-\item{labels}{Vector of labels for each observation in the dataset in the
-same order as the observations in the distance matrix.}
+\item{labels}{A label vector without missing values, with one label per row
+of \code{dm}.}
 }
 \value{
-Area Under the Precision-Recall curve, averaged over each
-observation.
+A list with components in this order:
+\itemize{
+\item \code{av_auc}: the PR AUC averaged over defined observation rows.
+\item \code{label_av}: a named list of per-label means in first-appearance order.
+}
 }
 \description{
 Embedding quality measure.
@@ -34,6 +38,9 @@ observations. The final reported result is the average over all observations.
 Rows with undefined AUC values, such as rows that cannot define both positive
 and negative examples, are excluded from overall and per-label averages. If no
 rows remain for an average, that average is \code{NA_real_}.
+
+\code{av_auc} weights each defined query equally; \code{label_av} reports per-label
+means in first-appearance order.
 
 Perfect retrieval results in an AUC of 1. For random retrieval, the value
 is the proportion of the positive class labels for that curve.

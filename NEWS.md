@@ -23,7 +23,10 @@ implemented with C++ so should be faster to calculate.
 
 ## Bug fixes and minor improvements
 
-* Many small fixes for corner cases and improved validation.
+* Substantially improved input validation across the package.
+* Corrected self-neighbor handling in `nbr_pres_knn()` and supplied nearest-neighbor graphs.
+* `roc_auc()` and `pr_auc()` now handle retrieval problems with undefined rows consistently.
+* `nbr_pres_knn()` now supports multithreaded calculations through `n_threads`.
 * rnndescent is now on [CRAN](https://cran.r-project.org/package=rnndescent), so we no longer need
 to install that from github.
 * `grain_size` for thread-handling has been removed from any API that exposed it.

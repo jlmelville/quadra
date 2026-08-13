@@ -13,15 +13,22 @@
 #' and negative examples, are excluded from overall and per-label averages. If
 #' no rows remain for an average, that average is `NA_real_`.
 #'
+#' `av_auc` weights each defined query equally; `label_av` reports per-label
+#' means in first-appearance order.
+#'
 #' Perfect retrieval results in an AUC of 1. For random retrieval gives a value
 #' of 0.5.
 #'
 #' @note Use of this function requires that the `PRROC` package be installed.
 #'
-#' @param dm Distance matrix of an embedding.
-#' @param labels Vector of labels for each observation in the dataset in the
-#'  same order as the observations in the distance matrix.
-#' @return Area Under the ROC curve, averaged over each observation.
+#' @param dm A finite square numeric distance matrix. The diagonal is excluded
+#'   from each retrieval problem.
+#' @param labels A label vector without missing values, with one label per row
+#'   of `dm`.
+#' @return A list with components in this order:
+#'
+#'   * `av_auc`: the AUC averaged over defined observation rows.
+#'   * `label_av`: a named list of per-label means in first-appearance order.
 #' @export
 roc_auc <- function(dm, labels) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
@@ -50,16 +57,19 @@ roc_auc <- function(dm, labels) {
 #' and negative examples, are excluded from overall and per-label averages. If no
 #' rows remain for an average, that average is `NA_real_`.
 #'
+#' `av_auc` weights each defined query equally; `label_av` reports per-label
+#' means in first-appearance order.
+#'
 #' Perfect retrieval results in an AUC of 1. For random retrieval, the value
 #' is the proportion of the positive class labels for that curve.
 #'
 #' @note Use of this function requires that the `PRROC` package be installed.
 #'
-#' @param dm Distance matrix of an embedding.
-#' @param labels Vector of labels for each observation in the dataset in the
-#'  same order as the observations in the distance matrix.
-#' @return Area Under the Precision-Recall curve, averaged over each
-#' observation.
+#' @inheritParams roc_auc
+#' @return A list with components in this order:
+#'
+#'   * `av_auc`: the PR AUC averaged over defined observation rows.
+#'   * `label_av`: a named list of per-label means in first-appearance order.
 #' @references
 #' Keilwagen, J., Grosse, I., & Grau, J. (2014).
 #' Area under precision-recall curves for weighted and unweighted data.
@@ -244,8 +254,11 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn) {
   av_n <- 0
   n <- nrow(dm)
   label_names <- unique(as.character(labels))
-  ns <- setNames(as.list(integer(length(label_names))), label_names)
-  label_av <- setNames(as.list(numeric(length(label_names))), label_names)
+  ns <- stats::setNames(as.list(integer(length(label_names))), label_names)
+  label_av <- stats::setNames(
+    as.list(numeric(length(label_names))),
+    label_names
+  )
   for (i in seq_len(n)) {
     label_index <- match(as.character(labels[i]), label_names)
 

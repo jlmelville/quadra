@@ -12,15 +12,22 @@ rnx_auc(din, dout)
 \item{dout}{Output distance matrix.}
 }
 \value{
-Area under the RNX curve.
+Area under the RNX curve. A value of 1 is perfect, 0 is the random
+baseline, and negative values indicate worse-than-random rank agreement.
 }
 \description{
 The RNX curve is formed by calculating the \code{rnx_crm} metric for
 different sizes of neighborhood. Each value of RNX is scaled according to
 the natural log of the neighborhood size, to give a higher weight to smaller
-neighborhoods. An AUC of 1 indicates perfect neighborhood preservation, an
-AUC of 0 is due to random results. Self-neighbors on the distance-matrix
-diagonal are excluded before the co-ranking matrix is calculated.
+neighborhoods. An AUC of 1 indicates perfect neighborhood preservation and
+an AUC of 0 is the random-neighborhood baseline. Zero is not a lower bound:
+worse-than-random rank agreement can produce negative RNX values and a
+negative RNX AUC. Self-neighbors on the distance-matrix diagonal are excluded
+before the co-ranking matrix is calculated. Tied distances are ranked by
+first occurrence in original column order after self-neighbor exclusion.
+}
+\details{
+Distance matrices are used as supplied without a finite-value check.
 }
 \references{
 Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).

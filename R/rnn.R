@@ -22,6 +22,11 @@
 #' See the documentation for the [rnndescent::brute_force_knn()] and
 #' [rnndescent::nnd_knn()] functions for more details.
 #'
+#' Each `nn_args_*` value must have unique, nonempty, nonmissing names and cannot
+#' contain `X`, `data`, `k`, `metric`, `nn_method`, `n_threads`, `verbose`, or
+#' `obs`. Other arguments must be accepted by the selected backend. Supplied
+#' graphs ignore them.
+#'
 #' Because the nearest neighbor search can be time-consuming, if you set
 #' `ret_extra = TRUE`, the return value of this function is a list which
 #' includes the nearest neighbor graph for `Xin` and for `Xout`. The graph can
@@ -36,36 +41,46 @@
 #' nearest neighbor graphs can be provided. The format of the graph must be a
 #' list containing:
 #'
-#' * `idx` a matrix with as many rows as observations in the input data and
-#' `k` columns. The `i`th row of this matrix contains the row indices of the
-#' nearest non-self neighbors of observation `i` in non-decreasing distance
-#' order. Graphs calculated by this function are self-excluded. Older cached
-#' self-inclusive graphs are detected and stripped with a warning.
+#' * `idx` a matrix with one row per observation and distinct valid one-based
+#' indices in nearest-first order. All columns are checked before self-indices
+#' are removed and the first `k` non-self neighbors are retained.
 #' * `dist` (optional) a matrix with the same dimensions as `idx`, containing the
 #' equivalent distances. This information is not actually used by the
 #' preservation function but is included in the output of the nearest neighbor
 #' calculation. So if you provide your own nearest neighbor data, this matrix
 #' does not need to be present.
 #'
+#' Supplied graphs use the first `k` retained indices exactly as ordered, so tie
+#' handling comes from the graph provider or caller. Internally calculated
+#' graphs request `k + 1` candidates before removing self-neighbors.
+#'
+#' @section Raw Input Handling:
+#'
+#' Nonnumeric data-frame columns are ignored. Supported sparse matrices are
+#' passed to `rnndescent` without densification.
+#'
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
 #'   with one observation per row, or if `is_transposed = TRUE`, one observation
 #'   per column. Alternatively, it can be a pre-computed nearest neighbor
 #'   graph. In the latter case, `nn_method_in`, `metric_in` and `nn_args_in` are
-#'   ignored. If `Xin` is a data-frame, non-numeric columns are ignored.
+#'   ignored.
 #' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
 #'   or data frame with one observation per row, or if `is_transposed = TRUE`,
 #'   one observation per column. Alternatively, it can be a pre-computed nearest
 #'   neighbor graph. In the latter case, `nn_method_out`, `metric_out` and
-#'   `nn_args_out` are ignored. If `Xout` is a data-frame, non-numeric columns
-#'   are ignored.
+#'   `nn_args_out` are ignored.
 #' @param k the number of nearest neighbors to find. Can be a numeric vector,
-#' in which case the preservation is calculated for each value separately.
+#'   in which case the preservation is calculated for each value separately.
+#'   Values must be unique positive integers no larger than the number of
+#'   non-self observations.
 #' @param nn_method_in the nearest neighbor method to calculate the neighbors of
 #'   `Xin`. Can be one of `"brute"` (brute force calculation) or `"nnd"`, the
 #'   nearest neighbor descent method of Dong and co-workers (2011).
 #' @param metric_in the distance calculation to apply to `Xin`. One of
 #'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
-#'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
+#'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`. Euclidean
+#'   and squared Euclidean have the same exact neighbor ordering, but an
+#'   approximate search can still differ because of approximation or ties.
 #' @param nn_method_out the nearest neighbor method to calculate the neighbors
 #'   of `Xout`. See `nn_method_in` for details.
 #' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
@@ -76,17 +91,17 @@
 #'   transposing can be slow, so if this function will be called multiple times
 #'   with the same input data, it is more efficient to transpose the input data
 #'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use.
+#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#'   serially.
 #' @param verbose if `TRUE`, log information about the calculation to the
 #'   console.
 #' @param ret_extra if `TRUE`, additionally return the nearest neighbor graphs
 #'   for `Xin` and `Xout`.
-#' @param nn_args_in list of extra arguments to pass to the nearest neighbor
-#'   methods, [rnndescent::brute_force_knn()] or [rnndescent::nnd_knn()],
-#'   depending on the value of `nn_method_in`.
-#' @param nn_args_out list of extra arguments to pass to the nearest neighbor
-#'   methods, [rnndescent::brute_force_knn()] or [rnndescent::nnd_knn()],
-#'   depending on the value of `nn_method_out`.
+#' @param nn_args_in named list of extra arguments for the selected
+#'   nearest-neighbor method for `Xin`. See Details for naming and routing rules.
+#' @param nn_args_out named list of extra arguments accepted by the selected
+#'   nearest-neighbor method for `Xout`, with the same naming and ownership rules
+#'   as `nn_args_in`.
 #' @return the mean value of the intersection of the neighborhoods per
 #'   observation scaled between `0` (no neighbors in common) to `1` (all
 #'   neighbors in common). For unrelated output neighborhoods, the expected
@@ -95,11 +110,11 @@
 #'   preservations for each `k` in the order they were passed. If
 #'   `ret_extra = TRUE`, then a list is returned containing:
 #'
-#'   * `nnp`: the vector of nearest neighbor preservation values.
 #'   * `nn_in`: the nearest neighbor graph for `Xin`. See the
 #'   'Nearest Neighbor Graph Format' section for details.
 #'   * `nn_out`: the nearest neighbor graph for `Xout`. See the
 #'   'Nearest Neighbor Graph Format' section for details.
+#'   * `nnp`: the vector of nearest neighbor preservation values.
 #'   * `nnpv`: a list of vectors where each vector contains the individual
 #'   neighbor preservation per observation. Items are named `nnp<k>`, where
 #'   `<k>` refers to the values provided in the `k` parameter.
@@ -253,6 +268,12 @@ nn_preservation <- function(
 #' self-excluded. Older cached self-inclusive graphs are detected and stripped
 #' with a warning.
 #'
+#' Supplied graph distances must align with their indices and be ordered
+#' nearest-first. Supported sparse inputs pass through to `rnndescent`.
+#'
+#' Squared Euclidean preserves neighbor order but changes the distance
+#' magnitudes used by this metric, so its result can differ from Euclidean.
+#'
 #' If either local-radius vector is constant, the correlation is undefined and
 #' the corresponding result is `NA_real_`. If `log = TRUE`, all selected local
 #' radius values must be positive, so duplicate points that produce zero local
@@ -261,11 +282,13 @@ nn_preservation <- function(
 #' @param Xin the input data (usually high-dimensional), a matrix or data frame
 #'   with one observation per row, or if `is_transposed = TRUE`, one observation
 #'   per column. Alternatively, it can be a pre-computed nearest neighbor graph
-#'   with `idx` and `dist` matrix elements.
+#'   with `idx` and `dist` matrix elements. If `Xin` is a data frame,
+#'   nonnumeric columns are ignored.
 #' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
 #'   or data frame with one observation per row, or if `is_transposed = TRUE`,
 #'   one observation per column. Alternatively, it can be a pre-computed nearest
-#'   neighbor graph with `idx` and `dist` matrix elements.
+#'   neighbor graph with `idx` and `dist` matrix elements. If `Xout` is a data
+#'   frame, nonnumeric columns are ignored.
 #' @param k the number of nearest neighbors to use. Can be a numeric vector, in
 #'   which case the local radius correlation is calculated for each value
 #'   separately.
@@ -280,9 +303,9 @@ nn_preservation <- function(
 #'   provided in the `k` parameter. If `ret_extra = TRUE`, then a list is
 #'   returned containing:
 #'
-#'   * `lrc`: the vector of local radius correlations.
 #'   * `nn_in`: the nearest neighbor graph for `Xin`.
 #'   * `nn_out`: the nearest neighbor graph for `Xout`.
+#'   * `lrc`: the vector of local radius correlations.
 #'   * `scale_in`: a matrix of input local scale values, one column per `k`.
 #'   * `scale_out`: a matrix of output local scale values, one column per `k`.
 #'
@@ -442,6 +465,11 @@ local_radius_correlation <- function(
 #' self-excluded. Older cached self-inclusive graphs are detected and stripped
 #' with a warning.
 #'
+#' Supplied graphs follow [nn_preservation()] ordering and self-neighbor rules;
+#' supported sparse inputs pass through to `rnndescent`. Exact Euclidean and
+#' squared-Euclidean searches are order equivalent, subject to ties and
+#' approximation.
+#'
 #' If either mutual-neighbor count vector is constant, the correlation is
 #' undefined and the corresponding result is `NA_real_`.
 #'
@@ -455,9 +483,9 @@ local_radius_correlation <- function(
 #'   provided in the `k` parameter. If `ret_extra = TRUE`, then a list is
 #'   returned containing:
 #'
-#'   * `mnc`: the vector of mutual neighbor correlations.
 #'   * `nn_in`: the nearest neighbor graph for `Xin`.
 #'   * `nn_out`: the nearest neighbor graph for `Xout`.
+#'   * `mnc`: the vector of mutual neighbor correlations.
 #'   * `mutual_neighbor_in`: a matrix of input mutual-neighbor counts, one
 #'   column per `k`.
 #'   * `mutual_neighbor_out`: a matrix of output mutual-neighbor counts, one

@@ -34,6 +34,14 @@ n is the number of observations or items in the dataset.
 
 Self-neighbors on the diagonal are excluded from each row before the
 neighborhood overlap is calculated.
+
+If the \code{k}th-smallest distance is tied, every observation at that distance
+is treated as a neighbor. The shared count is capped at \code{k} before it is
+divided by \code{k}. This differs from exact-rank metrics such as
+\code{\link[=trustworthiness]{trustworthiness()}} and \code{\link[=rnx_auc]{rnx_auc()}}, which break ties by original column
+order, and from supplied-graph metrics, which use the first \code{k} indices.
+
+Distance matrices are used as supplied without a finite-value check.
 }
 \note{
 This is not a very efficient way to calculate the preservation if you

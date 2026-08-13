@@ -25,17 +25,18 @@ nn_preservation(
 with one observation per row, or if \code{is_transposed = TRUE}, one observation
 per column. Alternatively, it can be a pre-computed nearest neighbor
 graph. In the latter case, \code{nn_method_in}, \code{metric_in} and \code{nn_args_in} are
-ignored. If \code{Xin} is a data-frame, non-numeric columns are ignored.}
+ignored.}
 
 \item{Xout}{the output data (usually lower dimensional than \code{Xin}), a matrix
 or data frame with one observation per row, or if \code{is_transposed = TRUE},
 one observation per column. Alternatively, it can be a pre-computed nearest
 neighbor graph. In the latter case, \code{nn_method_out}, \code{metric_out} and
-\code{nn_args_out} are ignored. If \code{Xout} is a data-frame, non-numeric columns
-are ignored.}
+\code{nn_args_out} are ignored.}
 
 \item{k}{the number of nearest neighbors to find. Can be a numeric vector,
-in which case the preservation is calculated for each value separately.}
+in which case the preservation is calculated for each value separately.
+Values must be unique positive integers no larger than the number of
+non-self observations.}
 
 \item{nn_method_in}{the nearest neighbor method to calculate the neighbors of
 \code{Xin}. Can be one of \code{"brute"} (brute force calculation) or \code{"nnd"}, the
@@ -43,7 +44,9 @@ nearest neighbor descent method of Dong and co-workers (2011).}
 
 \item{metric_in}{the distance calculation to apply to \code{Xin}. One of
 \code{"euclidean"}, \code{"sqeuclidean"} (squared Euclidean), \code{"cosine"}, \code{"manhattan"},
-\code{"correlation"} (1 minus the Pearson correlation), or \code{"hamming"}.}
+\code{"correlation"} (1 minus the Pearson correlation), or \code{"hamming"}. Euclidean
+and squared Euclidean have the same exact neighbor ordering, but an
+approximate search can still differ because of approximation or ties.}
 
 \item{nn_method_out}{the nearest neighbor method to calculate the neighbors
 of \code{Xout}. See \code{nn_method_in} for details.}
@@ -58,7 +61,8 @@ transposing can be slow, so if this function will be called multiple times
 with the same input data, it is more efficient to transpose the input data
 once outside of this function and set \code{is_transposed = TRUE}.}
 
-\item{n_threads}{the maximum number of threads to use.}
+\item{n_threads}{the maximum number of threads to use. \code{0} or \code{1} runs
+serially.}
 
 \item{verbose}{if \code{TRUE}, log information about the calculation to the
 console.}
@@ -66,13 +70,12 @@ console.}
 \item{ret_extra}{if \code{TRUE}, additionally return the nearest neighbor graphs
 for \code{Xin} and \code{Xout}.}
 
-\item{nn_args_in}{list of extra arguments to pass to the nearest neighbor
-methods, \code{\link[rnndescent:brute_force_knn]{rnndescent::brute_force_knn()}} or \code{\link[rnndescent:nnd_knn]{rnndescent::nnd_knn()}},
-depending on the value of \code{nn_method_in}.}
+\item{nn_args_in}{named list of extra arguments for the selected
+nearest-neighbor method for \code{Xin}. See Details for naming and routing rules.}
 
-\item{nn_args_out}{list of extra arguments to pass to the nearest neighbor
-methods, \code{\link[rnndescent:brute_force_knn]{rnndescent::brute_force_knn()}} or \code{\link[rnndescent:nnd_knn]{rnndescent::nnd_knn()}},
-depending on the value of \code{nn_method_out}.}
+\item{nn_args_out}{named list of extra arguments accepted by the selected
+nearest-neighbor method for \code{Xout}, with the same naming and ownership rules
+as \code{nn_args_in}.}
 }
 \value{
 the mean value of the intersection of the neighborhoods per
@@ -83,11 +86,11 @@ observations. If \code{k} is a vector, then the return value is a vector of the
 preservations for each \code{k} in the order they were passed. If
 \code{ret_extra = TRUE}, then a list is returned containing:
 \itemize{
-\item \code{nnp}: the vector of nearest neighbor preservation values.
 \item \code{nn_in}: the nearest neighbor graph for \code{Xin}. See the
 'Nearest Neighbor Graph Format' section for details.
 \item \code{nn_out}: the nearest neighbor graph for \code{Xout}. See the
 'Nearest Neighbor Graph Format' section for details.
+\item \code{nnp}: the vector of nearest neighbor preservation values.
 \item \code{nnpv}: a list of vectors where each vector contains the individual
 neighbor preservation per observation. Items are named \verb{nnp<k>}, where
 \verb{<k>} refers to the values provided in the \code{k} parameter.
@@ -117,6 +120,11 @@ arguments to those functions via the \code{nn_args_in} and \code{nn_args_out} li
 See the documentation for the \code{\link[rnndescent:brute_force_knn]{rnndescent::brute_force_knn()}} and
 \code{\link[rnndescent:nnd_knn]{rnndescent::nnd_knn()}} functions for more details.
 
+Each \verb{nn_args_*} value must have unique, nonempty, nonmissing names and cannot
+contain \code{X}, \code{data}, \code{k}, \code{metric}, \code{nn_method}, \code{n_threads}, \code{verbose}, or
+\code{obs}. Other arguments must be accepted by the selected backend. Supplied
+graphs ignore them.
+
 Because the nearest neighbor search can be time-consuming, if you set
 \code{ret_extra = TRUE}, the return value of this function is a list which
 includes the nearest neighbor graph for \code{Xin} and for \code{Xout}. The graph can
@@ -132,17 +140,26 @@ Rather than provide the observations to \code{Xin} and \code{Xout}, pre-computed
 nearest neighbor graphs can be provided. The format of the graph must be a
 list containing:
 \itemize{
-\item \code{idx} a matrix with as many rows as observations in the input data and
-\code{k} columns. The \code{i}th row of this matrix contains the row indices of the
-nearest non-self neighbors of observation \code{i} in non-decreasing distance
-order. Graphs calculated by this function are self-excluded. Older cached
-self-inclusive graphs are detected and stripped with a warning.
+\item \code{idx} a matrix with one row per observation and distinct valid one-based
+indices in nearest-first order. All columns are checked before self-indices
+are removed and the first \code{k} non-self neighbors are retained.
 \item \code{dist} (optional) a matrix with the same dimensions as \code{idx}, containing the
 equivalent distances. This information is not actually used by the
 preservation function but is included in the output of the nearest neighbor
 calculation. So if you provide your own nearest neighbor data, this matrix
 does not need to be present.
 }
+
+Supplied graphs use the first \code{k} retained indices exactly as ordered, so tie
+handling comes from the graph provider or caller. Internally calculated
+graphs request \code{k + 1} candidates before removing self-neighbors.
+}
+
+\section{Raw Input Handling}{
+
+
+Nonnumeric data-frame columns are ignored. Supported sparse matrices are
+passed to \code{rnndescent} without densification.
 }
 
 \examples{
