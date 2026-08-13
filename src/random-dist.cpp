@@ -21,8 +21,8 @@ void distance_sample_inner(std::size_t begin, std::size_t end,
                            const std::function<Dfun> &dfunin,
                            const It xout_begin, std::size_t xout_ncol,
                            const std::function<Dfun> &dfunout,
-                           std::vector<double> &din,
-                           std::vector<double> &dout) {
+                           std::vector<double> &input_distances,
+                           std::vector<double> &output_distances) {
 
   for (std::size_t i = begin; i < end; i++) {
     // DQIntSampler::sample(n_obs, 2) draws distinct indices without
@@ -30,12 +30,12 @@ void distance_sample_inner(std::size_t begin, std::size_t end,
     auto idxs = int_sampler.sample(n_obs, 2);
 
     const It xin_i_begin = xin_begin + idxs[0] * xin_ncol;
-    din[i] = dfunin(xin_i_begin, xin_i_begin + xin_ncol,
-                    xin_begin + idxs[1] * xin_ncol);
+    input_distances[i] = dfunin(xin_i_begin, xin_i_begin + xin_ncol,
+                                xin_begin + idxs[1] * xin_ncol);
 
     const It xout_i_begin = xout_begin + idxs[0] * xout_ncol;
-    dout[i] = dfunout(xout_i_begin, xout_i_begin + xout_ncol,
-                      xout_begin + idxs[1] * xout_ncol);
+    output_distances[i] = dfunout(xout_i_begin, xout_i_begin + xout_ncol,
+                                  xout_begin + idxs[1] * xout_ncol);
   }
 }
 
@@ -43,7 +43,8 @@ void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
                       It xin_end, It xout_begin, It xout_end,
                       const std::function<Dfun> &dfunin,
                       const std::function<Dfun> &dfunout,
-                      std::vector<double> &din, std::vector<double> &dout,
+                      std::vector<double> &input_distances,
+                      std::vector<double> &output_distances,
                       std::size_t n_threads) {
   const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
   const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
@@ -57,7 +58,7 @@ void random_distances(std::size_t n_pairs, std::size_t n_obs, It xin_begin,
     auto thread_sampler = sampler_provider.get_parallel_instance(chunk_id);
     distance_sample_inner(begin, end, *thread_sampler, n_obs, xin_begin,
                           xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout,
-                          din, dout);
+                          input_distances, output_distances);
   };
 
   pforr::parallel_for_indexed(n_pairs, worker, n_threads);
@@ -83,18 +84,18 @@ List random_distances(NumericMatrix xin, NumericMatrix xout,
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
 
-  std::vector<double> din(pair_count);
-  std::vector<double> dout(pair_count);
+  std::vector<double> input_distances(pair_count);
+  std::vector<double> output_distances(pair_count);
 
   auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 
   random_distances(pair_count, xin.ncol(), xin_cpp.begin(), xin_cpp.end(),
-                   xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout, din, dout,
-                   thread_count);
+                   xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout,
+                   input_distances, output_distances, thread_count);
 
-  NumericVector res_in(din.begin(), din.end());
-  NumericVector res_out(dout.begin(), dout.end());
+  NumericVector res_in(input_distances.begin(), input_distances.end());
+  NumericVector res_out(output_distances.begin(), output_distances.end());
 
   return List::create(_("din") = res_in, _("dout") = res_out);
 }

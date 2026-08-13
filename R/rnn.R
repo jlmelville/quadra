@@ -170,7 +170,7 @@ nn_preservation <- function(
   report_progress("Getting neighbor graph for Xin", verbose = verbose)
   nn_in <-
     do.call(
-      get_nn_graph,
+      resolve_nn_graph,
       list(
         X = Xin,
         k = max_k,
@@ -186,7 +186,7 @@ nn_preservation <- function(
   report_progress("Getting neighbor graph for Xout", verbose = verbose)
   nn_out <-
     do.call(
-      get_nn_graph,
+      resolve_nn_graph,
       list(
         X = Xout,
         k = max_k,
@@ -346,7 +346,7 @@ local_radius_correlation <- function(
   report_progress("Getting neighbor graph for Xin", verbose = verbose)
   nn_in <-
     do.call(
-      get_nn_graph,
+      resolve_nn_graph,
       list(
         X = Xin,
         k = max_k,
@@ -364,7 +364,7 @@ local_radius_correlation <- function(
   report_progress("Getting neighbor graph for Xout", verbose = verbose)
   nn_out <-
     do.call(
-      get_nn_graph,
+      resolve_nn_graph,
       list(
         X = Xout,
         k = max_k,
@@ -518,7 +518,7 @@ mutual_neighbor_correlation <- function(
   report_progress("Getting neighbor graph for Xin", verbose = verbose)
   nn_in <-
     do.call(
-      get_nn_graph,
+      resolve_nn_graph,
       list(
         X = Xin,
         k = max_k,
@@ -534,7 +534,7 @@ mutual_neighbor_correlation <- function(
   report_progress("Getting neighbor graph for Xout", verbose = verbose)
   nn_out <-
     do.call(
-      get_nn_graph,
+      resolve_nn_graph,
       list(
         X = Xout,
         k = max_k,
@@ -674,7 +674,7 @@ validate_nn_backend_args <- function(nn_args, nn_method, name) {
   invisible(nn_args)
 }
 
-calc_nn_graph <-
+compute_nn_graph <-
   function(
     X,
     k = 15,
@@ -702,7 +702,7 @@ calc_nn_graph <-
     )
   }
 
-get_nn_graph <-
+resolve_nn_graph <-
   function(
     X,
     k = 15,
@@ -727,7 +727,7 @@ get_nn_graph <-
       X <- prepare_input_matrix(X, name = name, allow_sparse = TRUE)
       n_obs <- if (is_transposed) ncol(X) else nrow(X)
       check_k_for_n_obs(k, n_obs)
-      nn_graph <- calc_nn_graph(
+      nn_graph <- compute_nn_graph(
         X = X,
         k = k + 1L,
         nn_method = nn_method,
@@ -773,7 +773,7 @@ is_nn_graph <- function(graph) {
   all(dim(idx) == dim(dist))
 }
 
-check_nn_graph <- function(graph, name = "graph") {
+validate_nn_graph <- function(graph, name = "graph") {
   if (!is.list(graph) || is.null(graph$idx) || !is.matrix(graph$idx)) {
     stop(
       name,
@@ -816,8 +816,8 @@ check_nn_graph <- function(graph, name = "graph") {
   invisible(graph)
 }
 
-check_nn_graph_dist <- function(graph, name = "graph") {
-  check_nn_graph(graph, name)
+validate_nn_graph_distances <- function(graph, name = "graph") {
+  validate_nn_graph(graph, name)
   dist <- graph$dist
   if (is.null(dist)) {
     stop(
@@ -872,7 +872,7 @@ prepare_supplied_nn_graph <- function(
   require_dist = FALSE,
   warn_self = TRUE
 ) {
-  check_nn_graph(graph, name)
+  validate_nn_graph(graph, name)
   check_k_for_n_obs(k, nrow(graph$idx))
   if (require_dist && is.null(graph$dist)) {
     stop(

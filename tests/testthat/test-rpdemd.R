@@ -51,7 +51,10 @@ test_that("random pair distance stress matches sampled distances", {
   set.seed(987)
   randlist <- random_pair_distances(m, n, n_pairs = 50)
   expected <- sqrt(
-    mean((scale01(randlist$din) - scale01(randlist$dout))^2)
+    mean(
+      (rescale_unit_interval(randlist$din) -
+        rescale_unit_interval(randlist$dout))^2
+    )
   )
 
   set.seed(987)

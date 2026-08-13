@@ -44,7 +44,7 @@ nbr_pres <- function(din, dout, k) {
     dj <- dout[i, ]
     di[i] <- Inf
     dj[i] <- Inf
-    preservations[i] <- nbr_pres_i(di, dj, k)
+    preservations[i] <- neighbor_preservation_for_row(di, dj, k)
   }
   preservations
 }
@@ -361,7 +361,7 @@ k_smallest_ind <- function(x, k) {
 # \code{k}-smallest values of \code{di} and the \code{k}-smallest
 # values of \code{dj}. If there aren't exactly k values (i.e. because of ties),
 # more than k results will be returned.
-k_shared_nbrs_ind <- function(di, dj, k) {
+shared_neighbor_indices <- function(di, dj, k) {
   nindi <- k_smallest_ind(di, k)
   nindj <- k_smallest_ind(dj, k)
 
@@ -383,8 +383,8 @@ k_shared_nbrs_ind <- function(di, dj, k) {
 # @param k Size of the neighborhood to consider.
 # @return The number of shared neighbors in the equivalent neighbor lists of
 # \code{di} and \code{dj}.
-nbr_pres_i <- function(di, dj, k) {
-  base::min(k, length(k_shared_nbrs_ind(di, dj, k))) / k
+neighbor_preservation_for_row <- function(di, dj, k) {
+  base::min(k, length(shared_neighbor_indices(di, dj, k))) / k
 }
 
 validate_distance_matrix_pair <- function(din, dout) {

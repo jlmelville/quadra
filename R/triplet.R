@@ -93,7 +93,7 @@ random_triplet_accuracy <-
 
     if (is.matrix(n_triplets)) {
       triplets <-
-        get_triplet_matrix(n_obs, n_triplets)
+        validate_triplet_matrix(n_obs, n_triplets)
 
       return(
         triplet_sample(
@@ -119,7 +119,7 @@ random_triplet_accuracy <-
   }
 
 # Validate a pre-generated zero-indexed triplet matrix.
-get_triplet_matrix <- function(n_obs, triplets) {
+validate_triplet_matrix <- function(n_obs, triplets) {
   if (!is.numeric(triplets) || anyNA(triplets) || any(!is.finite(triplets))) {
     stop("Triplets matrix must contain finite numeric indices", call. = FALSE)
   }

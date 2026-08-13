@@ -92,21 +92,24 @@ void update_triplet_counts(TripletCounts &counts, std::size_t p1,
                            const It xout_begin, std::size_t xout_ncol,
                            const std::function<Dfun> &dfunout) {
 
-  auto din_ip1 = dfunin(xin_i_begin, xin_i_end, xin_begin + p1 * xin_ncol);
-  auto din_ip2 = dfunin(xin_i_begin, xin_i_end, xin_begin + p2 * xin_ncol);
+  auto input_distance_1 =
+      dfunin(xin_i_begin, xin_i_end, xin_begin + p1 * xin_ncol);
+  auto input_distance_2 =
+      dfunin(xin_i_begin, xin_i_end, xin_begin + p2 * xin_ncol);
 
-  auto dout_ip1 =
+  auto output_distance_1 =
       dfunout(xout_i_begin, xout_i_end, xout_begin + p1 * xout_ncol);
-  auto dout_ip2 =
+  auto output_distance_2 =
       dfunout(xout_i_begin, xout_i_end, xout_begin + p2 * xout_ncol);
 
-  const int input_order = compare_distances(din_ip1, din_ip2);
+  const int input_order = compare_distances(input_distance_1, input_distance_2);
   if (input_order == 0) {
     return;
   }
 
   ++counts.comparisons;
-  const int output_order = compare_distances(dout_ip1, dout_ip2);
+  const int output_order =
+      compare_distances(output_distance_1, output_distance_2);
   if (input_order == output_order) {
     ++counts.agreements;
   }
@@ -126,8 +129,8 @@ double summarize_triplet_counts(const std::vector<TripletCounts> &counts) {
 }
 
 TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
-                                   std::size_t ntriplets_per_obs,
-                                   std::size_t nobs,
+                                   std::size_t n_triplets_per_observation,
+                                   std::size_t n_obs,
                                    const TripIt triplets_begin,
                                    const It xin_begin, std::size_t xin_ncol,
                                    const std::function<Dfun> &dfunin,
@@ -135,7 +138,7 @@ TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
                                    const std::function<Dfun> &dfunout) {
 
   TripletCounts counts;
-  const std::size_t nt2 = ntriplets_per_obs * 2;
+  const std::size_t nt2 = n_triplets_per_observation * 2;
   for (std::size_t i = begin; i < end; i++) {
     const TripIt trip_obs_begin = triplets_begin + i * nt2;
     const It xin_i_begin = xin_begin + i * xin_ncol;
@@ -144,7 +147,7 @@ TripletCounts triplet_sample_inner(std::size_t begin, std::size_t end,
     const It xout_i_begin = xout_begin + i * xout_ncol;
     const It xout_i_end = xout_i_begin + xout_ncol;
 
-    for (std::size_t j = 0; j < ntriplets_per_obs; j++) {
+    for (std::size_t j = 0; j < n_triplets_per_observation; j++) {
       const TripIt tripi = trip_obs_begin + (j * 2);
       const std::size_t p1 = *tripi;
       const std::size_t p2 = *(tripi + 1);
@@ -162,8 +165,8 @@ std::size_t avoid_anchor_index(std::size_t idx, std::size_t anchor) {
 }
 
 TripletCounts random_triplet_sample_inner(
-    std::size_t begin, std::size_t end, std::size_t ntriplets_per_obs,
-    std::size_t nobs, tdoann::RandomIntGenerator<uint64_t> &int_sampler,
+    std::size_t begin, std::size_t end, std::size_t n_triplets_per_observation,
+    std::size_t n_obs, tdoann::RandomIntGenerator<uint64_t> &int_sampler,
     const It xin_begin, std::size_t xin_ncol, const std::function<Dfun> &dfunin,
     const It xout_begin, std::size_t xout_ncol,
     const std::function<Dfun> &dfunout) {
@@ -176,8 +179,8 @@ TripletCounts random_triplet_sample_inner(
     const It xout_i_begin = xout_begin + i * xout_ncol;
     const It xout_i_end = xout_i_begin + xout_ncol;
 
-    for (std::size_t j = 0; j < ntriplets_per_obs; j++) {
-      const auto idxs = int_sampler.sample(nobs - 1, 2);
+    for (std::size_t j = 0; j < n_triplets_per_observation; j++) {
+      const auto idxs = int_sampler.sample(n_obs - 1, 2);
       const std::size_t p1 = avoid_anchor_index(idxs[0], i);
       const std::size_t p2 = avoid_anchor_index(idxs[1], i);
 
@@ -190,55 +193,57 @@ TripletCounts random_triplet_sample_inner(
 }
 
 double triplet_sample(TripIt triplets_begin, TripIt triplets_end,
-                      std::size_t nobs, It xin_begin, It xin_end, It xout_begin,
-                      It xout_end, const std::function<Dfun> &dfunin,
+                      std::size_t n_obs, It xin_begin, It xin_end,
+                      It xout_begin, It xout_end,
+                      const std::function<Dfun> &dfunin,
                       const std::function<Dfun> &dfunout,
                       std::size_t n_threads) {
 
-  const std::size_t ntriplets_per_obs =
-      (triplets_end - triplets_begin) / nobs / 2;
-  const std::size_t xin_nfeat = (xin_end - xin_begin) / nobs;
-  const std::size_t xout_nfeat = (xout_end - xout_begin) / nobs;
+  const std::size_t n_triplets_per_observation =
+      (triplets_end - triplets_begin) / n_obs / 2;
+  const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
+  const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
 
-  std::vector<TripletCounts> counts(n_parallel_chunks(0, nobs, n_threads));
+  std::vector<TripletCounts> counts(n_parallel_chunks(0, n_obs, n_threads));
 
   auto worker = [&](std::size_t begin, std::size_t end, std::size_t thread_id) {
     const auto chunk_counts = triplet_sample_inner(
-        begin, end, ntriplets_per_obs, nobs, triplets_begin, xin_begin,
-        xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
+        begin, end, n_triplets_per_observation, n_obs, triplets_begin,
+        xin_begin, xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
     counts[thread_id].agreements += chunk_counts.agreements;
     counts[thread_id].comparisons += chunk_counts.comparisons;
   };
 
-  pforr::parallel_for_indexed(0, nobs, worker, n_threads);
+  pforr::parallel_for_indexed(0, n_obs, worker, n_threads);
 
   return summarize_triplet_counts(counts);
 }
 
-double random_triplet_sample(std::size_t ntriplets_per_obs, std::size_t nobs,
-                             It xin_begin, It xin_end, It xout_begin,
-                             It xout_end, const std::function<Dfun> &dfunin,
+double random_triplet_sample(std::size_t n_triplets_per_observation,
+                             std::size_t n_obs, It xin_begin, It xin_end,
+                             It xout_begin, It xout_end,
+                             const std::function<Dfun> &dfunin,
                              const std::function<Dfun> &dfunout,
                              std::size_t n_threads) {
-  const std::size_t xin_nfeat = (xin_end - xin_begin) / nobs;
-  const std::size_t xout_nfeat = (xout_end - xout_begin) / nobs;
+  const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
+  const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
 
   rnndescent::ParallelIntRNGAdapter<uint64_t, rnndescent::DQIntSampler>
       sampler_provider;
   sampler_provider.initialize();
 
-  std::vector<TripletCounts> counts(n_parallel_chunks(0, nobs, n_threads));
+  std::vector<TripletCounts> counts(n_parallel_chunks(0, n_obs, n_threads));
 
   auto worker = [&](std::size_t begin, std::size_t end, std::size_t chunk_id) {
     auto thread_sampler = sampler_provider.get_parallel_instance(chunk_id);
     const auto chunk_counts = random_triplet_sample_inner(
-        begin, end, ntriplets_per_obs, nobs, *thread_sampler, xin_begin,
-        xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
+        begin, end, n_triplets_per_observation, n_obs, *thread_sampler,
+        xin_begin, xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
     counts[chunk_id].agreements += chunk_counts.agreements;
     counts[chunk_id].comparisons += chunk_counts.comparisons;
   };
 
-  pforr::parallel_for_indexed(0, nobs, worker, n_threads);
+  pforr::parallel_for_indexed(0, n_obs, worker, n_threads);
 
   return summarize_triplet_counts(counts);
 }

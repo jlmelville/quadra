@@ -28,7 +28,7 @@ roc_auc <- function(dm, labels) {
     stop("roc_auc function requires 'PRROC' package")
   }
   validate_auc_inputs(dm, labels)
-  auc_mat(dm, labels, roc_auc_row)
+  summarize_retrieval_auc(dm, labels, roc_auc_row)
 }
 
 #' Area Under the Precision-Recall Curve for an Embedding
@@ -75,7 +75,7 @@ pr_auc <- function(dm, labels) {
     stop("pr_auc function requires 'PRROC' package")
   }
   validate_auc_inputs(dm, labels)
-  auc_mat(dm, labels, pr_auc_row)
+  summarize_retrieval_auc(dm, labels, pr_auc_row)
 }
 
 validate_auc_inputs <- function(dm, labels) {
@@ -239,7 +239,7 @@ roc_auc_row <- function(dm, labels, i) {
 # \item{av_auc}{Area Under the curve, averaged over each observation.}
 # The list also contains the average AUC per class label, with each average
 # being named after the class label.
-auc_mat <- function(dm, labels, auc_row_fn) {
+summarize_retrieval_auc <- function(dm, labels, auc_row_fn) {
   av_auc <- 0
   av_n <- 0
   n <- nrow(dm)

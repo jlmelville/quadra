@@ -175,8 +175,8 @@ random_pair_distance_emd <- function(
   x <- randlist$din
   y <- randlist$dout
   if (range_scale) {
-    x <- scale01(x)
-    y <- scale01(y)
+    x <- rescale_unit_interval(x)
+    y <- rescale_unit_interval(y)
   }
 
   emd(
@@ -251,8 +251,8 @@ random_pair_distance_stress <- function(
   x <- randlist$din
   y <- randlist$dout
   if (range_scale) {
-    x <- scale01(x)
-    y <- scale01(y)
+    x <- rescale_unit_interval(x)
+    y <- rescale_unit_interval(y)
   }
 
   sqrt(mean((x - y)^2))
@@ -301,7 +301,7 @@ random_pair_distances <- function(
   )
 }
 
-scale01 <- function(x) {
+rescale_unit_interval <- function(x) {
   x <- x - min(x)
   xmax <- max(x)
   if (xmax == 0) {
