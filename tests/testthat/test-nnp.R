@@ -191,7 +191,7 @@ test_that("nearest-neighbor metrics report progress only when requested", {
 test_that("sparse raw inputs remain sparse through graph preparation", {
   # Allocation safety requires checking the private preparation boundary:
   # graph results alone cannot reveal an intermediate dense conversion.
-  prepared <- x2m(sparse_m, allow_sparse = TRUE)
+  prepared <- prepare_input_matrix(sparse_m, allow_sparse = TRUE)
 
   expect_identical(prepared, sparse_m)
   expect_true(methods::is(prepared, "sparseMatrix"))

@@ -23,7 +23,7 @@ report_progress <- function(
 }
 
 # convert data frame to matrix using numeric columns
-x2m <- function(
+prepare_input_matrix <- function(
   X,
   name = "Input data",
   allow_sparse = FALSE,

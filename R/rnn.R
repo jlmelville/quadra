@@ -724,7 +724,7 @@ get_nn_graph <-
         warn_self = TRUE
       )
     } else {
-      X <- x2m(X, name = name, allow_sparse = TRUE)
+      X <- prepare_input_matrix(X, name = name, allow_sparse = TRUE)
       n_obs <- if (is_transposed) ncol(X) else nrow(X)
       check_k_for_n_obs(k, n_obs)
       nn_graph <- calc_nn_graph(

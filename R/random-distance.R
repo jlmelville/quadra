@@ -272,8 +272,8 @@ random_pair_distances <- function(
   metric_in <- validate_distance(metric_in)
   metric_out <- validate_distance(metric_out)
 
-  Xin <- x2m(Xin, name = "Xin", require_finite = TRUE)
-  Xout <- x2m(Xout, name = "Xout", require_finite = TRUE)
+  Xin <- prepare_input_matrix(Xin, name = "Xin", require_finite = TRUE)
+  Xout <- prepare_input_matrix(Xout, name = "Xout", require_finite = TRUE)
   if (!is_transposed) {
     Xin <- t(Xin)
     Xout <- t(Xout)
