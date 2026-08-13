@@ -167,7 +167,7 @@ nn_preservation <- function(
   }
   max_k <- max(k)
 
-  tsmessage("Getting neighbor graph for Xin")
+  report_progress("Getting neighbor graph for Xin", verbose = verbose)
   nn_in <-
     do.call(
       get_nn_graph,
@@ -183,7 +183,7 @@ nn_preservation <- function(
         name = "Xin"
       )
     )
-  tsmessage("Getting neighbor graph for Xout")
+  report_progress("Getting neighbor graph for Xout", verbose = verbose)
   nn_out <-
     do.call(
       get_nn_graph,
@@ -343,7 +343,7 @@ local_radius_correlation <- function(
   }
   max_k <- max(k)
 
-  tsmessage("Getting neighbor graph for Xin")
+  report_progress("Getting neighbor graph for Xin", verbose = verbose)
   nn_in <-
     do.call(
       get_nn_graph,
@@ -361,7 +361,7 @@ local_radius_correlation <- function(
       )
     )
 
-  tsmessage("Getting neighbor graph for Xout")
+  report_progress("Getting neighbor graph for Xout", verbose = verbose)
   nn_out <-
     do.call(
       get_nn_graph,
@@ -515,7 +515,7 @@ mutual_neighbor_correlation <- function(
   }
   max_k <- max(k)
 
-  tsmessage("Getting neighbor graph for Xin")
+  report_progress("Getting neighbor graph for Xin", verbose = verbose)
   nn_in <-
     do.call(
       get_nn_graph,
@@ -531,7 +531,7 @@ mutual_neighbor_correlation <- function(
         name = "Xin"
       )
     )
-  tsmessage("Getting neighbor graph for Xout")
+  report_progress("Getting neighbor graph for Xout", verbose = verbose)
   nn_out <-
     do.call(
       get_nn_graph,

@@ -152,6 +152,42 @@ test_that("generated nearest-neighbor graphs exclude self-neighbors", {
   expect_equal(ncol(nnd_res$nn_out$idx), 2)
 })
 
+test_that("nearest-neighbor metrics report progress only when requested", {
+  graph <- list(
+    idx = matrix(c(2, 1, 4, 3), ncol = 1),
+    dist = matrix(c(1, 1, 2, 2), ncol = 1)
+  )
+  metrics <- list(
+    nn_preservation = nn_preservation,
+    local_radius_correlation = local_radius_correlation,
+    mutual_neighbor_correlation = mutual_neighbor_correlation
+  )
+  expected <- c(
+    "Getting neighbor graph for Xin",
+    "Getting neighbor graph for Xout"
+  )
+
+  for (metric_name in names(metrics)) {
+    metric <- metrics[[metric_name]]
+    expect_equal(
+      testthat::capture_messages(metric(graph, graph, k = 1, verbose = FALSE)),
+      character(),
+      info = metric_name
+    )
+
+    messages <- testthat::capture_messages(
+      metric(graph, graph, k = 1, verbose = TRUE)
+    )
+    progress_text <- sub(
+      "^.*(?=Getting neighbor graph)",
+      "",
+      trimws(messages),
+      perl = TRUE
+    )
+    expect_equal(progress_text, expected, info = metric_name)
+  }
+})
+
 test_that("sparse raw inputs remain sparse through graph preparation", {
   # Allocation safety requires checking the private preparation boundary:
   # graph results alone cannot reveal an intermediate dense conversion.
