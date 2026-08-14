@@ -22,14 +22,14 @@ std::size_t matrix_offset(std::size_t row, std::size_t col, std::size_t nrow) {
 std::vector<KQuery> prepare_k_queries(const IntegerVector &k,
                                       std::size_t max_cols) {
   if (k.size() < 1) {
-    stop("k must contain positive integers");
+    stop("k must be nonempty");
   }
 
   std::vector<KQuery> queries;
   queries.reserve(k.size());
   for (R_xlen_t i = 0; i < k.size(); ++i) {
-    if (k[i] == NA_INTEGER || k[i] < 1) {
-      stop("k must contain positive integers");
+    if (k[i] == NA_INTEGER || k[i] < 0) {
+      stop("k must contain nonnegative integers");
     }
     const auto value = static_cast<std::size_t>(k[i]);
     if (value > max_cols) {
@@ -118,15 +118,12 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
   if (idx.nrow() != ref_idx.nrow()) {
     stop("idx and ref_idx must have the same number of rows");
   }
-  if (idx.nrow() < 2 || idx.ncol() < 1 || ref_idx.ncol() < 1) {
-    stop("idx and ref_idx must each have at least two rows and one column");
-  }
 
   const auto queries =
       prepare_k_queries(k, std::min(idx.ncol(), ref_idx.ncol()));
   const std::size_t n_obs = idx.nrow();
   const std::size_t max_k = queries.back().value;
-  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
+  const std::size_t thread_count = quadra::checked_thread_count(n_threads);
 
   const auto idx_cpp = copy_neighbor_indices(idx, max_k, "idx");
   const auto ref_idx_cpp = copy_neighbor_indices(ref_idx, max_k, "ref_idx");

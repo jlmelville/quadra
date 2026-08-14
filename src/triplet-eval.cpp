@@ -32,11 +32,8 @@ std::size_t validate_observation_matrices(const NumericMatrix &xin,
   return static_cast<std::size_t>(xin.ncol());
 }
 
-std::vector<std::size_t> validate_triplets(const NumericMatrix &triplets,
-                                           std::size_t n_obs) {
-  if (triplets.nrow() < 1 || triplets.ncol() < 1) {
-    stop("triplets must be nonempty");
-  }
+std::vector<std::size_t> copy_checked_triplets(const NumericMatrix &triplets,
+                                               std::size_t n_obs) {
   if (triplets.ncol() != static_cast<int>(n_obs)) {
     stop("triplets must have one column per observation");
   }
@@ -54,11 +51,9 @@ std::vector<std::size_t> validate_triplets(const NumericMatrix &triplets,
                            first != std::floor(first) ||
                            second != std::floor(second) || first < 0 ||
                            second < 0 || first >= static_cast<double>(n_obs) ||
-                           second >= static_cast<double>(n_obs) ||
-                           first == col || second == col || first == second;
+                           second >= static_cast<double>(n_obs);
       if (invalid) {
-        stop("triplets must contain distinct anchor and endpoint indices in "
-             "range");
+        stop("triplets must contain finite integer indices in range");
       }
       copied.push_back(static_cast<std::size_t>(first));
       copied.push_back(static_cast<std::size_t>(second));
@@ -256,8 +251,8 @@ double triplet_sample(const NumericMatrix &triplets, const NumericMatrix &xin,
                       double n_threads = 0) {
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);
-  const auto triplets_cpp = validate_triplets(triplets, n_obs);
-  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
+  const auto triplets_cpp = copy_checked_triplets(triplets, n_obs);
+  const std::size_t thread_count = quadra::checked_thread_count(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
@@ -279,8 +274,8 @@ double random_triplet_sample(const NumericMatrix &xin,
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);
   const std::size_t triplet_count =
-      quadra::validate_positive_count(n_triplets, "n_triplets");
-  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
+      quadra::checked_nonnegative_count(n_triplets, "n_triplets");
+  const std::size_t thread_count = quadra::checked_thread_count(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);

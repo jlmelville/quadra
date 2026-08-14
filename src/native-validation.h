@@ -9,7 +9,9 @@
 
 namespace quadra {
 
-inline std::size_t validate_n_threads(double n_threads) {
+// Public argument contracts belong in R. These guards protect independently
+// callable registered routines before narrowing, allocation, or thread setup.
+inline std::size_t checked_thread_count(double n_threads) {
   if (!std::isfinite(n_threads) || n_threads < 0 ||
       n_threads != std::floor(n_threads)) {
     Rcpp::stop(
@@ -22,9 +24,9 @@ inline std::size_t validate_n_threads(double n_threads) {
   return static_cast<std::size_t>(n_threads);
 }
 
-inline std::size_t validate_positive_count(double value, const char *name) {
-  if (!std::isfinite(value) || value < 1 || value != std::floor(value)) {
-    Rcpp::stop("%s must be a positive integer", name);
+inline std::size_t checked_nonnegative_count(double value, const char *name) {
+  if (!std::isfinite(value) || value < 0 || value != std::floor(value)) {
+    Rcpp::stop("%s must be finite, whole, and nonnegative", name);
   }
   if (value > static_cast<double>((std::numeric_limits<int>::max)())) {
     Rcpp::stop("%s exceeds the supported integer range", name);

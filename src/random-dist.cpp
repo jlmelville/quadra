@@ -78,8 +78,8 @@ List random_distances(NumericMatrix xin, NumericMatrix xout,
   }
 
   const std::size_t pair_count =
-      quadra::validate_positive_count(n_pairs, "n_pairs");
-  const std::size_t thread_count = quadra::validate_n_threads(n_threads);
+      quadra::checked_nonnegative_count(n_pairs, "n_pairs");
+  const std::size_t thread_count = quadra::checked_thread_count(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
