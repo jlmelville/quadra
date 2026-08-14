@@ -23,13 +23,14 @@ random_pair_distance_stress(
 
   the input data (usually high-dimensional), a matrix or data frame with
   one observation per row, or if `is_transposed = TRUE`, one observation
-  per column.
+  per column. Nonnumeric data-frame columns are ignored; sparse matrices
+  are unsupported and retained values must be finite.
 
 - Xout:
 
   the output data (usually lower dimensional than `Xin`), a matrix or
   data frame with one observation per row, or if `is_transposed = TRUE`,
-  one observation per column.
+  one observation per column, with the same input requirements as `Xin`.
 
 - n_pairs:
 
@@ -82,6 +83,13 @@ embeddings with different distance scales, but it also means the value
 is mainly useful for comparing methods under identical sampling and
 scaling settings.
 
+Reset the R seed and keep `n_threads` fixed to reuse the same sampled
+pairs across calls. Changing the thread count can change the sample.
+
+Squared Euclidean preserves pair-distance ordering but changes distance
+magnitudes. It can therefore produce a different stress value from
+Euclidean distance, even when `range_scale = TRUE`.
+
 ## See also
 
 [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md),
@@ -95,17 +103,20 @@ for other measures of global structure preservation.
 ``` r
 iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_stress(iris, iris_pca2)
-#> [1] 0.005466072
+#> [1] 0.006003239
 
-# If you plan on comparing the results of multiple output methods, then
-# pre-transposing the input data can save time
+# For fair comparisons, reset the seed and keep n_threads fixed before each
+# call. Pre-transposing the input data can also save time.
 tiris <- t(iris[, -5])
 iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+set.seed(42)
 random_pair_distance_stress(tiris, t(iris_pca1), is_transposed = TRUE)
-#> [1] 0.01893072
+#> [1] 0.02308223
+set.seed(42)
 random_pair_distance_stress(tiris, t(iris_pca2), is_transposed = TRUE)
-#> [1] 0.006364007
+#> [1] 0.006990074
+set.seed(42)
 random_pair_distance_stress(tiris, t(iris_pca3), is_transposed = TRUE)
-#> [1] 0.001815861
+#> [1] 0.002023991
 ```

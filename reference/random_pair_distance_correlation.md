@@ -26,13 +26,14 @@ random_pair_distance_correlation(
 
   the input data (usually high-dimensional), a matrix or data frame with
   one observation per row, or if `is_transposed = TRUE`, one observation
-  per column.
+  per column. Nonnumeric data-frame columns are ignored; sparse matrices
+  are unsupported and retained values must be finite.
 
 - Xout:
 
   the output data (usually lower dimensional than `Xin`), a matrix or
   data frame with one observation per row, or if `is_transposed = TRUE`,
-  one observation per column.
+  one observation per column, with the same input requirements as `Xin`.
 
 - n_pairs:
 
@@ -82,6 +83,13 @@ agreement. This differs slightly from the procedure in the Becht paper
 which randomly samples a subset of observations and then exhaustively
 calculates all pair-wise distances within that subset.
 
+Reset the R seed and keep `n_threads` fixed to reuse the same sampled
+pairs across calls. Changing the thread count can change the sample.
+
+Euclidean and squared Euclidean give the same pair-distance ordering, so
+Spearman correlation is order-equivalent. Squaring changes magnitudes,
+so Pearson correlation can change.
+
 ## References
 
 Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L.
@@ -103,15 +111,18 @@ iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_correlation(iris, iris_pca2)
 #> [1] 0.9997105
 
-# If you plan on comparing the results of multiple output methods, then
-# pre-transposing the input data can save time
+# For fair comparisons, reset the seed and keep n_threads fixed before each
+# call. Pre-transposing the input data can also save time.
 tiris <- t(iris[, -5])
 iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+set.seed(42)
 random_pair_distance_correlation(tiris, t(iris_pca1), is_transposed = TRUE)
-#> [1] 0.9977412
+#> [1] 0.9971188
+set.seed(42)
 random_pair_distance_correlation(tiris, t(iris_pca2), is_transposed = TRUE)
-#> [1] 0.9997525
+#> [1] 0.9996855
+set.seed(42)
 random_pair_distance_correlation(tiris, t(iris_pca3), is_transposed = TRUE)
-#> [1] 0.9999674
+#> [1] 0.9999692
 ```

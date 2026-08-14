@@ -63,6 +63,53 @@
 <p>This package provides several ways to evaluate the performance of an
 embedding. They fall into four broad families.</p>
 <div class="section level2">
+<h2 id="choosing-a-starting-metric">Choosing a Starting Metric<a class="anchor" aria-label="anchor" href="#choosing-a-starting-metric"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>User question</th>
+<th>Reasonable starting metric</th>
+<th>Decision supported by the result</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Are the same nearby observations retained?</td>
+<td><code><a href="../reference/nn_preservation.html">nn_preservation()</a></code></td>
+<td>Whether local-neighborhood identity is preserved well enough for the
+intended use.</td>
+</tr>
+<tr class="even">
+<td>Do dense and sparse regions keep their relative local scale?</td>
+<td><code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code></td>
+<td>Whether scale distortion needs attention even when neighbor
+identities look acceptable.</td>
+</tr>
+<tr class="odd">
+<td>Are broad distance orderings retained?</td>
+<td><code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code></td>
+<td>Whether the embedding preserves enough global ordering for the
+intended use.</td>
+</tr>
+<tr class="even">
+<td>Do known labels remain retrievable?</td>
+<td>
+<code><a href="../reference/roc_auc.html">roc_auc()</a></code> or <code><a href="../reference/pr_auc.html">pr_auc()</a></code>
+</td>
+<td>Whether same-label observations remain separated from other labels
+in the embedding.</td>
+</tr>
+</tbody>
+</table>
+<p>These are starting points rather than interchangeable scores. The
+sections below explain the related metrics and the input conventions
+that affect their interpretation.</p>
+</div>
+<div class="section level2">
 <h2 id="local-neighborhood-preservation">Local Neighborhood Preservation<a class="anchor" aria-label="anchor" href="#local-neighborhood-preservation"></a>
 </h2>
 <p>The most generic approach is to consider “neighborhood
@@ -82,6 +129,8 @@ local-neighborhood metrics, but they use rank penalties rather than only
 counting shared neighbors. They are exact distance-matrix functions for
 small datasets. <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes rank-based
 neighborhood agreement over many neighborhood sizes.</p>
+<p>See the <a href="local-preservation.html">local preservation</a>
+article for examples and related local diagnostics.</p>
 </div>
 <div class="section level2">
 <h2 id="local-scale-preservation">Local Scale Preservation<a class="anchor" aria-label="anchor" href="#local-scale-preservation"></a>
@@ -120,7 +169,28 @@ distributions using Earth Mover’s Distance.</li>
 <code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares matched sampled
 distances with a root mean squared difference.</li>
 </ul>
-<p>See the global preservation article for those metrics.</p>
+<p>See the <a href="global-preservation.html">global preservation</a>
+article for those metrics.</p>
+</div>
+<div class="section level2">
+<h2 id="current-input-and-ordering-conventions">Current input and ordering conventions<a class="anchor" aria-label="anchor" href="#current-input-and-ordering-conventions"></a>
+</h2>
+<p>Sampled pair and triplet metrics require dense, finite inputs; graph
+metrics can pass supported sparse inputs to <code>rnndescent</code>.
+Nonnumeric data-frame columns are ignored. Exact distance-matrix metrics
+do not screen nonfinite values.</p>
+<p>Tie handling differs by representation. <code><a href="../reference/nbr_pres.html">nbr_pres()</a></code>
+includes every item tied at the <code>k</code>th distance boundary and
+caps the overlap at <code>k</code>. Trustworthiness, continuity, and RNX
+break distance ties by original column order. Supplied-graph metrics use
+the first <code>k</code> indices in the provider or caller’s fixed
+order.</p>
+<p>Euclidean and squared Euclidean preserve neighbor, triplet, and
+Spearman ordering. Squaring changes distance magnitudes, so it can
+change Pearson distance or local-radius correlations, EMD, stress, and
+local radius/mean summaries. The <code>"sqeuclidean"</code> default is
+therefore part of those magnitude statistics, not merely a faster
+spelling of Euclidean distance.</p>
 </div>
 <div class="section level2">
 <h2 id="label-retrieval">Label Retrieval<a class="anchor" aria-label="anchor" href="#label-retrieval"></a>
@@ -141,6 +211,8 @@ labeling usually reserved for data intended for supervised
 classification. Quadra can also provide some help with this, but
 requires the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC
 package</a> to be installed.</p>
+<p>See the <a href="label-retrieval.html">label retrieval</a> article
+for examples and return value details.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

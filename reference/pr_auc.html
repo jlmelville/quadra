@@ -48,19 +48,20 @@
 
 
 <dl><dt id="arg-dm">dm<a class="anchor" aria-label="anchor" href="#arg-dm"></a></dt>
-<dd><p>Distance matrix of an embedding.</p></dd>
+<dd><p>A finite square numeric distance matrix. The diagonal is excluded
+from each retrieval problem.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Vector of labels for each observation in the dataset in the
-same order as the observations in the distance matrix.</p></dd>
+<dd><p>A label vector without missing values, with one label per row
+of <code>dm</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Area Under the Precision-Recall curve, averaged over each
-observation.</p>
-    </div>
+    <p>A list with components in this order:</p><ul><li><p><code>av_auc</code>: the PR AUC averaged over defined observation rows.</p></li>
+<li><p><code>label_av</code>: a named list of per-label means in first-appearance order.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The PR curve plots precision (also known as positive predictive value, PPV)
@@ -76,6 +77,8 @@ observations. The final reported result is the average over all observations.
 Rows with undefined AUC values, such as rows that cannot define both positive
 and negative examples, are excluded from overall and per-label averages. If no
 rows remain for an average, that average is <code>NA_real_</code>.</p>
+<p><code>av_auc</code> weights each defined query equally; <code>label_av</code> reports per-label
+means in first-appearance order.</p>
 <p>Perfect retrieval results in an AUC of 1. For random retrieval, the value
 is the proportion of the positive class labels for that curve.</p>
     </div>

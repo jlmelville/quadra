@@ -77,14 +77,16 @@ distance to the first <code>k</code> nearest non-self neighbors.</p>
 <dd><p>the input data (usually high-dimensional), a matrix or data frame
 with one observation per row, or if <code>is_transposed = TRUE</code>, one observation
 per column. Alternatively, it can be a pre-computed nearest neighbor graph
-with <code>idx</code> and <code>dist</code> matrix elements.</p></dd>
+with <code>idx</code> and <code>dist</code> matrix elements. If <code>Xin</code> is a data frame,
+nonnumeric columns are ignored.</p></dd>
 
 
 <dt id="arg-xout">Xout<a class="anchor" aria-label="anchor" href="#arg-xout"></a></dt>
 <dd><p>the output data (usually lower dimensional than <code>Xin</code>), a matrix
 or data frame with one observation per row, or if <code>is_transposed = TRUE</code>,
 one observation per column. Alternatively, it can be a pre-computed nearest
-neighbor graph with <code>idx</code> and <code>dist</code> matrix elements.</p></dd>
+neighbor graph with <code>idx</code> and <code>dist</code> matrix elements. If <code>Xout</code> is a data
+frame, nonnumeric columns are ignored.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
@@ -116,7 +118,9 @@ nearest neighbor descent method of Dong and co-workers (2011).</p></dd>
 <dt id="arg-metric-in">metric_in<a class="anchor" aria-label="anchor" href="#arg-metric-in"></a></dt>
 <dd><p>the distance calculation to apply to <code>Xin</code>. One of
 <code>"euclidean"</code>, <code>"sqeuclidean"</code> (squared Euclidean), <code>"cosine"</code>, <code>"manhattan"</code>,
-<code>"correlation"</code> (1 minus the Pearson correlation), or <code>"hamming"</code>.</p></dd>
+<code>"correlation"</code> (1 minus the Pearson correlation), or <code>"hamming"</code>. Euclidean
+and squared Euclidean have the same exact neighbor ordering, but an
+approximate search can still differ because of approximation or ties.</p></dd>
 
 
 <dt id="arg-nn-method-out">nn_method_out<a class="anchor" aria-label="anchor" href="#arg-nn-method-out"></a></dt>
@@ -139,7 +143,8 @@ once outside of this function and set <code>is_transposed = TRUE</code>.</p></dd
 
 
 <dt id="arg-n-threads">n_threads<a class="anchor" aria-label="anchor" href="#arg-n-threads"></a></dt>
-<dd><p>the maximum number of threads to use.</p></dd>
+<dd><p>the maximum number of threads to use. <code>0</code> or <code>1</code> runs
+serially.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -153,15 +158,14 @@ for <code>Xin</code> and <code>Xout</code>.</p></dd>
 
 
 <dt id="arg-nn-args-in">nn_args_in<a class="anchor" aria-label="anchor" href="#arg-nn-args-in"></a></dt>
-<dd><p>list of extra arguments to pass to the nearest neighbor
-methods, <code><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">rnndescent::brute_force_knn()</a></code> or <code><a href="https://jlmelville.github.io/rnndescent/reference/nnd_knn.html" class="external-link">rnndescent::nnd_knn()</a></code>,
-depending on the value of <code>nn_method_in</code>.</p></dd>
+<dd><p>named list of extra arguments for the selected
+nearest-neighbor method for <code>Xin</code>. See Details for naming and routing rules.</p></dd>
 
 
 <dt id="arg-nn-args-out">nn_args_out<a class="anchor" aria-label="anchor" href="#arg-nn-args-out"></a></dt>
-<dd><p>list of extra arguments to pass to the nearest neighbor
-methods, <code><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">rnndescent::brute_force_knn()</a></code> or <code><a href="https://jlmelville.github.io/rnndescent/reference/nnd_knn.html" class="external-link">rnndescent::nnd_knn()</a></code>,
-depending on the value of <code>nn_method_out</code>.</p></dd>
+<dd><p>named list of extra arguments accepted by the selected
+nearest-neighbor method for <code>Xout</code>, with the same naming and ownership rules
+as <code>nn_args_in</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -169,9 +173,9 @@ depending on the value of <code>nn_method_out</code>.</p></dd>
     <p>A named numeric vector of local radius correlations, one value for
 each <code>k</code>. Items are named <code>lrc&lt;k&gt;</code>, where <code>&lt;k&gt;</code> refers to the values
 provided in the <code>k</code> parameter. If <code>ret_extra = TRUE</code>, then a list is
-returned containing:</p><ul><li><p><code>lrc</code>: the vector of local radius correlations.</p></li>
-<li><p><code>nn_in</code>: the nearest neighbor graph for <code>Xin</code>.</p></li>
+returned containing:</p><ul><li><p><code>nn_in</code>: the nearest neighbor graph for <code>Xin</code>.</p></li>
 <li><p><code>nn_out</code>: the nearest neighbor graph for <code>Xout</code>.</p></li>
+<li><p><code>lrc</code>: the vector of local radius correlations.</p></li>
 <li><p><code>scale_in</code>: a matrix of input local scale values, one column per <code>k</code>.</p></li>
 <li><p><code>scale_out</code>: a matrix of output local scale values, one column per <code>k</code>.</p></li>
 </ul></div>
@@ -188,6 +192,10 @@ must contain a <code>dist</code> matrix as well as an <code>idx</code> matrix be
 uses neighbor distances. Graphs calculated by this function are
 self-excluded. Older cached self-inclusive graphs are detected and stripped
 with a warning.</p>
+<p>Supplied graph distances must align with their indices and be ordered
+nearest-first. Supported sparse inputs pass through to <code>rnndescent</code>.</p>
+<p>Squared Euclidean preserves neighbor order but changes the distance
+magnitudes used by this metric, so its result can differ from Euclidean.</p>
 <p>If either local-radius vector is constant, the correlation is undefined and
 the corresponding result is <code>NA_real_</code>. If <code>log = TRUE</code>, all selected local
 radius values must be positive, so duplicate points that produce zero local

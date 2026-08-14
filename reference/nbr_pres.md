@@ -43,6 +43,18 @@ dataset.
 Self-neighbors on the diagonal are excluded from each row before the
 neighborhood overlap is calculated.
 
+If the `k`th-smallest distance is tied, every observation at that
+distance is treated as a neighbor. The shared count is capped at `k`
+before it is divided by `k`. This differs from exact-rank metrics such
+as
+[`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+and
+[`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md),
+which break ties by original column order, and from supplied-graph
+metrics, which use the first `k` indices.
+
+Distance matrices are used as supplied without a finite-value check.
+
 ## Note
 
 This is not a very efficient way to calculate the preservation if you

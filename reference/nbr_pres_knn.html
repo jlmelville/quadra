@@ -63,12 +63,13 @@ of <code>i</code>.</p>
 
 
 <dl><dt id="arg-kin">kin<a class="anchor" aria-label="anchor" href="#arg-kin"></a></dt>
-<dd><p>Nearest neighbor matrix. The "ground truth" or reference indices.</p></dd>
+<dd><p>Nearest-neighbor index matrix. The "ground truth" or reference
+indices, with observations in rows and neighbors in nearest-first order.</p></dd>
 
 
 <dt id="arg-kout">kout<a class="anchor" aria-label="anchor" href="#arg-kout"></a></dt>
-<dd><p>Nearest neighbor matrix. A set of distances to compare to the reference
-indices.</p></dd>
+<dd><p>Nearest-neighbor index matrix to compare with <code>kin</code>, using the
+same row and ordering conventions.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
@@ -96,6 +97,10 @@ and 1 (perfect preservation). For nearest-neighbor matrices that exclude
 self-neighbors, random performance gives an approximate value of k / (n - 1),
 where k is the size of the neighborhood and n is the number of observations
 or items in the dataset.</p>
+<p>Rows contain distinct one-based indices in nearest-first order. All supplied
+columns are checked before self-indices are removed and the first <code>k</code>
+non-self neighbors are retained. Self-inclusive inputs therefore need at
+least <code>k + 1</code> columns. Supplied order resolves ties.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

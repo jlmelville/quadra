@@ -40,7 +40,16 @@
 
 ### Bug fixes and minor improvements
 
-- Many small fixes for corner cases and improved validation.
+- Substantially improved input validation across the package.
+- Corrected self-neighbor handling in
+  [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
+  and supplied nearest-neighbor graphs.
+- [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
+  and
+  [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
+  now handle retrieval problems with undefined rows consistently.
+- [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
+  now supports multithreaded calculations through `n_threads`.
 - rnndescent is now on
   [CRAN](https://cran.r-project.org/package=rnndescent), so we no longer
   need to install that from github.

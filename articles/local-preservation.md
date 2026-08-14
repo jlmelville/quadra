@@ -12,6 +12,18 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 nn_preservation(iris_x, pca_iris, k = c(15, 30))
 ```
 
+Supplied graphs use one-based indices in nearest-first order. Quadra
+checks all columns, removes self-indices, and retains the first `k`
+non-self neighbors, so self-inclusive graphs need at least `k + 1`
+columns. Supplied order resolves ties;
+[`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
+includes boundary ties, while exact rank metrics break ties by
+distance-matrix column order.
+
+Graph searches pass supported sparse inputs to `rnndescent`; nonnumeric
+data-frame columns are ignored. Exact Euclidean and squared-Euclidean
+searches have the same ordering, subject to ties and approximation.
+
 ## Trustworthiness and Continuity
 
 [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
@@ -63,6 +75,9 @@ the `k`th nearest non-self neighbor in the input data and output
 embedding. Set `statistic = "mean"` to use the mean distance to the
 first `k` neighbors, or `log = TRUE` to compare log radii when all
 selected radii are positive.
+
+Local radius uses distance magnitudes, so squared Euclidean can differ
+from Euclidean.
 
 If you already have nearest-neighbor graphs with distance matrices, you
 can reuse them:
@@ -122,24 +137,35 @@ use the `nbr_pres_knn` function:
 
 # A function to wrap the RcppAnnoy API to return a matrix of the nearest
 # neighbor indices
-find_nn <- function(X, k = 10, n_trees = 50, search_k = k * n_trees) {
+find_nn <- function(
+  X,
+  k = 10,
+  n_trees = 50,
+  search_k = (k + 1) * n_trees
+) {
   nr <- nrow(X)
   nc <- ncol(X)
+  requested_k <- k + 1
 
   ann <- methods::new(RcppAnnoy::AnnoyEuclidean, nc)
-  for (i in 1:nr) {
+  for (i in seq_len(nr)) {
     ann$addItem(i - 1, X[i, ])
   }
   ann$build(n_trees)
 
   idx <- matrix(nrow = nr, ncol = k)
-  for (i in 1:nr) {
-    res <- ann$getNNsByItemList(i - 1, k, search_k, FALSE)
-    if (length(res$item) != k) {
-      stop("search_k/n_trees settings were unable to find ", k,
-           " neighbors for item ", i)
+  for (i in seq_len(nr)) {
+    res <- ann$getNNsByItemList(i - 1, requested_k, search_k, FALSE)
+    non_self <- res$item[res$item != i - 1]
+    if (length(non_self) < k) {
+      stop(
+        "search_k/n_trees settings were unable to find ",
+        k,
+        " non-self neighbors for item ",
+        i
+      )
     }
-    idx[i, ] <- res$item
+    idx[i, ] <- non_self[seq_len(k)]
   }
   idx + 1
 }

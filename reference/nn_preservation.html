@@ -66,7 +66,7 @@
 with one observation per row, or if <code>is_transposed = TRUE</code>, one observation
 per column. Alternatively, it can be a pre-computed nearest neighbor
 graph. In the latter case, <code>nn_method_in</code>, <code>metric_in</code> and <code>nn_args_in</code> are
-ignored. If <code>Xin</code> is a data-frame, non-numeric columns are ignored.</p></dd>
+ignored.</p></dd>
 
 
 <dt id="arg-xout">Xout<a class="anchor" aria-label="anchor" href="#arg-xout"></a></dt>
@@ -74,13 +74,14 @@ ignored. If <code>Xin</code> is a data-frame, non-numeric columns are ignored.</
 or data frame with one observation per row, or if <code>is_transposed = TRUE</code>,
 one observation per column. Alternatively, it can be a pre-computed nearest
 neighbor graph. In the latter case, <code>nn_method_out</code>, <code>metric_out</code> and
-<code>nn_args_out</code> are ignored. If <code>Xout</code> is a data-frame, non-numeric columns
-are ignored.</p></dd>
+<code>nn_args_out</code> are ignored.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
 <dd><p>the number of nearest neighbors to find. Can be a numeric vector,
-in which case the preservation is calculated for each value separately.</p></dd>
+in which case the preservation is calculated for each value separately.
+Values must be unique positive integers no larger than the number of
+non-self observations.</p></dd>
 
 
 <dt id="arg-nn-method-in">nn_method_in<a class="anchor" aria-label="anchor" href="#arg-nn-method-in"></a></dt>
@@ -92,7 +93,9 @@ nearest neighbor descent method of Dong and co-workers (2011).</p></dd>
 <dt id="arg-metric-in">metric_in<a class="anchor" aria-label="anchor" href="#arg-metric-in"></a></dt>
 <dd><p>the distance calculation to apply to <code>Xin</code>. One of
 <code>"euclidean"</code>, <code>"sqeuclidean"</code> (squared Euclidean), <code>"cosine"</code>, <code>"manhattan"</code>,
-<code>"correlation"</code> (1 minus the Pearson correlation), or <code>"hamming"</code>.</p></dd>
+<code>"correlation"</code> (1 minus the Pearson correlation), or <code>"hamming"</code>. Euclidean
+and squared Euclidean have the same exact neighbor ordering, but an
+approximate search can still differ because of approximation or ties.</p></dd>
 
 
 <dt id="arg-nn-method-out">nn_method_out<a class="anchor" aria-label="anchor" href="#arg-nn-method-out"></a></dt>
@@ -115,7 +118,8 @@ once outside of this function and set <code>is_transposed = TRUE</code>.</p></dd
 
 
 <dt id="arg-n-threads">n_threads<a class="anchor" aria-label="anchor" href="#arg-n-threads"></a></dt>
-<dd><p>the maximum number of threads to use.</p></dd>
+<dd><p>the maximum number of threads to use. <code>0</code> or <code>1</code> runs
+serially.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -129,15 +133,14 @@ for <code>Xin</code> and <code>Xout</code>.</p></dd>
 
 
 <dt id="arg-nn-args-in">nn_args_in<a class="anchor" aria-label="anchor" href="#arg-nn-args-in"></a></dt>
-<dd><p>list of extra arguments to pass to the nearest neighbor
-methods, <code><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">rnndescent::brute_force_knn()</a></code> or <code><a href="https://jlmelville.github.io/rnndescent/reference/nnd_knn.html" class="external-link">rnndescent::nnd_knn()</a></code>,
-depending on the value of <code>nn_method_in</code>.</p></dd>
+<dd><p>named list of extra arguments for the selected
+nearest-neighbor method for <code>Xin</code>. See Details for naming and routing rules.</p></dd>
 
 
 <dt id="arg-nn-args-out">nn_args_out<a class="anchor" aria-label="anchor" href="#arg-nn-args-out"></a></dt>
-<dd><p>list of extra arguments to pass to the nearest neighbor
-methods, <code><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">rnndescent::brute_force_knn()</a></code> or <code><a href="https://jlmelville.github.io/rnndescent/reference/nnd_knn.html" class="external-link">rnndescent::nnd_knn()</a></code>,
-depending on the value of <code>nn_method_out</code>.</p></dd>
+<dd><p>named list of extra arguments accepted by the selected
+nearest-neighbor method for <code>Xout</code>, with the same naming and ownership rules
+as <code>nn_args_in</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -148,11 +151,11 @@ neighbors in common). For unrelated output neighborhoods, the expected
 preservation is approximately <code>k / (n - 1)</code>, where n is the number of
 observations. If <code>k</code> is a vector, then the return value is a vector of the
 preservations for each <code>k</code> in the order they were passed. If
-<code>ret_extra = TRUE</code>, then a list is returned containing:</p><ul><li><p><code>nnp</code>: the vector of nearest neighbor preservation values.</p></li>
-<li><p><code>nn_in</code>: the nearest neighbor graph for <code>Xin</code>. See the
+<code>ret_extra = TRUE</code>, then a list is returned containing:</p><ul><li><p><code>nn_in</code>: the nearest neighbor graph for <code>Xin</code>. See the
 'Nearest Neighbor Graph Format' section for details.</p></li>
 <li><p><code>nn_out</code>: the nearest neighbor graph for <code>Xout</code>. See the
 'Nearest Neighbor Graph Format' section for details.</p></li>
+<li><p><code>nnp</code>: the vector of nearest neighbor preservation values.</p></li>
 <li><p><code>nnpv</code>: a list of vectors where each vector contains the individual
 neighbor preservation per observation. Items are named <code>nnp&lt;k&gt;</code>, where
 <code>&lt;k&gt;</code> refers to the values provided in the <code>k</code> parameter.</p></li>
@@ -176,6 +179,10 @@ force neighbor search is often feasible for <code>Xout</code> even when it isn't
 arguments to those functions via the <code>nn_args_in</code> and <code>nn_args_out</code> lists.
 See the documentation for the <code><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">rnndescent::brute_force_knn()</a></code> and
 <code><a href="https://jlmelville.github.io/rnndescent/reference/nnd_knn.html" class="external-link">rnndescent::nnd_knn()</a></code> functions for more details.</p>
+<p>Each <code>nn_args_*</code> value must have unique, nonempty, nonmissing names and cannot
+contain <code>X</code>, <code>data</code>, <code>k</code>, <code>metric</code>, <code>nn_method</code>, <code>n_threads</code>, <code>verbose</code>, or
+<code>obs</code>. Other arguments must be accepted by the selected backend. Supplied
+graphs ignore them.</p>
 <p>Because the nearest neighbor search can be time-consuming, if you set
 <code>ret_extra = TRUE</code>, the return value of this function is a list which
 includes the nearest neighbor graph for <code>Xin</code> and for <code>Xout</code>. The graph can
@@ -191,17 +198,26 @@ or random number seed have been been modified.</p>
 
 <p>Rather than provide the observations to <code>Xin</code> and <code>Xout</code>, pre-computed
 nearest neighbor graphs can be provided. The format of the graph must be a
-list containing:</p><ul><li><p><code>idx</code> a matrix with as many rows as observations in the input data and
-<code>k</code> columns. The <code>i</code>th row of this matrix contains the row indices of the
-nearest non-self neighbors of observation <code>i</code> in non-decreasing distance
-order. Graphs calculated by this function are self-excluded. Older cached
-self-inclusive graphs are detected and stripped with a warning.</p></li>
+list containing:</p><ul><li><p><code>idx</code> a matrix with one row per observation and distinct valid one-based
+indices in nearest-first order. All columns are checked before self-indices
+are removed and the first <code>k</code> non-self neighbors are retained.</p></li>
 <li><p><code>dist</code> (optional) a matrix with the same dimensions as <code>idx</code>, containing the
 equivalent distances. This information is not actually used by the
 preservation function but is included in the output of the nearest neighbor
 calculation. So if you provide your own nearest neighbor data, this matrix
 does not need to be present.</p></li>
-</ul></div>
+</ul><p>Supplied graphs use the first <code>k</code> retained indices exactly as ordered, so tie
+handling comes from the graph provider or caller. Internally calculated
+graphs request <code>k + 1</code> candidates before removing self-neighbors.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="raw-input-handling">Raw Input Handling<a class="anchor" aria-label="anchor" href="#raw-input-handling"></a></h2>
+
+
+
+<p>Nonnumeric data-frame columns are ignored. Supported sparse matrices are
+passed to <code>rnndescent</code> without densification.</p>
+    </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Dong, W., Moses, C., &amp; Li, K. (2011, March).

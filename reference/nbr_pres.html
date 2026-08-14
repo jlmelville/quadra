@@ -86,6 +86,12 @@ approximate value of k / (n - 1), where k is the size of the neighborhood and
 n is the number of observations or items in the dataset.</p>
 <p>Self-neighbors on the diagonal are excluded from each row before the
 neighborhood overlap is calculated.</p>
+<p>If the <code>k</code>th-smallest distance is tied, every observation at that distance
+is treated as a neighbor. The shared count is capped at <code>k</code> before it is
+divided by <code>k</code>. This differs from exact-rank metrics such as
+<code><a href="trustworthiness.html">trustworthiness()</a></code> and <code><a href="rnx_auc.html">rnx_auc()</a></code>, which break ties by original column
+order, and from supplied-graph metrics, which use the first <code>k</code> indices.</p>
+<p>Distance matrices are used as supplied without a finite-value check.</p>
     </div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>

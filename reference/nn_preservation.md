@@ -30,8 +30,7 @@ nn_preservation(
   one observation per row, or if `is_transposed = TRUE`, one observation
   per column. Alternatively, it can be a pre-computed nearest neighbor
   graph. In the latter case, `nn_method_in`, `metric_in` and
-  `nn_args_in` are ignored. If `Xin` is a data-frame, non-numeric
-  columns are ignored.
+  `nn_args_in` are ignored.
 
 - Xout:
 
@@ -39,13 +38,14 @@ nn_preservation(
   data frame with one observation per row, or if `is_transposed = TRUE`,
   one observation per column. Alternatively, it can be a pre-computed
   nearest neighbor graph. In the latter case, `nn_method_out`,
-  `metric_out` and `nn_args_out` are ignored. If `Xout` is a data-frame,
-  non-numeric columns are ignored.
+  `metric_out` and `nn_args_out` are ignored.
 
 - k:
 
   the number of nearest neighbors to find. Can be a numeric vector, in
   which case the preservation is calculated for each value separately.
+  Values must be unique positive integers no larger than the number of
+  non-self observations.
 
 - nn_method_in:
 
@@ -58,6 +58,9 @@ nn_preservation(
   the distance calculation to apply to `Xin`. One of `"euclidean"`,
   `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
+  Euclidean and squared Euclidean have the same exact neighbor ordering,
+  but an approximate search can still differ because of approximation or
+  ties.
 
 - nn_method_out:
 
@@ -79,7 +82,7 @@ nn_preservation(
 
 - n_threads:
 
-  the maximum number of threads to use.
+  the maximum number of threads to use. `0` or `1` runs serially.
 
 - verbose:
 
@@ -92,19 +95,14 @@ nn_preservation(
 
 - nn_args_in:
 
-  list of extra arguments to pass to the nearest neighbor methods,
-  [`rnndescent::brute_force_knn()`](https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html)
-  or
-  [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html),
-  depending on the value of `nn_method_in`.
+  named list of extra arguments for the selected nearest-neighbor method
+  for `Xin`. See Details for naming and routing rules.
 
 - nn_args_out:
 
-  list of extra arguments to pass to the nearest neighbor methods,
-  [`rnndescent::brute_force_knn()`](https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html)
-  or
-  [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html),
-  depending on the value of `nn_method_out`.
+  named list of extra arguments accepted by the selected
+  nearest-neighbor method for `Xout`, with the same naming and ownership
+  rules as `nn_args_in`.
 
 ## Value
 
@@ -116,13 +114,13 @@ If `k` is a vector, then the return value is a vector of the
 preservations for each `k` in the order they were passed. If
 `ret_extra = TRUE`, then a list is returned containing:
 
-- `nnp`: the vector of nearest neighbor preservation values.
-
 - `nn_in`: the nearest neighbor graph for `Xin`. See the 'Nearest
   Neighbor Graph Format' section for details.
 
 - `nn_out`: the nearest neighbor graph for `Xout`. See the 'Nearest
   Neighbor Graph Format' section for details.
+
+- `nnp`: the vector of nearest neighbor preservation values.
 
 - `nnpv`: a list of vectors where each vector contains the individual
   neighbor preservation per observation. Items are named `nnp<k>`, where
@@ -153,6 +151,11 @@ and
 [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html)
 functions for more details.
 
+Each `nn_args_*` value must have unique, nonempty, nonmissing names and
+cannot contain `X`, `data`, `k`, `metric`, `nn_method`, `n_threads`,
+`verbose`, or `obs`. Other arguments must be accepted by the selected
+backend. Supplied graphs ignore them.
+
 Because the nearest neighbor search can be time-consuming, if you set
 `ret_extra = TRUE`, the return value of this function is a list which
 includes the nearest neighbor graph for `Xin` and for `Xout`. The graph
@@ -167,18 +170,26 @@ Rather than provide the observations to `Xin` and `Xout`, pre-computed
 nearest neighbor graphs can be provided. The format of the graph must be
 a list containing:
 
-- `idx` a matrix with as many rows as observations in the input data and
-  `k` columns. The `i`th row of this matrix contains the row indices of
-  the nearest non-self neighbors of observation `i` in non-decreasing
-  distance order. Graphs calculated by this function are self-excluded.
-  Older cached self-inclusive graphs are detected and stripped with a
-  warning.
+- `idx` a matrix with one row per observation and distinct valid
+  one-based indices in nearest-first order. All columns are checked
+  before self-indices are removed and the first `k` non-self neighbors
+  are retained.
 
 - `dist` (optional) a matrix with the same dimensions as `idx`,
   containing the equivalent distances. This information is not actually
   used by the preservation function but is included in the output of the
   nearest neighbor calculation. So if you provide your own nearest
   neighbor data, this matrix does not need to be present.
+
+Supplied graphs use the first `k` retained indices exactly as ordered,
+so tie handling comes from the graph provider or caller. Internally
+calculated graphs request `k + 1` candidates before removing
+self-neighbors.
+
+## Raw Input Handling
+
+Nonnumeric data-frame columns are ignored. Supported sparse matrices are
+passed to `rnndescent` without densification.
 
 ## References
 

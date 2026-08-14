@@ -47,7 +47,12 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-and-minor-improvements-0-2-0">Bug fixes and minor improvements<a class="anchor" aria-label="anchor" href="#bug-fixes-and-minor-improvements-0-2-0"></a></h3>
-<ul><li>Many small fixes for corner cases and improved validation.</li>
+<ul><li>Substantially improved input validation across the package.</li>
+<li>Corrected self-neighbor handling in <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code> and supplied nearest-neighbor graphs.</li>
+<li>
+<code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> now handle retrieval problems with undefined rows consistently.</li>
+<li>
+<code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code> now supports multithreaded calculations through <code>n_threads</code>.</li>
 <li>rnndescent is now on <a href="https://cran.r-project.org/package=rnndescent" class="external-link">CRAN</a>, so we no longer need to install that from github.</li>
 <li>
 <code>grain_size</code> for thread-handling has been removed from any API that exposed it.</li>

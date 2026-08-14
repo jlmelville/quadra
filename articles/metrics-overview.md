@@ -3,6 +3,19 @@
 This package provides several ways to evaluate the performance of an
 embedding. They fall into four broad families.
 
+## Choosing a Starting Metric
+
+| User question | Reasonable starting metric | Decision supported by the result |
+|----|----|----|
+| Are the same nearby observations retained? | [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md) | Whether local-neighborhood identity is preserved well enough for the intended use. |
+| Do dense and sparse regions keep their relative local scale? | [`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md) | Whether scale distortion needs attention even when neighbor identities look acceptable. |
+| Are broad distance orderings retained? | [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md) | Whether the embedding preserves enough global ordering for the intended use. |
+| Do known labels remain retrievable? | [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md) or [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md) | Whether same-label observations remain separated from other labels in the embedding. |
+
+These are starting points rather than interchangeable scores. The
+sections below explain the related metrics and the input conventions
+that affect their interpretation.
+
 ## Local Neighborhood Preservation
 
 The most generic approach is to consider “neighborhood preservation”:
@@ -28,6 +41,10 @@ functions for small datasets.
 [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
 summarizes rank-based neighborhood agreement over many neighborhood
 sizes.
+
+See the [local
+preservation](https://jlmelville.github.io/quadra/articles/local-preservation.md)
+article for examples and related local diagnostics.
 
 ## Local Scale Preservation
 
@@ -62,7 +79,30 @@ for global structure preservation:
   compares matched sampled distances with a root mean squared
   difference.
 
-See the global preservation article for those metrics.
+See the [global
+preservation](https://jlmelville.github.io/quadra/articles/global-preservation.md)
+article for those metrics.
+
+## Current input and ordering conventions
+
+Sampled pair and triplet metrics require dense, finite inputs; graph
+metrics can pass supported sparse inputs to `rnndescent`. Nonnumeric
+data-frame columns are ignored. Exact distance-matrix metrics do not
+screen nonfinite values.
+
+Tie handling differs by representation.
+[`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
+includes every item tied at the `k`th distance boundary and caps the
+overlap at `k`. Trustworthiness, continuity, and RNX break distance ties
+by original column order. Supplied-graph metrics use the first `k`
+indices in the provider or caller’s fixed order.
+
+Euclidean and squared Euclidean preserve neighbor, triplet, and Spearman
+ordering. Squaring changes distance magnitudes, so it can change Pearson
+distance or local-radius correlations, EMD, stress, and local
+radius/mean summaries. The `"sqeuclidean"` default is therefore part of
+those magnitude statistics, not merely a faster spelling of Euclidean
+distance.
 
 ## Label Retrieval
 
@@ -82,3 +122,7 @@ labeling usually reserved for data intended for supervised
 classification. Quadra can also provide some help with this, but
 requires the [PRROC package](https://cran.r-project.org/package=PRROC)
 to be installed.
+
+See the [label
+retrieval](https://jlmelville.github.io/quadra/articles/label-retrieval.md)
+article for examples and return value details.

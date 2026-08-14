@@ -64,17 +64,22 @@ results using the random triplet accuracy method of Wang and co-workers
 <dl><dt id="arg-xin">Xin<a class="anchor" aria-label="anchor" href="#arg-xin"></a></dt>
 <dd><p>the input data (usually high-dimensional), a matrix or data frame
 with one observation per row, or if <code>is_transposed = TRUE</code>, one observation
-per column.</p></dd>
+per column. Nonnumeric data-frame columns are ignored; sparse matrices are
+unsupported and retained values must be finite.</p></dd>
 
 
 <dt id="arg-xout">Xout<a class="anchor" aria-label="anchor" href="#arg-xout"></a></dt>
 <dd><p>the output data (usually lower dimensional than <code>Xin</code>), a matrix
 or data frame with one observation per row, or if <code>is_transposed = TRUE</code>,
-one observation per column.</p></dd>
+one observation per column, with the same input requirements as <code>Xin</code>.</p></dd>
 
 
 <dt id="arg-n-triplets">n_triplets<a class="anchor" aria-label="anchor" href="#arg-n-triplets"></a></dt>
-<dd><p>the number of triplets per observation to generate.</p></dd>
+<dd><p>Either a positive integer number of triplets to sample per
+observation, or an explicit zero-based endpoint matrix. An explicit matrix
+has one column per observation (anchor); successive row pairs contain the
+endpoints for each triplet. Endpoints are integers in <code>[0, n - 1]</code>, distinct
+from each other and their zero-based anchor.</p></dd>
 
 
 <dt id="arg-metric-in">metric_in<a class="anchor" aria-label="anchor" href="#arg-metric-in"></a></dt>
@@ -118,6 +123,11 @@ proportion of triangles where the relative distances agree between the input
 and output data. Triplets with tied input-space distances are excluded from
 the denominator because they do not define a relative ordering. If no sampled
 input triplets define an ordering, the result is <code>NA_real_</code>.</p>
+<p>Reset the R seed and keep <code>n_threads</code> fixed to reuse the same sampled
+triplets across calls. A matrix-valued <code>n_triplets</code> performs no internal
+sampling.</p>
+<p>Euclidean and squared Euclidean give the same distance ordering and therefore
+the same triplet comparisons, apart from numerical ties.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -137,19 +147,22 @@ structure preservation.</p></div>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">iris_pca2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span><span class="fu">random_triplet_accuracy</span><span class="op">(</span><span class="va">iris</span>, <span class="va">iris_pca2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.976</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9853333</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># If you plan on comparing the results of multiple output methods, then</span></span></span>
-<span class="r-in"><span><span class="co"># pre-transposing the input data can save time</span></span></span>
+<span class="r-in"><span><span class="co"># For fair comparisons, reset the seed and keep n_threads fixed before each</span></span></span>
+<span class="r-in"><span><span class="co"># call. Pre-transposing the input data can also save time.</span></span></span>
 <span class="r-in"><span><span class="va">tiris</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">iris_pca1</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span>, rank. <span class="op">=</span> <span class="fl">1</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span><span class="va">iris_pca3</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span>, rank. <span class="op">=</span> <span class="fl">3</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">random_triplet_accuracy</span><span class="op">(</span><span class="va">tiris</span>, <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">iris_pca1</span><span class="op">)</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9386667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9426667</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">random_triplet_accuracy</span><span class="op">(</span><span class="va">tiris</span>, <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">iris_pca2</span><span class="op">)</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.988</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9746667</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">random_triplet_accuracy</span><span class="op">(</span><span class="va">tiris</span>, <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">iris_pca3</span><span class="op">)</span>, is_transposed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9986667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.996</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

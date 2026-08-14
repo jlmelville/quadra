@@ -21,6 +21,34 @@ Rows with undefined AUC values, such as rows that cannot define both
 positive and negative examples, are excluded from overall and per-label
 averages. If no rows remain for an average, that average is `NA_real_`.
 
+Both
+[`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
+and
+[`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
+require a finite square distance matrix and one nonmissing label per
+observation. The diagonal query is excluded.
+
+Each function returns `list(av_auc, label_av)`. `av_auc` weights every
+defined observation row equally; it is not an unweighted mean of the
+label summaries. `label_av` is a named list of per-label means in label
+first-appearance order. Labels with no defined row remain represented
+with `NA_real_`.
+
+``` r
+
+iris_x <- as.matrix(iris[, -5])
+pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
+dout <- as.matrix(stats::dist(pca_iris))
+
+roc <- roc_auc(dout, iris$Species)
+roc$av_auc
+roc$label_av
+
+pr <- pr_auc(dout, iris$Species)
+pr$av_auc
+pr$label_av
+```
+
 ## Further Reading
 
 Venna, J., Peltonen, J., Nybo, K., Aidos, H., & Kaski, S. (2010).

@@ -35,14 +35,16 @@ local_radius_correlation(
   the input data (usually high-dimensional), a matrix or data frame with
   one observation per row, or if `is_transposed = TRUE`, one observation
   per column. Alternatively, it can be a pre-computed nearest neighbor
-  graph with `idx` and `dist` matrix elements.
+  graph with `idx` and `dist` matrix elements. If `Xin` is a data frame,
+  nonnumeric columns are ignored.
 
 - Xout:
 
   the output data (usually lower dimensional than `Xin`), a matrix or
   data frame with one observation per row, or if `is_transposed = TRUE`,
   one observation per column. Alternatively, it can be a pre-computed
-  nearest neighbor graph with `idx` and `dist` matrix elements.
+  nearest neighbor graph with `idx` and `dist` matrix elements. If
+  `Xout` is a data frame, nonnumeric columns are ignored.
 
 - k:
 
@@ -75,6 +77,9 @@ local_radius_correlation(
   the distance calculation to apply to `Xin`. One of `"euclidean"`,
   `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
+  Euclidean and squared Euclidean have the same exact neighbor ordering,
+  but an approximate search can still differ because of approximation or
+  ties.
 
 - nn_method_out:
 
@@ -96,7 +101,7 @@ local_radius_correlation(
 
 - n_threads:
 
-  the maximum number of threads to use.
+  the maximum number of threads to use. `0` or `1` runs serially.
 
 - verbose:
 
@@ -109,19 +114,14 @@ local_radius_correlation(
 
 - nn_args_in:
 
-  list of extra arguments to pass to the nearest neighbor methods,
-  [`rnndescent::brute_force_knn()`](https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html)
-  or
-  [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html),
-  depending on the value of `nn_method_in`.
+  named list of extra arguments for the selected nearest-neighbor method
+  for `Xin`. See Details for naming and routing rules.
 
 - nn_args_out:
 
-  list of extra arguments to pass to the nearest neighbor methods,
-  [`rnndescent::brute_force_knn()`](https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html)
-  or
-  [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html),
-  depending on the value of `nn_method_out`.
+  named list of extra arguments accepted by the selected
+  nearest-neighbor method for `Xout`, with the same naming and ownership
+  rules as `nn_args_in`.
 
 ## Value
 
@@ -130,11 +130,11 @@ A named numeric vector of local radius correlations, one value for each
 in the `k` parameter. If `ret_extra = TRUE`, then a list is returned
 containing:
 
-- `lrc`: the vector of local radius correlations.
-
 - `nn_in`: the nearest neighbor graph for `Xin`.
 
 - `nn_out`: the nearest neighbor graph for `Xout`.
+
+- `lrc`: the vector of local radius correlations.
 
 - `scale_in`: a matrix of input local scale values, one column per `k`.
 
@@ -157,6 +157,12 @@ supplied nearest-neighbor graphs must contain a `dist` matrix as well as
 an `idx` matrix because this metric uses neighbor distances. Graphs
 calculated by this function are self-excluded. Older cached
 self-inclusive graphs are detected and stripped with a warning.
+
+Supplied graph distances must align with their indices and be ordered
+nearest-first. Supported sparse inputs pass through to `rnndescent`.
+
+Squared Euclidean preserves neighbor order but changes the distance
+magnitudes used by this metric, so its result can differ from Euclidean.
 
 If either local-radius vector is constant, the correlation is undefined
 and the corresponding result is `NA_real_`. If `log = TRUE`, all

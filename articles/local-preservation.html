@@ -70,6 +70,16 @@ numbers of neighbors.</p>
 <code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
 <span><span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">pca_iris</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Supplied graphs use one-based indices in nearest-first order. Quadra
+checks all columns, removes self-indices, and retains the first
+<code>k</code> non-self neighbors, so self-inclusive graphs need at
+least <code>k + 1</code> columns. Supplied order resolves ties;
+<code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> includes boundary ties, while exact rank metrics
+break ties by distance-matrix column order.</p>
+<p>Graph searches pass supported sparse inputs to
+<code>rnndescent</code>; nonnumeric data-frame columns are ignored.
+Exact Euclidean and squared-Euclidean searches have the same ordering,
+subject to ties and approximation.</p>
 </div>
 <div class="section level2">
 <h2 id="trustworthiness-and-continuity">Trustworthiness and Continuity<a class="anchor" aria-label="anchor" href="#trustworthiness-and-continuity"></a>
@@ -112,6 +122,8 @@ output embedding. Set <code>statistic = "mean"</code> to use the mean
 distance to the first <code>k</code> neighbors, or
 <code>log = TRUE</code> to compare log radii when all selected radii are
 positive.</p>
+<p>Local radius uses distance magnitudes, so squared Euclidean can
+differ from Euclidean.</p>
 <p>If you already have nearest-neighbor graphs with distance matrices,
 you can reuse them:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -155,24 +167,35 @@ the <code>nbr_pres_knn</code> function:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A function to wrap the RcppAnnoy API to return a matrix of the nearest</span></span>
 <span><span class="co"># neighbor indices</span></span>
-<span><span class="va">find_nn</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">k</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">n_trees</span> <span class="op">=</span> <span class="fl">50</span>, <span class="va">search_k</span> <span class="op">=</span> <span class="va">k</span> <span class="op">*</span> <span class="va">n_trees</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">find_nn</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
+<span>  <span class="va">X</span>,</span>
+<span>  <span class="va">k</span> <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  <span class="va">n_trees</span> <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  <span class="va">search_k</span> <span class="op">=</span> <span class="op">(</span><span class="va">k</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="va">n_trees</span></span>
+<span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">nr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
 <span>  <span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
+<span>  <span class="va">requested_k</span> <span class="op">&lt;-</span> <span class="va">k</span> <span class="op">+</span> <span class="fl">1</span></span>
 <span></span>
 <span>  <span class="va">ann</span> <span class="op">&lt;-</span> <span class="fu">methods</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/methods/new.html" class="external-link">new</a></span><span class="op">(</span><span class="fu">RcppAnnoy</span><span class="fu">::</span><span class="va">AnnoyEuclidean</span>, <span class="va">nc</span><span class="op">)</span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">nr</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nr</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">ann</span><span class="op">$</span><span class="fu">addItem</span><span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">X</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span>  <span class="va">ann</span><span class="op">$</span><span class="fu">build</span><span class="op">(</span><span class="va">n_trees</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span>nrow <span class="op">=</span> <span class="va">nr</span>, ncol <span class="op">=</span> <span class="va">k</span><span class="op">)</span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">nr</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">res</span> <span class="op">&lt;-</span> <span class="va">ann</span><span class="op">$</span><span class="fu">getNNsByItemList</span><span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">k</span>, <span class="va">search_k</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">item</span><span class="op">)</span> <span class="op">!=</span> <span class="va">k</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"search_k/n_trees settings were unable to find "</span>, <span class="va">k</span>,</span>
-<span>           <span class="st">" neighbors for item "</span>, <span class="va">i</span><span class="op">)</span></span>
+<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nr</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">res</span> <span class="op">&lt;-</span> <span class="va">ann</span><span class="op">$</span><span class="fu">getNNsByItemList</span><span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">requested_k</span>, <span class="va">search_k</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>    <span class="va">non_self</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">item</span><span class="op">[</span><span class="va">res</span><span class="op">$</span><span class="va">item</span> <span class="op">!=</span> <span class="va">i</span> <span class="op">-</span> <span class="fl">1</span><span class="op">]</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">non_self</span><span class="op">)</span> <span class="op">&lt;</span> <span class="va">k</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span></span>
+<span>        <span class="st">"search_k/n_trees settings were unable to find "</span>,</span>
+<span>        <span class="va">k</span>,</span>
+<span>        <span class="st">" non-self neighbors for item "</span>,</span>
+<span>        <span class="va">i</span></span>
+<span>      <span class="op">)</span></span>
 <span>    <span class="op">}</span></span>
-<span>    <span class="va">idx</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">item</span></span>
+<span>    <span class="va">idx</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="va">non_self</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">k</span><span class="op">)</span><span class="op">]</span></span>
 <span>  <span class="op">}</span></span>
 <span>  <span class="va">idx</span> <span class="op">+</span> <span class="fl">1</span></span>
 <span><span class="op">}</span></span>

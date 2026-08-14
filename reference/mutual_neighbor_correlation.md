@@ -34,8 +34,7 @@ mutual_neighbor_correlation(
   one observation per row, or if `is_transposed = TRUE`, one observation
   per column. Alternatively, it can be a pre-computed nearest neighbor
   graph. In the latter case, `nn_method_in`, `metric_in` and
-  `nn_args_in` are ignored. If `Xin` is a data-frame, non-numeric
-  columns are ignored.
+  `nn_args_in` are ignored.
 
 - Xout:
 
@@ -43,8 +42,7 @@ mutual_neighbor_correlation(
   data frame with one observation per row, or if `is_transposed = TRUE`,
   one observation per column. Alternatively, it can be a pre-computed
   nearest neighbor graph. In the latter case, `nn_method_out`,
-  `metric_out` and `nn_args_out` are ignored. If `Xout` is a data-frame,
-  non-numeric columns are ignored.
+  `metric_out` and `nn_args_out` are ignored.
 
 - k:
 
@@ -67,6 +65,9 @@ mutual_neighbor_correlation(
   the distance calculation to apply to `Xin`. One of `"euclidean"`,
   `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
+  Euclidean and squared Euclidean have the same exact neighbor ordering,
+  but an approximate search can still differ because of approximation or
+  ties.
 
 - nn_method_out:
 
@@ -88,7 +89,7 @@ mutual_neighbor_correlation(
 
 - n_threads:
 
-  the maximum number of threads to use.
+  the maximum number of threads to use. `0` or `1` runs serially.
 
 - verbose:
 
@@ -101,19 +102,14 @@ mutual_neighbor_correlation(
 
 - nn_args_in:
 
-  list of extra arguments to pass to the nearest neighbor methods,
-  [`rnndescent::brute_force_knn()`](https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html)
-  or
-  [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html),
-  depending on the value of `nn_method_in`.
+  named list of extra arguments for the selected nearest-neighbor method
+  for `Xin`. See Details for naming and routing rules.
 
 - nn_args_out:
 
-  list of extra arguments to pass to the nearest neighbor methods,
-  [`rnndescent::brute_force_knn()`](https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html)
-  or
-  [`rnndescent::nnd_knn()`](https://jlmelville.github.io/rnndescent/reference/nnd_knn.html),
-  depending on the value of `nn_method_out`.
+  named list of extra arguments accepted by the selected
+  nearest-neighbor method for `Xout`, with the same naming and ownership
+  rules as `nn_args_in`.
 
 ## Value
 
@@ -122,11 +118,11 @@ each `k`. Items are named `mnc<k>`, where `<k>` refers to the values
 provided in the `k` parameter. If `ret_extra = TRUE`, then a list is
 returned containing:
 
-- `mnc`: the vector of mutual neighbor correlations.
-
 - `nn_in`: the nearest neighbor graph for `Xin`.
 
 - `nn_out`: the nearest neighbor graph for `Xout`.
+
+- `mnc`: the vector of mutual neighbor correlations.
 
 - `mutual_neighbor_in`: a matrix of input mutual-neighbor counts, one
   column per `k`.
@@ -150,6 +146,12 @@ supplied nearest-neighbor graphs only need an `idx` matrix because this
 metric uses neighbor identities, not distances. Graphs calculated by
 this function are self-excluded. Older cached self-inclusive graphs are
 detected and stripped with a warning.
+
+Supplied graphs follow
+[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+ordering and self-neighbor rules; supported sparse inputs pass through
+to `rnndescent`. Exact Euclidean and squared-Euclidean searches are
+order equivalent, subject to ties and approximation.
 
 If either mutual-neighbor count vector is constant, the correlation is
 undefined and the corresponding result is `NA_real_`.

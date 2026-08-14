@@ -24,17 +24,22 @@ random_triplet_accuracy(
 
   the input data (usually high-dimensional), a matrix or data frame with
   one observation per row, or if `is_transposed = TRUE`, one observation
-  per column.
+  per column. Nonnumeric data-frame columns are ignored; sparse matrices
+  are unsupported and retained values must be finite.
 
 - Xout:
 
   the output data (usually lower dimensional than `Xin`), a matrix or
   data frame with one observation per row, or if `is_transposed = TRUE`,
-  one observation per column.
+  one observation per column, with the same input requirements as `Xin`.
 
 - n_triplets:
 
-  the number of triplets per observation to generate.
+  Either a positive integer number of triplets to sample per
+  observation, or an explicit zero-based endpoint matrix. An explicit
+  matrix has one column per observation (anchor); successive row pairs
+  contain the endpoints for each triplet. Endpoints are integers in
+  `[0, n - 1]`, distinct from each other and their zero-based anchor.
 
 - metric_in:
 
@@ -77,6 +82,13 @@ distances are excluded from the denominator because they do not define a
 relative ordering. If no sampled input triplets define an ordering, the
 result is `NA_real_`.
 
+Reset the R seed and keep `n_threads` fixed to reuse the same sampled
+triplets across calls. A matrix-valued `n_triplets` performs no internal
+sampling.
+
+Euclidean and squared Euclidean give the same distance ordering and
+therefore the same triplet comparisons, apart from numerical ties.
+
 ## References
 
 Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021). Understanding
@@ -96,17 +108,20 @@ for another measure of global structure preservation.
 ``` r
 iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 random_triplet_accuracy(iris, iris_pca2)
-#> [1] 0.976
+#> [1] 0.9853333
 
-# If you plan on comparing the results of multiple output methods, then
-# pre-transposing the input data can save time
+# For fair comparisons, reset the seed and keep n_threads fixed before each
+# call. Pre-transposing the input data can also save time.
 tiris <- t(iris[, -5])
 iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
 iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
+set.seed(42)
 random_triplet_accuracy(tiris, t(iris_pca1), is_transposed = TRUE)
-#> [1] 0.9386667
+#> [1] 0.9426667
+set.seed(42)
 random_triplet_accuracy(tiris, t(iris_pca2), is_transposed = TRUE)
-#> [1] 0.988
+#> [1] 0.9746667
+set.seed(42)
 random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
-#> [1] 0.9986667
+#> [1] 0.996
 ```

@@ -80,6 +80,26 @@ package</a> to be installed.</p>
 positive and negative examples, are excluded from overall and per-label
 averages. If no rows remain for an average, that average is
 <code>NA_real_</code>.</p>
+<p>Both <code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> require a
+finite square distance matrix and one nonmissing label per observation.
+The diagonal query is excluded.</p>
+<p>Each function returns <code>list(av_auc, label_av)</code>.
+<code>av_auc</code> weights every defined observation row equally; it is
+not an unweighted mean of the label summaries. <code>label_av</code> is
+a named list of per-label means in label first-appearance order. Labels
+with no defined row remain represented with <code>NA_real_</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">roc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roc_auc.html">roc_auc</a></span><span class="op">(</span><span class="va">dout</span>, <span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">)</span></span>
+<span><span class="va">roc</span><span class="op">$</span><span class="va">av_auc</span></span>
+<span><span class="va">roc</span><span class="op">$</span><span class="va">label_av</span></span>
+<span></span>
+<span><span class="va">pr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pr_auc.html">pr_auc</a></span><span class="op">(</span><span class="va">dout</span>, <span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">)</span></span>
+<span><span class="va">pr</span><span class="op">$</span><span class="va">av_auc</span></span>
+<span><span class="va">pr</span><span class="op">$</span><span class="va">label_av</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h2>
