@@ -217,6 +217,20 @@ test_that("sparse raw inputs support graph-search routes", {
   }
 })
 
+test_that("nearest-neighbor metrics reject unusable raw matrices", {
+  character_matrix <- matrix("x", nrow = 3, ncol = 1)
+  empty_matrix <- matrix(numeric(), nrow = 0, ncol = 1)
+
+  expect_error(
+    nn_preservation(character_matrix, character_matrix, k = 1),
+    "must be numeric"
+  )
+  expect_error(
+    nn_preservation(empty_matrix, empty_matrix, k = 1),
+    "at least one row and one column"
+  )
+})
+
 test_that("cached self-excluded graphs reproduce raw-data values", {
   raw_res <- nn_preservation(
     m,
@@ -588,6 +602,26 @@ test_that("mutual neighbor correlation validates inputs", {
   )
 })
 
+test_that("nearest-neighbor metrics reject graphs with different row counts", {
+  graph3 <- list(
+    idx = matrix(c(2, 1, 2), ncol = 1),
+    dist = matrix(1, nrow = 3, ncol = 1)
+  )
+  graph4 <- list(
+    idx = matrix(c(2, 1, 4, 3), ncol = 1),
+    dist = matrix(1, nrow = 4, ncol = 1)
+  )
+
+  expect_error(
+    nn_preservation(graph3, graph4, k = 1),
+    "same number of rows"
+  )
+  expect_error(
+    local_radius_correlation(graph3, graph4, k = 1),
+    "same number of rows"
+  )
+})
+
 test_that("old self-inclusive cached graphs are stripped with a warning", {
   old_graph <- rnndescent::brute_force_knn(m, k = 3, metric = "sqeuclidean")
   stripped_graph <- list(
@@ -933,6 +967,18 @@ test_that("nearest-neighbor inputs are validated", {
   expect_error(
     nn_preservation(list(idx = 1), graph, k = 1),
     "nearest-neighbor graph"
+  )
+  expect_error(
+    nn_preservation(
+      list(idx = matrix(as.character(idx), nrow = nrow(idx))),
+      graph,
+      k = 1
+    ),
+    "idx must be a numeric matrix"
+  )
+  expect_error(
+    nn_preservation(list(idx = idx, dist = as.vector(idx)), graph, k = 1),
+    "dist must be a matrix"
   )
   bad_idx <- idx[, 1, drop = FALSE]
   bad_idx[1, 1] <- NA_real_

@@ -82,6 +82,8 @@ test_that("nearest-neighbor matrix preservation validates inputs", {
   )
   kout <- kin
 
+  expect_error(nbr_pres_knn(kin[, 1], kout, k = 1), "kin must be a matrix")
+  expect_error(nbr_pres_knn(kin, kout[, 1], k = 1), "kout must be a matrix")
   expect_error(nbr_pres_knn(kin, kout, k = 0), "positive integer")
   expect_error(nbr_pres_knn(kin, kout, k = 3), "at least 3 non-self neighbors")
   expect_error(nbr_pres_knn(kin, kout[-1, ], k = 1), "same number of rows")
