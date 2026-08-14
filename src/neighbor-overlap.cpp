@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
 #include <vector>
 
@@ -45,27 +44,15 @@ std::vector<KQuery> prepare_k_queries(const IntegerVector &k,
   return queries;
 }
 
-std::size_t checked_neighbor_index(double value, std::size_t n_obs,
-                                   const char *name) {
-  if (!R_finite(value) || value < 1.0 || value > static_cast<double>(n_obs) ||
-      value != std::floor(value)) {
-    stop("%s must contain finite integer indices between 1 and the number of "
-         "rows",
-         name);
-  }
-  return static_cast<std::size_t>(value);
-}
-
 std::vector<std::size_t> copy_neighbor_indices(const NumericMatrix &idx,
-                                               std::size_t n_cols,
-                                               const char *name) {
+                                               std::size_t n_cols) {
   const std::size_t n_obs = idx.nrow();
   std::vector<std::size_t> copied(n_obs * n_cols);
 
   for (std::size_t col = 0; col < n_cols; ++col) {
     for (std::size_t row = 0; row < n_obs; ++row) {
       copied[matrix_offset(row, col, n_obs)] =
-          checked_neighbor_index(idx(row, col), n_obs, name);
+          static_cast<std::size_t>(idx(row, col));
     }
   }
   return copied;
@@ -125,8 +112,8 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
   const std::size_t max_k = queries.back().value;
   const std::size_t thread_count = quadra::checked_thread_count(n_threads);
 
-  const auto idx_cpp = copy_neighbor_indices(idx, max_k, "idx");
-  const auto ref_idx_cpp = copy_neighbor_indices(ref_idx, max_k, "ref_idx");
+  const auto idx_cpp = copy_neighbor_indices(idx, max_k);
+  const auto ref_idx_cpp = copy_neighbor_indices(ref_idx, max_k);
 
   std::vector<int> counts(n_obs * static_cast<std::size_t>(k.size()), 0);
   auto worker = [&](std::size_t begin, std::size_t end) {

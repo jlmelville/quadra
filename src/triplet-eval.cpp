@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -32,34 +31,13 @@ std::size_t validate_observation_matrices(const NumericMatrix &xin,
   return static_cast<std::size_t>(xin.ncol());
 }
 
-std::vector<std::size_t> copy_checked_triplets(const NumericMatrix &triplets,
-                                               std::size_t n_obs) {
+void validate_triplet_layout(const NumericMatrix &triplets, std::size_t n_obs) {
   if (triplets.ncol() != static_cast<int>(n_obs)) {
     stop("triplets must have one column per observation");
   }
   if ((triplets.nrow() % 2) != 0) {
     stop("triplets must have an even number of rows");
   }
-
-  std::vector<std::size_t> copied;
-  copied.reserve(triplets.size());
-  for (int col = 0; col < triplets.ncol(); ++col) {
-    for (int row = 0; row < triplets.nrow(); row += 2) {
-      const double first = triplets(row, col);
-      const double second = triplets(row + 1, col);
-      const bool invalid = !R_finite(first) || !R_finite(second) ||
-                           first != std::floor(first) ||
-                           second != std::floor(second) || first < 0 ||
-                           second < 0 || first >= static_cast<double>(n_obs) ||
-                           second >= static_cast<double>(n_obs);
-      if (invalid) {
-        stop("triplets must contain finite integer indices in range");
-      }
-      copied.push_back(static_cast<std::size_t>(first));
-      copied.push_back(static_cast<std::size_t>(second));
-    }
-  }
-  return copied;
 }
 
 struct TripletCounts {
@@ -251,12 +229,13 @@ double triplet_sample(const NumericMatrix &triplets, const NumericMatrix &xin,
                       double n_threads = 0) {
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);
-  const auto triplets_cpp = copy_checked_triplets(triplets, n_obs);
+  validate_triplet_layout(triplets, n_obs);
   const std::size_t thread_count = quadra::checked_thread_count(n_threads);
 
   std::function<Dfun> dfunin = create_dfun(metric_in);
   std::function<Dfun> dfunout = create_dfun(metric_out);
 
+  auto triplets_cpp = Rcpp::as<std::vector<std::size_t>>(triplets);
   auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 

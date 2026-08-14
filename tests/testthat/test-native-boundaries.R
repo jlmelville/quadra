@@ -1,6 +1,6 @@
 # Direct calls to generated internal wrappers are intentional here. These tests
-# cover only malformed inputs that could otherwise reach unchecked indexing,
-# narrowing, allocation, or thread setup. Public semantics are tested through
+# cover only cheap structural guards before narrowing, allocation, indexing, or
+# thread setup. Element validity and public semantics are tested through
 # exported R functions instead.
 
 test_that("neighbor-overlap native boundary protects unchecked access", {
@@ -21,12 +21,6 @@ test_that("neighbor-overlap native boundary protects unchecked access", {
   expect_error(
     neighbor_overlap_counts(idx, idx, 2L),
     "larger than the number of columns"
-  )
-  bad_idx <- idx
-  bad_idx[1, 1] <- 0
-  expect_error(
-    neighbor_overlap_counts(bad_idx, idx, 1L),
-    "finite integer indices"
   )
   expect_error(
     neighbor_overlap_counts(idx, idx, 1L, -1),
@@ -107,20 +101,6 @@ test_that("explicit-triplet native boundary protects native indexing", {
     triplet_sample(matrix(0, nrow = 3, ncol = 3), xin, xin),
     "even number of rows"
   )
-
-  unsafe_triplets <- list(
-    negative = replace(valid, 1, -1),
-    out_of_range = replace(valid, 1, 3),
-    nonfinite = replace(valid, 1, NA_real_),
-    noninteger = replace(valid, 1, 1.5)
-  )
-  for (case_name in names(unsafe_triplets)) {
-    expect_error(
-      triplet_sample(unsafe_triplets[[case_name]], xin, xin),
-      "finite integer indices in range",
-      info = case_name
-    )
-  }
 
   expect_error(
     triplet_sample(valid, xin, xin, n_threads = -1),
