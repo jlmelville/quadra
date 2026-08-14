@@ -81,10 +81,13 @@ neighborhood size <code>k</code>; lower values indicate worse preservation.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Both functions use exact ranks from the supplied distance matrices and
-exclude the diagonal self-neighbor from each row. Tied distances are ranked in
-their original column order after self-neighbor exclusion, matching
-<code>rank(ties.method = "first")</code>.</p>
-<p>Distance matrices are used as supplied without a finite-value check.</p>
+exclude the diagonal self-neighbor from each row. Nonmissing values use
+ordinary numeric ordering: <code>-Inf</code> ranks before finite values and <code>Inf</code> after
+them. <code>NA</code> and <code>NaN</code> rank after all nonmissing values. Original column order
+resolves equal values and the order among missing values, matching
+<code>rank(na.last = TRUE, ties.method = "first")</code> after self-neighbor exclusion.
+Consequently, nonfinite distances can produce an ordinary finite score
+rather than an error or <code>NA</code>.</p>
 <p>Because these functions require full <code>n</code> by <code>n</code> distance matrices, they are
 practical only for small datasets. For larger datasets, use nearest-neighbor
 preservation metrics such as <code><a href="nn_preservation.html">nn_preservation()</a></code> or <code><a href="nbr_pres_knn.html">nbr_pres_knn()</a></code>.</p>
