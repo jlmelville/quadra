@@ -775,30 +775,8 @@ resolve_nn_graph <-
     }
   }
 
-graph_k <- function(nn_graph) {
-  ncol(nn_graph$idx)
-}
-
 graph_dim <- function(nn_graph) {
   dim(nn_graph$idx)
-}
-
-is_nn_graph <- function(graph) {
-  if (!is.list(graph) || is.null(graph$idx)) {
-    return(FALSE)
-  }
-  idx <- graph$idx
-  if (!is.matrix(idx)) {
-    return(FALSE)
-  }
-  dist <- graph$dist
-  if (is.null(dist)) {
-    return(TRUE)
-  }
-  if (!is.matrix(dist)) {
-    return(FALSE)
-  }
-  all(dim(idx) == dim(dist))
 }
 
 validate_nn_graph <- function(graph, name = "graph") {
@@ -841,20 +819,6 @@ validate_nn_graph <- function(graph, name = "graph") {
       )
     }
   }
-  invisible(graph)
-}
-
-validate_nn_graph_distances <- function(graph, name = "graph") {
-  validate_nn_graph(graph, name)
-  dist <- graph$dist
-  if (is.null(dist)) {
-    stop(
-      name,
-      " must contain a 'dist' matrix for local radius correlation",
-      call. = FALSE
-    )
-  }
-  check_nn_graph_dist_values(dist, name)
   invisible(graph)
 }
 
@@ -952,51 +916,4 @@ prepare_supplied_nn_graph <- function(
     graph$dist <- dist_out
   }
   graph
-}
-
-strip_self_neighbors <- function(graph, k, name = "Nearest-neighbor graph") {
-  prepare_supplied_nn_graph(
-    graph,
-    k = k,
-    name = name,
-    warn_self = FALSE
-  )
-}
-
-nn_overlap_counts <- function(idx, ref_idx, k, n_threads = 0) {
-  if (is.list(idx)) {
-    idx <- idx$idx
-  }
-  if (!methods::is(idx, "matrix")) {
-    stop("idx must be a matrix or nearest-neighbor graph", call. = FALSE)
-  }
-
-  if (is.list(ref_idx)) {
-    ref_idx <- ref_idx$idx
-  }
-  if (!methods::is(ref_idx, "matrix")) {
-    stop("ref_idx must be a matrix or nearest-neighbor graph", call. = FALSE)
-  }
-
-  k <- validate_positive_integer_vector(k, "k")
-  n_threads <- validate_n_threads(n_threads)
-  max_k <- max(k)
-  if (nrow(ref_idx) != nrow(idx)) {
-    stop("idx and ref_idx must have the same number of rows", call. = FALSE)
-  }
-
-  idx <- prepare_supplied_nn_graph(
-    list(idx = idx),
-    k = max_k,
-    name = "idx",
-    warn_self = FALSE
-  )$idx
-  ref_idx <- prepare_supplied_nn_graph(
-    list(idx = ref_idx),
-    k = max_k,
-    name = "ref_idx",
-    warn_self = FALSE
-  )$idx
-
-  neighbor_overlap_counts(idx, ref_idx, k, n_threads)
 }

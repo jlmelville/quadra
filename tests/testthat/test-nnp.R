@@ -867,48 +867,6 @@ test_that("nearest-neighbor preservation returns per-row values", {
   expect_equal(res$nnpv$nnp1, c(0, 0, 0, 1))
 })
 
-test_that("nearest-neighbor overlap counts preserve requested k order", {
-  # fmt: skip
-  idx <- matrix(
-    c(
-      3, 2, 4,
-      3, 4, 1,
-      1, 2, 4,
-      3, 1, 2
-    ),
-    nrow = 4,
-    byrow = TRUE
-  )
-  # fmt: skip
-  ref_idx <- matrix(
-    c(
-      2, 3, 4,
-      1, 3, 4,
-      4, 1, 2,
-      3, 2, 1
-    ),
-    nrow = 4,
-    byrow = TRUE
-  )
-
-  expect_equal(
-    nn_overlap_counts(idx, ref_idx, k = c(2, 1)),
-    matrix(
-      c(
-        2,
-        1,
-        1,
-        1,
-        0,
-        0,
-        0,
-        1
-      ),
-      nrow = 4
-    )
-  )
-})
-
 test_that("nearest-neighbor preservation rejects duplicate indices", {
   # fmt: skip
   idx <- matrix(
