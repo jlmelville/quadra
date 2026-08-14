@@ -236,6 +236,73 @@ test_that("direct RNX AUC matches co-ranking reference with missing distances", 
   )
 })
 
+test_that("exact-rank metrics apply the documented nonfinite ordering", {
+  # `rank()` is the public-contract oracle: infinities use numeric ordering,
+  # missing values rank last, and original column order breaks ties.
+  rank_penalty_reference <- function(din, dout, k, continuity = FALSE) {
+    n_obs <- nrow(din)
+    penalty <- 0
+    for (i in seq_len(n_obs)) {
+      nonself <- seq_len(n_obs) != i
+      ranks_in <- rank(
+        din[i, nonself],
+        na.last = TRUE,
+        ties.method = "first"
+      )
+      ranks_out <- rank(
+        dout[i, nonself],
+        na.last = TRUE,
+        ties.method = "first"
+      )
+      neighborhood_ranks <- if (continuity) ranks_in else ranks_out
+      penalty_ranks <- if (continuity) ranks_out else ranks_in
+      penalized <- neighborhood_ranks <= k & penalty_ranks > k
+      penalty <- penalty + sum(penalty_ranks[penalized] - k)
+    }
+
+    normalization <- n_obs * k * ((2 * n_obs) - (3 * k) - 1)
+    1 - ((2 * penalty) / normalization)
+  }
+
+  # fmt: skip
+  din <- matrix(
+    c(
+         0, -Inf,    1,  Inf,  NA,
+      -Inf,    0,  NaN,    2, Inf,
+         1,  NaN,    0, -Inf,   1,
+       Inf,    2, -Inf,    0, NaN,
+        NA,  Inf,    1,  NaN,   0
+    ),
+    nrow = 5,
+    byrow = TRUE
+  )
+  # fmt: skip
+  dout <- matrix(
+    c(
+         0,    1, -Inf,   NA, Inf,
+         1,    0,  Inf, -Inf, NaN,
+      -Inf,  Inf,    0,    2, NaN,
+        NA, -Inf,    2,    0,   1,
+       Inf,  NaN,  NaN,    1,   0
+    ),
+    nrow = 5,
+    byrow = TRUE
+  )
+
+  expect_equal(
+    rnx_auc(din, dout),
+    rnx_auc_crm(coranking_matrix(din, dout))
+  )
+  expect_equal(
+    trustworthiness(din, dout, k = 1),
+    rank_penalty_reference(din, dout, k = 1)
+  )
+  expect_equal(
+    continuity(din, dout, k = 1),
+    rank_penalty_reference(din, dout, k = 1, continuity = TRUE)
+  )
+})
+
 test_that("trustworthiness and continuity are one for exact rank preservation", {
   din <- distance_matrix(matrix(c(0, 1, 4, 9, 16), ncol = 1))
 

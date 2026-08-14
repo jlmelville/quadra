@@ -23,11 +23,13 @@ neighborhoods. An AUC of 1 indicates perfect neighborhood preservation and
 an AUC of 0 is the random-neighborhood baseline. Zero is not a lower bound:
 worse-than-random rank agreement can produce negative RNX values and a
 negative RNX AUC. Self-neighbors on the distance-matrix diagonal are excluded
-before the co-ranking matrix is calculated. Tied distances are ranked by
-first occurrence in original column order after self-neighbor exclusion.
-}
-\details{
-Distance matrices are used as supplied without a finite-value check.
+before the co-ranking matrix is calculated. Nonmissing values use ordinary
+numeric ordering: \code{-Inf} ranks before finite values and \code{Inf} after them.
+\code{NA} and \code{NaN} rank after all nonmissing values. Original column order
+resolves equal values and the order among missing values, matching
+\code{rank(na.last = TRUE, ties.method = "first")} after self-neighbor exclusion.
+Consequently, nonfinite distances can produce an ordinary finite score
+rather than an error or \code{NA}.
 }
 \references{
 Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).

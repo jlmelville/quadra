@@ -31,11 +31,13 @@ longer among the \code{k} nearest neighbors in \code{dout}.
 }
 \details{
 Both functions use exact ranks from the supplied distance matrices and
-exclude the diagonal self-neighbor from each row. Tied distances are ranked in
-their original column order after self-neighbor exclusion, matching
-\code{rank(ties.method = "first")}.
-
-Distance matrices are used as supplied without a finite-value check.
+exclude the diagonal self-neighbor from each row. Nonmissing values use
+ordinary numeric ordering: \code{-Inf} ranks before finite values and \code{Inf} after
+them. \code{NA} and \code{NaN} rank after all nonmissing values. Original column order
+resolves equal values and the order among missing values, matching
+\code{rank(na.last = TRUE, ties.method = "first")} after self-neighbor exclusion.
+Consequently, nonfinite distances can produce an ordinary finite score
+rather than an error or \code{NA}.
 
 Because these functions require full \code{n} by \code{n} distance matrices, they are
 practical only for small datasets. For larger datasets, use nearest-neighbor

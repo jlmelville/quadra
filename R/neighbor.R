@@ -129,11 +129,13 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' longer among the `k` nearest neighbors in `dout`.
 #'
 #' Both functions use exact ranks from the supplied distance matrices and
-#' exclude the diagonal self-neighbor from each row. Tied distances are ranked in
-#' their original column order after self-neighbor exclusion, matching
-#' `rank(ties.method = "first")`.
-#'
-#' Distance matrices are used as supplied without a finite-value check.
+#' exclude the diagonal self-neighbor from each row. Nonmissing values use
+#' ordinary numeric ordering: `-Inf` ranks before finite values and `Inf` after
+#' them. `NA` and `NaN` rank after all nonmissing values. Original column order
+#' resolves equal values and the order among missing values, matching
+#' `rank(na.last = TRUE, ties.method = "first")` after self-neighbor exclusion.
+#' Consequently, nonfinite distances can produce an ordinary finite score
+#' rather than an error or `NA`.
 #'
 #' Because these functions require full `n` by `n` distance matrices, they are
 #' practical only for small datasets. For larger datasets, use nearest-neighbor
@@ -187,10 +189,13 @@ continuity <- function(din, dout, k) {
 #' an AUC of 0 is the random-neighborhood baseline. Zero is not a lower bound:
 #' worse-than-random rank agreement can produce negative RNX values and a
 #' negative RNX AUC. Self-neighbors on the distance-matrix diagonal are excluded
-#' before the co-ranking matrix is calculated. Tied distances are ranked by
-#' first occurrence in original column order after self-neighbor exclusion.
-#'
-#' Distance matrices are used as supplied without a finite-value check.
+#' before the co-ranking matrix is calculated. Nonmissing values use ordinary
+#' numeric ordering: `-Inf` ranks before finite values and `Inf` after them.
+#' `NA` and `NaN` rank after all nonmissing values. Original column order
+#' resolves equal values and the order among missing values, matching
+#' `rank(na.last = TRUE, ties.method = "first")` after self-neighbor exclusion.
+#' Consequently, nonfinite distances can produce an ordinary finite score
+#' rather than an error or `NA`.
 #'
 #' @param din Input distance matrix.
 #' @param dout Output distance matrix.
