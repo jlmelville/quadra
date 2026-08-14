@@ -72,6 +72,7 @@ prepare_input_matrix <- function(
 validate_positive_integer <- function(x, name) {
   if (
     !is.numeric(x) ||
+      is.complex(x) ||
       length(x) != 1L ||
       is.na(x) ||
       !is.finite(x) ||
@@ -80,12 +81,16 @@ validate_positive_integer <- function(x, name) {
   ) {
     stop(name, " must be a positive integer", call. = FALSE)
   }
+  if (x > .Machine$integer.max) {
+    stop(name, " exceeds the supported integer range", call. = FALSE)
+  }
   as.integer(x)
 }
 
 validate_positive_integer_vector <- function(x, name) {
   if (
     !is.numeric(x) ||
+      is.complex(x) ||
       length(x) < 1L ||
       anyNA(x) ||
       any(!is.finite(x)) ||
@@ -93,6 +98,13 @@ validate_positive_integer_vector <- function(x, name) {
       any(x != floor(x))
   ) {
     stop(name, " must contain positive integers", call. = FALSE)
+  }
+  if (any(x > .Machine$integer.max)) {
+    stop(
+      name,
+      " contains values that exceed the supported integer range",
+      call. = FALSE
+    )
   }
   if (anyDuplicated(x)) {
     stop(name, " must contain unique values", call. = FALSE)
