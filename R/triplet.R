@@ -1,75 +1,43 @@
 #' Random Triplet Accuracy
 #'
-#' Evaluates the preservation of global structure of dimensionality reduction
-#' results using the random triplet accuracy method of Wang and co-workers
-#' (2020).
+#' Returns the proportion of sampled anchored triplets whose relative distance
+#' ordering in `Xin` is preserved in `Xout`. Input-space ties are excluded; the
+#' result is `NA_real_` if no triplet defines an ordering.
 #'
-#' The random triplet accuracy is calculated by randomly selecting three points
-#' in the input data and calculating the distances for two sides of the
-#' resulting triangle. This is repeated for the output data, and the relative
-#' ordering of the distances are compared. The returned accuracy is the
-#' proportion of triangles where the relative distances agree between the input
-#' and output data. Triplets with tied input-space distances are excluded from
-#' the denominator because they do not define a relative ordering. If no sampled
-#' input triplets define an ordering, the result is `NA_real_`.
+#' `Xin` and `metric_in` define the reference geometry. Reset the R seed and
+#' keep `n_threads` fixed to reuse the same triplets across calls. A
+#' matrix-valued `n_triplets` bypasses sampling.
 #'
-#' Reset the R seed and keep `n_threads` fixed to reuse the same sampled
-#' triplets across calls. A matrix-valued `n_triplets` performs no internal
-#' sampling.
-#'
-#' Euclidean and squared Euclidean give the same distance ordering and therefore
-#' the same triplet comparisons, apart from numerical ties.
-#'
-#' @param Xin the input data (usually high-dimensional), a matrix or data frame
-#'   with one observation per row, or if `is_transposed = TRUE`, one observation
-#'   per column. Nonnumeric data-frame columns are ignored; sparse matrices are
-#'   unsupported and retained values must be finite.
-#' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
-#'   or data frame with one observation per row, or if `is_transposed = TRUE`,
-#'   one observation per column, with the same input requirements as `Xin`.
-#' @param n_triplets Either a positive integer number of triplets to sample per
-#'   observation, or an explicit zero-based endpoint matrix. An explicit matrix
-#'   has one column per observation (anchor); successive row pairs contain the
-#'   endpoints for each triplet. Endpoints are integers in `[0, n - 1]`, distinct
-#'   from each other and their zero-based anchor.
-#' @param metric_in the distance calculation to apply to `Xin`. One of
+#' @param Xin Input data, with observations in rows by default. Data must be
+#'   dense and finite; nonnumeric data-frame columns are ignored.
+#' @param Xout Output data, with the same input conventions and number of
+#'   observations as `Xin`.
+#' @param n_triplets Number of triplets to sample per observation, or a
+#'   zero-based endpoint matrix. A matrix has one column per anchor and a pair of
+#'   rows per triplet. Its endpoints must lie in `[0, n - 1]` and differ from
+#'   each other and the anchor.
+#' @param metric_in Distance metric for `Xin`. One of
 #'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
-#' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
+#' @param metric_out Distance metric for `Xout`. See `metric_in` for
 #'   details.
-#' @param is_transposed if `TRUE` then `Xin` and `Xout` are assumed to have been
-#'   passed in transposed format, i.e. with one observation per column.
-#'   Otherwise, `Xin` and `Xout` will be transposed. For large datasets,
-#'   transposing can be slow, so if this function will be called multiple times
-#'   with the same input data, it is more efficient to transpose the input data
-#'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#' @param is_transposed Whether observations are stored in columns rather than
+#'   rows.
+#' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
-#' @return The triplet accuracy, ranging from 0 (no relative distances agree) to
-#'   1 (all of them agree). For randomly distributed `Xout`, the
-#'   accuracy will be 0.5.
+#' @return Triplet accuracy in `[0, 1]`, or `NA_real_` if every input comparison
+#'   is tied.
 #' @references Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
 #' Understanding how dimension reduction tools work: an empirical approach to
 #' deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
 #' *J Mach. Learn. Res*, *22*, 1-73. <https://jmlr.org/papers/v22/20-1061.html>.
 #' @seealso [random_pair_distance_emd()] and
-#'   [random_pair_distance_correlation()] for another measure of global
-#'   structure preservation.
+#'   [random_pair_distance_correlation()] for other global preservation
+#'   measures.
 #' @examples
-#' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-#' random_triplet_accuracy(iris, iris_pca2)
-#'
-#' # For fair comparisons, reset the seed and keep n_threads fixed before each
-#' # call. Pre-transposing the input data can also save time.
-#' tiris <- t(iris[, -5])
-#' iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-#' iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-#' set.seed(42)
-#' random_triplet_accuracy(tiris, t(iris_pca1), is_transposed = TRUE)
-#' set.seed(42)
-#' random_triplet_accuracy(tiris, t(iris_pca2), is_transposed = TRUE)
-#' set.seed(42)
-#' random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
+#' iris_x <- iris[, -5]
+#' iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
+#' random_triplet_accuracy(iris_x, iris_pca2)
 #' @export
 random_triplet_accuracy <-
   function(

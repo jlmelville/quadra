@@ -1,73 +1,38 @@
 #' Random Pair Distance Correlation
 #'
-#' Evaluates the preservation of global structure of dimensionality reduction
-#' results using the correlation coefficient between randomly selected
-#' distances. The default Pearson correlation is similar to the method of Becht
-#' and co-workers (2019).
+#' Correlates distances for sampled pairs of observations in `Xin` and `Xout`.
+#' Pearson correlation measures linear association; Spearman correlation
+#' measures rank association.
 #'
-#' This function repeatedly samples random pairs of observations and calculates
-#' the distance between the points in both the original data and the embedding
-#' space. The correlation coefficient between the two sets of distances is
-#' reported. Pearson correlation measures linear agreement in the sampled
-#' distances, while Spearman correlation measures rank agreement. This differs
-#' slightly from the procedure in the Becht paper which randomly samples a
-#' subset of observations and then exhaustively calculates all pair-wise
-#' distances within that subset.
+#' `Xin` and `metric_in` define the reference geometry. Reset the R seed and
+#' keep `n_threads` fixed to reuse the same pairs across calls.
 #'
-#' Reset the R seed and keep `n_threads` fixed to reuse the same sampled pairs
-#' across calls. Changing the thread count can change the sample.
-#'
-#' Euclidean and squared Euclidean give the same pair-distance ordering, so
-#' Spearman correlation is order-equivalent. Squaring changes magnitudes, so
-#' Pearson correlation can change.
-#'
-#' @param Xin the input data (usually high-dimensional), a matrix or data frame
-#'   with one observation per row, or if `is_transposed = TRUE`, one observation
-#'   per column. Nonnumeric data-frame columns are ignored; sparse matrices are
-#'   unsupported and retained values must be finite.
-#' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
-#'   or data frame with one observation per row, or if `is_transposed = TRUE`,
-#'   one observation per column, with the same input requirements as `Xin`.
-#' @param n_pairs the number of random pairs of observations to calculate
-#'   distances for in the input and output space.
-#' @param metric_in the distance calculation to apply to `Xin`. One of
+#' @param Xin Input data, with observations in rows by default. Data must be
+#'   dense and finite; nonnumeric data-frame columns are ignored.
+#' @param Xout Output data, with the same input conventions and number of
+#'   observations as `Xin`.
+#' @param n_pairs Number of pairs to sample.
+#' @param metric_in Distance metric for `Xin`. One of
 #'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
-#' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
+#' @param metric_out Distance metric for `Xout`. See `metric_in` for
 #'   details.
-#' @param method correlation method, either `"pearson"` or `"spearman"`.
-#' @param is_transposed if `TRUE` then `Xin` and `Xout` are assumed to have been
-#'   passed in transposed format, i.e. with one observation per column.
-#'   Otherwise, `Xin` and `Xout` will be transposed. For large datasets,
-#'   transposing can be slow, so if this function will be called multiple times
-#'   with the same input data, it is more efficient to transpose the input data
-#'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#' @param method Correlation method, either `"pearson"` or `"spearman"`.
+#' @param is_transposed Whether observations are stored in columns rather than
+#'   rows.
+#' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
-#' @return The correlation between the distances in the input and output space.
-#'   For randomly distributed data, the expected value is 0.
+#' @return Correlation between the sampled input and output distances.
 #' @references Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 #' Ng, L. G., ... & Newell, E. W. (2019).
 #' Dimensionality reduction for visualizing single-cell data using UMAP.
 #' *Nature biotechnology*, *37*(1), 38-44.
 #' @seealso [random_pair_distance_emd()], [random_pair_distance_stress()], and
-#'   [random_triplet_accuracy()] for
-#'   another measure of global structure preservation.
+#'   [random_triplet_accuracy()] for other global preservation measures.
 #' @examples
-#' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-#' random_pair_distance_correlation(iris, iris_pca2)
-#'
-#' # For fair comparisons, reset the seed and keep n_threads fixed before each
-#' # call. Pre-transposing the input data can also save time.
-#' tiris <- t(iris[, -5])
-#' iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-#' iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-#' set.seed(42)
-#' random_pair_distance_correlation(tiris, t(iris_pca1), is_transposed = TRUE)
-#' set.seed(42)
-#' random_pair_distance_correlation(tiris, t(iris_pca2), is_transposed = TRUE)
-#' set.seed(42)
-#' random_pair_distance_correlation(tiris, t(iris_pca3), is_transposed = TRUE)
+#' iris_x <- iris[, -5]
+#' iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
+#' random_pair_distance_correlation(iris_x, iris_pca2)
 #' @export
 random_pair_distance_correlation <- function(
   Xin,
@@ -99,77 +64,43 @@ random_pair_distance_correlation <- function(
   )
 }
 
-#' Random Pair Distance Earth Mover's Distance
+#' Earth Mover's Distance Between Random-Pair Distances
 #'
-#' Evaluates the preservation of global structure of dimensionality reduction
-#' results using the Earth Mover's Distances between the distribution of
-#' randomly selected pairs of distances, similar to the method of Heiser and Lau
-#' (2020).
+#' Compares the empirical distributions of sampled input and output distances
+#' using Earth Mover's Distance. Each distance vector is scaled to `[0, 1]` by
+#' default.
 #'
-#' This function repeatedly samples random pairs of observations and calculates
-#' the distance between the points in both the original data and the embedding
-#' space. Each set of distances are scaled between `(0, 1)`, converted into an
-#' empirical distribution and the Earth Mover's (or Wasserstein) distance is
-#' calculated.
+#' EMD compares marginal distributions, not corresponding pairs. `Xin` and
+#' `metric_in` define the reference geometry. Reset the R seed and keep
+#' `n_threads` fixed to reuse the same pairs across calls.
 #'
-#' This function differs slightly from the procedure in the Heiser and Lau paper
-#' which considers all pair-wise distances.
-#'
-#' Reset the R seed and keep `n_threads` fixed to reuse the same sampled pairs
-#' across calls. Changing the thread count can change the sample.
-#'
-#' Squared Euclidean preserves pair-distance ordering but changes distance
-#' magnitudes. It can therefore produce a different EMD from Euclidean distance,
-#' even when `range_scale = TRUE`.
-#'
-#' @param Xin the input data (usually high-dimensional), a matrix or data frame
-#'   with one observation per row, or if `is_transposed = TRUE`, one observation
-#'   per column. Nonnumeric data-frame columns are ignored; sparse matrices are
-#'   unsupported and retained values must be finite.
-#' @param Xout the output data (usually lower dimensional than `Xin`), a matrix
-#'   or data frame with one observation per row, or if `is_transposed = TRUE`,
-#'   one observation per column, with the same input requirements as `Xin`.
-#' @param n_pairs the number of random pairs of observations to calculate
-#'   distances for in the input and output space.
-#' @param metric_in the distance calculation to apply to `Xin`. One of
+#' @param Xin Input data, with observations in rows by default. Data must be
+#'   dense and finite; nonnumeric data-frame columns are ignored.
+#' @param Xout Output data, with the same input conventions and number of
+#'   observations as `Xin`.
+#' @param n_pairs Number of pairs to sample.
+#' @param metric_in Distance metric for `Xin`. One of
 #'   `"euclidean"`, `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
 #'   `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
-#' @param metric_out the distance metric to apply to `Xout`. See `metric_in` for
+#' @param metric_out Distance metric for `Xout`. See `metric_in` for
 #'   details.
-#' @param range_scale if `TRUE` (the default) then scale each distance vector
-#' to the range 0-1 before converting to a distribution.
-#' @param is_transposed if `TRUE` then `Xin` and `Xout` are assumed to have been
-#'   passed in transposed format, i.e. with one observation per column.
-#'   Otherwise, `Xin` and `Xout` will be transposed. For large datasets,
-#'   transposing can be slow, so if this function will be called multiple times
-#'   with the same input data, it is more efficient to transpose the input data
-#'   once outside of this function and set `is_transposed = TRUE`.
-#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#' @param range_scale Whether to scale each distance vector to `[0, 1]`.
+#' @param is_transposed Whether observations are stored in columns rather than
+#'   rows.
+#' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
-#' @return The Earth Mover's distance between the empirical distributions formed
-#'   from the distances in the input and output space.
+#' @return Earth Mover's Distance between the sampled distance distributions.
 #' @references Heiser, C. N., & Lau, K. S. (2020).
 #' A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
 #' *Cell reports*, *31*(5), 107576.
 #' <https://github.com/KenLauLab/DR-structure-preservation>
 #' @seealso [random_pair_distance_correlation()],
-#'   [random_pair_distance_stress()], and [random_triplet_accuracy()] for
-#'   another measure of global structure preservation.
+#'   [random_pair_distance_stress()], and [random_triplet_accuracy()] for other
+#'   global preservation measures.
 #' @examples
-#' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-#' random_pair_distance_emd(iris, iris_pca2)
-#'
-#' # For fair comparisons, reset the seed and keep n_threads fixed before each
-#' # call. Pre-transposing the input data can also save time.
-#' tiris <- t(iris[, -5])
-#' iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-#' iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-#' set.seed(42)
-#' random_pair_distance_emd(tiris, t(iris_pca1), is_transposed = TRUE)
-#' set.seed(42)
-#' random_pair_distance_emd(tiris, t(iris_pca2), is_transposed = TRUE)
-#' set.seed(42)
-#' random_pair_distance_emd(tiris, t(iris_pca3), is_transposed = TRUE)
+#' iris_x <- iris[, -5]
+#' iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
+#' random_pair_distance_emd(iris_x, iris_pca2)
 #' @export
 random_pair_distance_emd <- function(
   Xin,
@@ -214,48 +145,22 @@ emd <- function(x, y) {
 
 #' Random Pair Distance Stress
 #'
-#' Evaluates global distance preservation with a sampled stress summary.
+#' Returns the root mean squared difference between matched sampled input and
+#' output distances. Each distance vector is scaled to `[0, 1]` by default.
 #'
-#' This function repeatedly samples random pairs of observations and calculates
-#' the distance between the points in both the original data and the embedding
-#' space. The returned value is the root mean squared difference between the
-#' matched sampled distances.
-#'
-#' By default, each sampled distance vector is scaled to the range 0-1 before
-#' stress is calculated. This makes the result comparable across embeddings with
-#' different distance scales, but it also means the value is mainly useful for
-#' comparing methods under identical sampling and scaling settings.
-#'
-#' Reset the R seed and keep `n_threads` fixed to reuse the same sampled pairs
-#' across calls. Changing the thread count can change the sample.
-#'
-#' Squared Euclidean preserves pair-distance ordering but changes distance
-#' magnitudes. It can therefore produce a different stress value from Euclidean
-#' distance, even when `range_scale = TRUE`.
+#' `Xin` and `metric_in` define the reference geometry. Reset the R seed and
+#' keep `n_threads` fixed to reuse the same pairs across calls.
 #'
 #' @inheritParams random_pair_distance_emd
-#' @param range_scale if `TRUE` (the default) then scale each sampled distance
-#'   vector to the range 0-1 before calculating stress.
-#' @return The sampled stress between the matched distances in the input and
-#'   output space.
+#' @param range_scale Whether to scale each sampled distance vector to `[0, 1]`.
+#' @return Root mean squared difference between the sampled distances.
 #' @seealso [random_pair_distance_correlation()],
 #'   [random_pair_distance_emd()], and [random_triplet_accuracy()] for other
 #'   measures of global structure preservation.
 #' @examples
-#' iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-#' random_pair_distance_stress(iris, iris_pca2)
-#'
-#' # For fair comparisons, reset the seed and keep n_threads fixed before each
-#' # call. Pre-transposing the input data can also save time.
-#' tiris <- t(iris[, -5])
-#' iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-#' iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-#' set.seed(42)
-#' random_pair_distance_stress(tiris, t(iris_pca1), is_transposed = TRUE)
-#' set.seed(42)
-#' random_pair_distance_stress(tiris, t(iris_pca2), is_transposed = TRUE)
-#' set.seed(42)
-#' random_pair_distance_stress(tiris, t(iris_pca3), is_transposed = TRUE)
+#' iris_x <- iris[, -5]
+#' iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
+#' random_pair_distance_stress(iris_x, iris_pca2)
 #' @export
 random_pair_distance_stress <- function(
   Xin,

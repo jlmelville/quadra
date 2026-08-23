@@ -2,13 +2,12 @@
 % Please edit documentation in R/auc.R
 \name{pr_auc}
 \alias{pr_auc}
-\title{Area Under the Precision-Recall Curve for an Embedding}
+\title{Average Precision-Recall AUC for Label Retrieval}
 \usage{
 pr_auc(dm, labels)
 }
 \arguments{
-\item{dm}{A finite square numeric distance matrix. The diagonal is excluded
-from each retrieval problem.}
+\item{dm}{Finite square numeric distance matrix. The query itself is excluded.}
 
 \item{labels}{A label vector without missing values, with one label per row
 of \code{dm}.}
@@ -16,37 +15,19 @@ of \code{dm}.}
 \value{
 A list with components in this order:
 \itemize{
-\item \code{av_auc}: the PR AUC averaged over defined observation rows.
+\item \code{av_auc}: the mean PR AUC over defined queries.
 \item \code{label_av}: a named list of per-label means in first-appearance order.
 }
 }
 \description{
-Embedding quality measure.
+Precision-recall counterpart to \code{\link[=roc_auc]{roc_auc()}}, often more informative for
+imbalanced labels.
 }
 \details{
-The PR curve plots precision (also known as positive predictive value, PPV)
-against recall (also known as the true positive rate). The area under the
-curve provides similar information compared to the area under the ROC curve,
-but may be more appropriate when classes are highly imbalanced.
-
-This function calculates the PR curve N times, where N is the number of the
-observations. The label of the Nth observation is set as the positive class
-and then the other observations are ranked according to their distance from
-the Nth observation in the output coordinates (lower distances being better).
-Observations with the same label as the Nth observation count as positive
-observations. The final reported result is the average over all observations.
-Rows with undefined AUC values, such as rows that cannot define both positive
-and negative examples, are excluded from overall and per-label averages. If no
-rows remain for an average, that average is \code{NA_real_}.
-
-\code{av_auc} weights each defined query equally; \code{label_av} reports per-label
-means in first-appearance order.
-
-Perfect retrieval results in an AUC of 1. For random retrieval, the value
-is the proportion of the positive class labels for that curve.
+Aggregation and undefined-query handling are the same as for \code{\link[=roc_auc]{roc_auc()}}.
 }
 \note{
-Use of this function requires that the \code{PRROC} package be installed.
+Requires the \code{PRROC} package.
 }
 \references{
 Keilwagen, J., Grosse, I., & Grau, J. (2014).

@@ -1,33 +1,20 @@
-#' Average Area Under the ROC Curve
+#' Average ROC AUC for Label Retrieval
 #'
-#' Embedding quality measure.
+#' Ranks other observations by distance from each query and treats matching
+#' labels as relevant.
 #'
-#' The ROC curve plots the true positive rate vs false positive rate.
-#' This function calculates the curve N times, where N is the number of the
-#' observations. The label of the Nth observation is set as the positive class
-#' and then the other observations are ranked according to their distance from
-#' the Nth observation in the output coordinates (lower distances being better).
-#' Observations with the same label as the Nth observation count as positive
-#' observations. The final reported result is the average over all observations.
-#' Rows with undefined AUC values, such as rows that cannot define both positive
-#' and negative examples, are excluded from overall and per-label averages. If
-#' no rows remain for an average, that average is `NA_real_`.
+#' `av_auc` is the mean ROC AUC over defined queries; `label_av` gives per-label
+#' means in first-appearance order. Queries without both relevant and irrelevant
+#' observations are excluded. An empty average is `NA_real_`.
 #'
-#' `av_auc` weights each defined query equally; `label_av` reports per-label
-#' means in first-appearance order.
+#' @note Requires the `PRROC` package.
 #'
-#' Perfect retrieval results in an AUC of 1. For random retrieval gives a value
-#' of 0.5.
-#'
-#' @note Use of this function requires that the `PRROC` package be installed.
-#'
-#' @param dm A finite square numeric distance matrix. The diagonal is excluded
-#'   from each retrieval problem.
+#' @param dm Finite square numeric distance matrix. The query itself is excluded.
 #' @param labels A label vector without missing values, with one label per row
 #'   of `dm`.
 #' @return A list with components in this order:
 #'
-#'   * `av_auc`: the AUC averaged over defined observation rows.
+#'   * `av_auc`: the mean AUC over defined queries.
 #'   * `label_av`: a named list of per-label means in first-appearance order.
 #' @export
 roc_auc <- function(dm, labels) {
@@ -38,37 +25,19 @@ roc_auc <- function(dm, labels) {
   summarize_retrieval_auc(dm, labels, roc_auc_row)
 }
 
-#' Area Under the Precision-Recall Curve for an Embedding
+#' Average Precision-Recall AUC for Label Retrieval
 #'
-#' Embedding quality measure.
+#' Precision-recall counterpart to [roc_auc()], often more informative for
+#' imbalanced labels.
 #'
-#' The PR curve plots precision (also known as positive predictive value, PPV)
-#' against recall (also known as the true positive rate). The area under the
-#' curve provides similar information compared to the area under the ROC curve,
-#' but may be more appropriate when classes are highly imbalanced.
+#' Aggregation and undefined-query handling are the same as for [roc_auc()].
 #'
-#' This function calculates the PR curve N times, where N is the number of the
-#' observations. The label of the Nth observation is set as the positive class
-#' and then the other observations are ranked according to their distance from
-#' the Nth observation in the output coordinates (lower distances being better).
-#' Observations with the same label as the Nth observation count as positive
-#' observations. The final reported result is the average over all observations.
-#' Rows with undefined AUC values, such as rows that cannot define both positive
-#' and negative examples, are excluded from overall and per-label averages. If no
-#' rows remain for an average, that average is `NA_real_`.
-#'
-#' `av_auc` weights each defined query equally; `label_av` reports per-label
-#' means in first-appearance order.
-#'
-#' Perfect retrieval results in an AUC of 1. For random retrieval, the value
-#' is the proportion of the positive class labels for that curve.
-#'
-#' @note Use of this function requires that the `PRROC` package be installed.
+#' @note Requires the `PRROC` package.
 #'
 #' @inheritParams roc_auc
 #' @return A list with components in this order:
 #'
-#'   * `av_auc`: the PR AUC averaged over defined observation rows.
+#'   * `av_auc`: the mean PR AUC over defined queries.
 #'   * `label_av`: a named list of per-label means in first-appearance order.
 #' @references
 #' Keilwagen, J., Grosse, I., & Grau, J. (2014).
@@ -126,7 +95,7 @@ validate_auc_inputs <- function(dm, labels) {
 
 # Area Under the PR Curve of an Observation
 #
-# Embedding quality measure.
+# Per-query label-retrieval score.
 #
 # The PR curve plots precision (also known as positive predictive value, PPV)
 # against recall (also known as the true positive rate). The area under the
@@ -183,7 +152,7 @@ pr_auc_row <- function(dm, labels, i) {
 
 # Area Under the ROC Curve of an Observation
 #
-# Embedding quality measure.
+# Per-query label-retrieval score.
 #
 # The ROC curve plots the true positive rate vs false positive rate.
 # This function calculates the curve with the label of the specified
@@ -223,7 +192,7 @@ roc_auc_row <- function(dm, labels, i) {
 
 # Average Area Under a Curve
 #
-# Embedding quality measure.
+# Aggregate label-retrieval scores.
 #
 # This function calculates a curve using the specified function, repeating the
 # procedure N times, where N is the number of the observations. Each time

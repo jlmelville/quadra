@@ -2,39 +2,17 @@
 
 #' Neighborhood Preservation Between Distance Matrices
 #'
-#' Calculates the neighborhood preservation for each observation in a dataset,
-#' represented by two distance matrices. The first matrix is the "ground truth",
-#' the second being the estimation or approximation.
-#' The neighborhood preservation is calculated for each row where each element
-#' `d[i, j]` is taken to be the distance between observation `i` and `j`.
+#' Returns the overlap between the `k`-neighborhoods defined by two distance
+#' matrices, separately for each observation.
 #'
-#' The neighborhood preservation can vary between 0 (no neighbors in common)
-#' and 1 (perfect preservation). However, random performance gives an
-#' approximate value of k / (n - 1), where k is the size of the neighborhood and
-#' n is the number of observations or items in the dataset.
+#' Diagonal entries are excluded. Ties at the `k`th distance are included, with
+#' each score capped at 1.
+#' Nonfinite entries are not rejected.
 #'
-#' Self-neighbors on the diagonal are excluded from each row before the
-#' neighborhood overlap is calculated.
-#'
-#' If the `k`th-smallest distance is tied, every observation at that distance
-#' is treated as a neighbor. The shared count is capped at `k` before it is
-#' divided by `k`. This differs from exact-rank metrics such as
-#' [trustworthiness()] and [rnx_auc()], which break ties by original column
-#' order, and from supplied-graph metrics, which use the first `k` indices.
-#'
-#' Distance matrices are used as supplied without a finite-value check.
-#'
-#' @note This is not a very efficient way to calculate the preservation if you
-#'  want to calculate the value for multiple values of `k`. For more global
-#'  measures of preservation, see [rnx_auc()].
-#'
-#' @param din Distance matrix. The "ground truth" or reference distances.
-#' @param dout Distance matrix. A set of distances to compare to the reference
-#'   distances.
-#' @param k The size of the neighborhood, where k is the number of neighbors to
-#'  include in the neighborhood.
-#' @return Vector of preservation values, one for each row of the distance
-#'  matrix.
+#' @param din Reference distance matrix.
+#' @param dout Distance matrix to compare with `din`.
+#' @param k Neighborhood size.
+#' @return Per-observation neighborhood overlap in `[0, 1]`.
 #' @export
 nbr_pres <- function(din, dout, k) {
   validate_distance_matrix_pair(din, dout)
@@ -60,38 +38,20 @@ nbr_pres <- function(din, dout, k) {
 
 #' Neighborhood Preservation Between Nearest Neighbor Matrices
 #'
-#' Calculates the neighborhood preservation for each observation in a dataset,
-#' represented by two matrices of the indices of the nearest neighbors. The
-#' first matrix is the "ground truth", the second being the estimation or
-#' approximation. The neighborhood preservation is calculated for each row where
-#' each element `d[i, k]` is taken to be the index of the kth nearest neighbor
-#' of `i`.
+#' Returns the overlap between reference and comparison nearest-neighbor
+#' matrices, separately for each observation.
 #'
-#' Approximate nearest neighbor methods, e.g.
-#' [RcppAnnoy](https://cran.r-project.org/package=RcppAnnoy), can find
-#' k-nearest neighbors quite efficiently and so makes calculating preservation
-#' values for larger datasets feasible.
+#' Rows contain distinct one-based indices in nearest-first order. Self-indices
+#' are removed, so self-inclusive matrices need at least `k + 1` columns.
+#' Supplied order resolves ties.
 #'
-#' The neighborhood preservation can vary between 0 (no neighbors in common)
-#' and 1 (perfect preservation). For nearest-neighbor matrices that exclude
-#' self-neighbors, random performance gives an approximate value of k / (n - 1),
-#' where k is the size of the neighborhood and n is the number of observations
-#' or items in the dataset.
-#'
-#' Rows contain distinct one-based indices in nearest-first order. All supplied
-#' columns are checked before self-indices are removed and the first `k`
-#' non-self neighbors are retained. Self-inclusive inputs therefore need at
-#' least `k + 1` columns. Supplied order resolves ties.
-#'
-#' @param kin Nearest-neighbor index matrix. The "ground truth" or reference
-#'   indices, with observations in rows and neighbors in nearest-first order.
-#' @param kout Nearest-neighbor index matrix to compare with `kin`, using the
-#'   same row and ordering conventions.
-#' @param k The size of the neighborhood, where k is the number of neighbors to
-#'  include in the neighborhood.
-#' @param n_threads the maximum number of threads to use. `0` or `1` runs
+#' @param kin Reference nearest-neighbor index matrix, with observations in rows
+#'   and neighbors in nearest-first order.
+#' @param kout Nearest-neighbor index matrix to compare with `kin`.
+#' @param k Neighborhood size.
+#' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
-#' @return Vector of preservation values, one for each row of `kin`.
+#' @return Per-observation neighborhood overlap in `[0, 1]`.
 #' @export
 nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
   if (!methods::is(kin, "matrix")) {
@@ -128,33 +88,15 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' `continuity()` applies the dual penalty to input-space neighbors that are no
 #' longer among the `k` nearest neighbors in `dout`.
 #'
-#' Both functions use exact ranks from the supplied distance matrices and
-#' exclude the diagonal self-neighbor from each row. Nonmissing values use
-#' ordinary numeric ordering: `-Inf` ranks before finite values and `Inf` after
-#' them. `NA` and `NaN` rank after all nonmissing values. Original column order
-#' resolves equal values and the order among missing values, matching
-#' `rank(na.last = TRUE, ties.method = "first")` after self-neighbor exclusion.
-#' Consequently, nonfinite distances can produce an ordinary finite score
-#' rather than an error or `NA`.
+#' Diagonal entries are excluded. Unlike [nbr_pres()], the penalty reflects how
+#' far a misplaced neighbor falls beyond `k`.
+#' Nonfinite entries are ranked rather than rejected; ties follow column order.
 #'
-#' Because these functions require full `n` by `n` distance matrices, they are
-#' practical only for small datasets. For larger datasets, use nearest-neighbor
-#' preservation metrics such as [nn_preservation()] or [nbr_pres_knn()].
-#'
-#' Unlike [nbr_pres()], which only counts shared neighbors, these metrics weight
-#' each unexpected or missing neighbor by how far its rank lies outside the
-#' `k`-neighborhood. [rnx_auc()] also uses rank-based neighborhood agreement,
-#' but aggregates across neighborhood sizes; these functions report the standard
-#' trustworthiness or continuity score at one `k`.
-#'
-#' @param din Input distance matrix. The "ground truth" or reference distances.
-#' @param dout Output distance matrix. A set of distances to compare to the
-#'   reference distances.
-#' @param k The size of the neighborhood. Must be a positive integer less than
-#'   half the number of observations so the standard 0-1 normalization remains
-#'   bounded.
-#' @return A scalar score. A value of 1 indicates no rank-penalty errors at
-#'   neighborhood size `k`; lower values indicate worse preservation.
+#' @param din Reference distance matrix.
+#' @param dout Distance matrix to compare with `din`.
+#' @param k Neighborhood size. Must be less than half the number of
+#'   observations.
+#' @return Scalar rank-preservation score; 1 indicates no penalty.
 #' @references
 #' Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
 #' projection methods: An experimental study. In *Artificial Neural Networks -
@@ -182,25 +124,15 @@ continuity <- function(din, dout, k) {
 
 #' Area Under the RNX Curve
 #'
-#' The RNX curve is formed by calculating the `rnx_crm` metric for
-#' different sizes of neighborhood. Each value of RNX is scaled according to
-#' the natural log of the neighborhood size, to give a higher weight to smaller
-#' neighborhoods. An AUC of 1 indicates perfect neighborhood preservation and
-#' an AUC of 0 is the random-neighborhood baseline. Zero is not a lower bound:
-#' worse-than-random rank agreement can produce negative RNX values and a
-#' negative RNX AUC. Self-neighbors on the distance-matrix diagonal are excluded
-#' before the co-ranking matrix is calculated. Nonmissing values use ordinary
-#' numeric ordering: `-Inf` ranks before finite values and `Inf` after them.
-#' `NA` and `NaN` rank after all nonmissing values. Original column order
-#' resolves equal values and the order among missing values, matching
-#' `rank(na.last = TRUE, ties.method = "first")` after self-neighbor exclusion.
-#' Consequently, nonfinite distances can produce an ordinary finite score
-#' rather than an error or `NA`.
+#' Summarizes rank-based neighborhood agreement across neighborhood sizes,
+#' weighting smaller neighborhoods more heavily. A value of 1 is perfect, 0 is
+#' the random-neighborhood baseline, and values may be negative. Diagonal
+#' entries are excluded. Nonfinite entries are ranked rather than rejected;
+#' ties follow column order.
 #'
-#' @param din Input distance matrix.
-#' @param dout Output distance matrix.
-#' @return Area under the RNX curve. A value of 1 is perfect, 0 is the random
-#'   baseline, and negative values indicate worse-than-random rank agreement.
+#' @param din Reference distance matrix.
+#' @param dout Distance matrix to compare with `din`.
+#' @return Area under the RNX curve.
 #' @references
 #' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
 #' Multi-scale similarities in stochastic neighbour embedding: Reducing
@@ -215,7 +147,7 @@ rnx_auc <- function(din, dout) {
   rnx_auc_direct(din, dout)
 }
 
-# Co-ranking reference implementations used as test oracles.
+# Co-ranking utilities.
 #
 # Co-ranking Matrix
 #

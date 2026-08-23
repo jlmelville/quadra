@@ -7,29 +7,19 @@
 rnx_auc(din, dout)
 }
 \arguments{
-\item{din}{Input distance matrix.}
+\item{din}{Reference distance matrix.}
 
-\item{dout}{Output distance matrix.}
+\item{dout}{Distance matrix to compare with \code{din}.}
 }
 \value{
-Area under the RNX curve. A value of 1 is perfect, 0 is the random
-baseline, and negative values indicate worse-than-random rank agreement.
+Area under the RNX curve.
 }
 \description{
-The RNX curve is formed by calculating the \code{rnx_crm} metric for
-different sizes of neighborhood. Each value of RNX is scaled according to
-the natural log of the neighborhood size, to give a higher weight to smaller
-neighborhoods. An AUC of 1 indicates perfect neighborhood preservation and
-an AUC of 0 is the random-neighborhood baseline. Zero is not a lower bound:
-worse-than-random rank agreement can produce negative RNX values and a
-negative RNX AUC. Self-neighbors on the distance-matrix diagonal are excluded
-before the co-ranking matrix is calculated. Nonmissing values use ordinary
-numeric ordering: \code{-Inf} ranks before finite values and \code{Inf} after them.
-\code{NA} and \code{NaN} rank after all nonmissing values. Original column order
-resolves equal values and the order among missing values, matching
-\code{rank(na.last = TRUE, ties.method = "first")} after self-neighbor exclusion.
-Consequently, nonfinite distances can produce an ordinary finite score
-rather than an error or \code{NA}.
+Summarizes rank-based neighborhood agreement across neighborhood sizes,
+weighting smaller neighborhoods more heavily. A value of 1 is perfect, 0 is
+the random-neighborhood baseline, and values may be negative. Diagonal
+entries are excluded. Nonfinite entries are ranked rather than rejected;
+ties follow column order.
 }
 \references{
 Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).

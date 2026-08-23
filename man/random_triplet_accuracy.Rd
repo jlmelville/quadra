@@ -15,80 +15,48 @@ random_triplet_accuracy(
 )
 }
 \arguments{
-\item{Xin}{the input data (usually high-dimensional), a matrix or data frame
-with one observation per row, or if \code{is_transposed = TRUE}, one observation
-per column. Nonnumeric data-frame columns are ignored; sparse matrices are
-unsupported and retained values must be finite.}
+\item{Xin}{Input data, with observations in rows by default. Data must be
+dense and finite; nonnumeric data-frame columns are ignored.}
 
-\item{Xout}{the output data (usually lower dimensional than \code{Xin}), a matrix
-or data frame with one observation per row, or if \code{is_transposed = TRUE},
-one observation per column, with the same input requirements as \code{Xin}.}
+\item{Xout}{Output data, with the same input conventions and number of
+observations as \code{Xin}.}
 
-\item{n_triplets}{Either a positive integer number of triplets to sample per
-observation, or an explicit zero-based endpoint matrix. An explicit matrix
-has one column per observation (anchor); successive row pairs contain the
-endpoints for each triplet. Endpoints are integers in \verb{[0, n - 1]}, distinct
-from each other and their zero-based anchor.}
+\item{n_triplets}{Number of triplets to sample per observation, or a
+zero-based endpoint matrix. A matrix has one column per anchor and a pair of
+rows per triplet. Its endpoints must lie in \verb{[0, n - 1]} and differ from
+each other and the anchor.}
 
-\item{metric_in}{the distance calculation to apply to \code{Xin}. One of
+\item{metric_in}{Distance metric for \code{Xin}. One of
 \code{"euclidean"}, \code{"sqeuclidean"} (squared Euclidean), \code{"cosine"}, \code{"manhattan"},
 \code{"correlation"} (1 minus the Pearson correlation), or \code{"hamming"}.}
 
-\item{metric_out}{the distance metric to apply to \code{Xout}. See \code{metric_in} for
+\item{metric_out}{Distance metric for \code{Xout}. See \code{metric_in} for
 details.}
 
-\item{is_transposed}{if \code{TRUE} then \code{Xin} and \code{Xout} are assumed to have been
-passed in transposed format, i.e. with one observation per column.
-Otherwise, \code{Xin} and \code{Xout} will be transposed. For large datasets,
-transposing can be slow, so if this function will be called multiple times
-with the same input data, it is more efficient to transpose the input data
-once outside of this function and set \code{is_transposed = TRUE}.}
+\item{is_transposed}{Whether observations are stored in columns rather than
+rows.}
 
-\item{n_threads}{the maximum number of threads to use. \code{0} or \code{1} runs
+\item{n_threads}{Maximum number of threads to use. \code{0} or \code{1} runs
 serially.}
 }
 \value{
-The triplet accuracy, ranging from 0 (no relative distances agree) to
-1 (all of them agree). For randomly distributed \code{Xout}, the
-accuracy will be 0.5.
+Triplet accuracy in \verb{[0, 1]}, or \code{NA_real_} if every input comparison
+is tied.
 }
 \description{
-Evaluates the preservation of global structure of dimensionality reduction
-results using the random triplet accuracy method of Wang and co-workers
-(2020).
+Returns the proportion of sampled anchored triplets whose relative distance
+ordering in \code{Xin} is preserved in \code{Xout}. Input-space ties are excluded; the
+result is \code{NA_real_} if no triplet defines an ordering.
 }
 \details{
-The random triplet accuracy is calculated by randomly selecting three points
-in the input data and calculating the distances for two sides of the
-resulting triangle. This is repeated for the output data, and the relative
-ordering of the distances are compared. The returned accuracy is the
-proportion of triangles where the relative distances agree between the input
-and output data. Triplets with tied input-space distances are excluded from
-the denominator because they do not define a relative ordering. If no sampled
-input triplets define an ordering, the result is \code{NA_real_}.
-
-Reset the R seed and keep \code{n_threads} fixed to reuse the same sampled
-triplets across calls. A matrix-valued \code{n_triplets} performs no internal
-sampling.
-
-Euclidean and squared Euclidean give the same distance ordering and therefore
-the same triplet comparisons, apart from numerical ties.
+\code{Xin} and \code{metric_in} define the reference geometry. Reset the R seed and
+keep \code{n_threads} fixed to reuse the same triplets across calls. A
+matrix-valued \code{n_triplets} bypasses sampling.
 }
 \examples{
-iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-random_triplet_accuracy(iris, iris_pca2)
-
-# For fair comparisons, reset the seed and keep n_threads fixed before each
-# call. Pre-transposing the input data can also save time.
-tiris <- t(iris[, -5])
-iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-set.seed(42)
-random_triplet_accuracy(tiris, t(iris_pca1), is_transposed = TRUE)
-set.seed(42)
-random_triplet_accuracy(tiris, t(iris_pca2), is_transposed = TRUE)
-set.seed(42)
-random_triplet_accuracy(tiris, t(iris_pca3), is_transposed = TRUE)
+iris_x <- iris[, -5]
+iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
+random_triplet_accuracy(iris_x, iris_pca2)
 }
 \references{
 Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
@@ -98,6 +66,6 @@ deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
 }
 \seealso{
 \code{\link[=random_pair_distance_emd]{random_pair_distance_emd()}} and
-\code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}} for another measure of global
-structure preservation.
+\code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}} for other global preservation
+measures.
 }

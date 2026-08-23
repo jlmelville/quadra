@@ -7,44 +7,21 @@
 nbr_pres(din, dout, k)
 }
 \arguments{
-\item{din}{Distance matrix. The "ground truth" or reference distances.}
+\item{din}{Reference distance matrix.}
 
-\item{dout}{Distance matrix. A set of distances to compare to the reference
-distances.}
+\item{dout}{Distance matrix to compare with \code{din}.}
 
-\item{k}{The size of the neighborhood, where k is the number of neighbors to
-include in the neighborhood.}
+\item{k}{Neighborhood size.}
 }
 \value{
-Vector of preservation values, one for each row of the distance
-matrix.
+Per-observation neighborhood overlap in \verb{[0, 1]}.
 }
 \description{
-Calculates the neighborhood preservation for each observation in a dataset,
-represented by two distance matrices. The first matrix is the "ground truth",
-the second being the estimation or approximation.
-The neighborhood preservation is calculated for each row where each element
-\code{d[i, j]} is taken to be the distance between observation \code{i} and \code{j}.
+Returns the overlap between the \code{k}-neighborhoods defined by two distance
+matrices, separately for each observation.
 }
 \details{
-The neighborhood preservation can vary between 0 (no neighbors in common)
-and 1 (perfect preservation). However, random performance gives an
-approximate value of k / (n - 1), where k is the size of the neighborhood and
-n is the number of observations or items in the dataset.
-
-Self-neighbors on the diagonal are excluded from each row before the
-neighborhood overlap is calculated.
-
-If the \code{k}th-smallest distance is tied, every observation at that distance
-is treated as a neighbor. The shared count is capped at \code{k} before it is
-divided by \code{k}. This differs from exact-rank metrics such as
-\code{\link[=trustworthiness]{trustworthiness()}} and \code{\link[=rnx_auc]{rnx_auc()}}, which break ties by original column
-order, and from supplied-graph metrics, which use the first \code{k} indices.
-
-Distance matrices are used as supplied without a finite-value check.
-}
-\note{
-This is not a very efficient way to calculate the preservation if you
-want to calculate the value for multiple values of \code{k}. For more global
-measures of preservation, see \code{\link[=rnx_auc]{rnx_auc()}}.
+Diagonal entries are excluded. Ties at the \code{k}th distance are included, with
+each score capped at 1.
+Nonfinite entries are not rejected.
 }

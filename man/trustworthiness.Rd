@@ -10,18 +10,15 @@ trustworthiness(din, dout, k)
 continuity(din, dout, k)
 }
 \arguments{
-\item{din}{Input distance matrix. The "ground truth" or reference distances.}
+\item{din}{Reference distance matrix.}
 
-\item{dout}{Output distance matrix. A set of distances to compare to the
-reference distances.}
+\item{dout}{Distance matrix to compare with \code{din}.}
 
-\item{k}{The size of the neighborhood. Must be a positive integer less than
-half the number of observations so the standard 0-1 normalization remains
-bounded.}
+\item{k}{Neighborhood size. Must be less than half the number of
+observations.}
 }
 \value{
-A scalar score. A value of 1 indicates no rank-penalty errors at
-neighborhood size \code{k}; lower values indicate worse preservation.
+Scalar rank-preservation score; 1 indicates no penalty.
 }
 \description{
 \code{trustworthiness()} penalizes observations that appear among the \code{k} nearest
@@ -30,24 +27,9 @@ neighbors in \code{dout} but have input-space rank greater than \code{k} in \cod
 longer among the \code{k} nearest neighbors in \code{dout}.
 }
 \details{
-Both functions use exact ranks from the supplied distance matrices and
-exclude the diagonal self-neighbor from each row. Nonmissing values use
-ordinary numeric ordering: \code{-Inf} ranks before finite values and \code{Inf} after
-them. \code{NA} and \code{NaN} rank after all nonmissing values. Original column order
-resolves equal values and the order among missing values, matching
-\code{rank(na.last = TRUE, ties.method = "first")} after self-neighbor exclusion.
-Consequently, nonfinite distances can produce an ordinary finite score
-rather than an error or \code{NA}.
-
-Because these functions require full \code{n} by \code{n} distance matrices, they are
-practical only for small datasets. For larger datasets, use nearest-neighbor
-preservation metrics such as \code{\link[=nn_preservation]{nn_preservation()}} or \code{\link[=nbr_pres_knn]{nbr_pres_knn()}}.
-
-Unlike \code{\link[=nbr_pres]{nbr_pres()}}, which only counts shared neighbors, these metrics weight
-each unexpected or missing neighbor by how far its rank lies outside the
-\code{k}-neighborhood. \code{\link[=rnx_auc]{rnx_auc()}} also uses rank-based neighborhood agreement,
-but aggregates across neighborhood sizes; these functions report the standard
-trustworthiness or continuity score at one \code{k}.
+Diagonal entries are excluded. Unlike \code{\link[=nbr_pres]{nbr_pres()}}, the penalty reflects how
+far a misplaced neighbor falls beyond \code{k}.
+Nonfinite entries are ranked rather than rejected; ties follow column order.
 }
 \examples{
 iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
