@@ -18,8 +18,8 @@ Area under the RNX curve.
 Summarizes rank-based neighborhood agreement across neighborhood sizes,
 weighting smaller neighborhoods more heavily. A value of 1 is perfect, 0 is
 the random-neighborhood baseline, and values may be negative. Diagonal
-entries are excluded. Nonfinite entries are ranked rather than rejected;
-ties follow column order.
+entries are excluded; off-diagonal entries must be finite. Ties follow column
+order.
 }
 \references{
 Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).

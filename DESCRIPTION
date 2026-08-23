@@ -1,7 +1,7 @@
 Type: Package
 Package: quadra
 Title: QUality Assessment of Dimensionality Reduction Algorithms
-Version: 0.2.0
+Version: 0.2.1
 Authors@R:
     person("James", "Melville", , "jlmelville@gmail.com", role = c("aut", "cre"))
 Description: Quantifies dimensionality-reduction embeddings with global

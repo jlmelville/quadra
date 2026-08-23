@@ -5,9 +5,8 @@
 #' Returns the overlap between the `k`-neighborhoods defined by two distance
 #' matrices, separately for each observation.
 #'
-#' Diagonal entries are excluded. Ties at the `k`th distance are included, with
-#' each score capped at 1.
-#' Nonfinite entries are not rejected.
+#' Diagonal entries are excluded; off-diagonal entries must be finite. Ties at
+#' the `k`th distance are included, with each score capped at 1.
 #'
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
@@ -88,9 +87,9 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' `continuity()` applies the dual penalty to input-space neighbors that are no
 #' longer among the `k` nearest neighbors in `dout`.
 #'
-#' Diagonal entries are excluded. Unlike [nbr_pres()], the penalty reflects how
-#' far a misplaced neighbor falls beyond `k`.
-#' Nonfinite entries are ranked rather than rejected; ties follow column order.
+#' Diagonal entries are excluded; off-diagonal entries must be finite. Unlike
+#' [nbr_pres()], the penalty reflects how far a misplaced neighbor falls beyond
+#' `k`.
 #'
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
@@ -127,8 +126,8 @@ continuity <- function(din, dout, k) {
 #' Summarizes rank-based neighborhood agreement across neighborhood sizes,
 #' weighting smaller neighborhoods more heavily. A value of 1 is perfect, 0 is
 #' the random-neighborhood baseline, and values may be negative. Diagonal
-#' entries are excluded. Nonfinite entries are ranked rather than rejected;
-#' ties follow column order.
+#' entries are excluded; off-diagonal entries must be finite. Ties follow column
+#' order.
 #'
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
@@ -358,6 +357,20 @@ validate_distance_matrix_pair <- function(din, dout) {
   }
   if (nrow(din) != ncol(din)) {
     stop("din and dout must be square distance matrices", call. = FALSE)
+  }
+  validate_finite_off_diagonal(din, "din")
+  validate_finite_off_diagonal(dout, "dout")
+  invisible(TRUE)
+}
+
+validate_finite_off_diagonal <- function(x, name) {
+  for (i in seq_len(nrow(x))) {
+    if (any(!is.finite(x[i, -i]))) {
+      stop(
+        paste0("`", name, "` must contain only finite off-diagonal distances"),
+        call. = FALSE
+      )
+    }
   }
   invisible(TRUE)
 }

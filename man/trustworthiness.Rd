@@ -27,9 +27,9 @@ neighbors in \code{dout} but have input-space rank greater than \code{k} in \cod
 longer among the \code{k} nearest neighbors in \code{dout}.
 }
 \details{
-Diagonal entries are excluded. Unlike \code{\link[=nbr_pres]{nbr_pres()}}, the penalty reflects how
-far a misplaced neighbor falls beyond \code{k}.
-Nonfinite entries are ranked rather than rejected; ties follow column order.
+Diagonal entries are excluded; off-diagonal entries must be finite. Unlike
+\code{\link[=nbr_pres]{nbr_pres()}}, the penalty reflects how far a misplaced neighbor falls beyond
+\code{k}.
 }
 \examples{
 iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x

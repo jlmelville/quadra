@@ -1,4 +1,11 @@
 
+# quadra 0.2.1
+
+## Bug fixes and minor improvements
+
+* `nbr_pres()`, `trustworthiness()`, `continuity()`, and `rnx_auc()` now reject
+nonfinite off-diagonal distances; diagonal values remain ignored.
+
 # quadra 0.2.0
 
 ## New features

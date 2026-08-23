@@ -21,7 +21,6 @@ Returns the overlap between the \code{k}-neighborhoods defined by two distance
 matrices, separately for each observation.
 }
 \details{
-Diagonal entries are excluded. Ties at the \code{k}th distance are included, with
-each score capped at 1.
-Nonfinite entries are not rejected.
+Diagonal entries are excluded; off-diagonal entries must be finite. Ties at
+the \code{k}th distance are included, with each score capped at 1.
 }

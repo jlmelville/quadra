@@ -218,91 +218,64 @@ test_that("direct RNX AUC matches co-ranking reference with tied ranks", {
   )
 })
 
-test_that("direct RNX AUC matches co-ranking reference with missing distances", {
-  # fmt: skip
-  din <- matrix(
-    c(
-       0,  1, NA,  2,
-       1,  0,  2, NA,
-      NA,  2,  0,  1,
-       2, NA,  1,  0
-    ),
-    nrow = 4,
-    byrow = TRUE
+test_that("distance-matrix metrics reject nonfinite off-diagonal entries", {
+  dm <- distance_matrix(matrix(c(0, 1, 4, 9, 16), ncol = 1))
+  metrics <- list(
+    nbr_pres = function(din, dout) nbr_pres(din, dout, k = 1),
+    trustworthiness = function(din, dout) {
+      trustworthiness(din, dout, k = 1)
+    },
+    continuity = function(din, dout) continuity(din, dout, k = 1),
+    rnx_auc = rnx_auc
   )
-  dout <- din
 
-  expect_equal(
-    rnx_auc(din, dout),
-    rnx_auc_crm(coranking_matrix(din, dout))
-  )
+  for (metric_name in names(metrics)) {
+    metric <- metrics[[metric_name]]
+    for (input_name in c("din", "dout")) {
+      for (value in list(NA_real_, NaN, Inf, -Inf)) {
+        inputs <- list(din = dm, dout = dm)
+        inputs[[input_name]][1, 2] <- value
+        expect_error(
+          do.call(metric, inputs),
+          paste0(
+            "`",
+            input_name,
+            "` must contain only finite off-diagonal distances"
+          ),
+          info = paste(metric_name, input_name, value)
+        )
+      }
+    }
+  }
 })
 
-test_that("exact-rank metrics apply the documented nonfinite ordering", {
-  # `rank()` is the public-contract oracle: infinities use numeric ordering,
-  # missing values rank last, and original column order breaks ties.
-  rank_penalty_reference <- function(din, dout, k, continuity = FALSE) {
-    n_obs <- nrow(din)
-    penalty <- 0
-    for (i in seq_len(n_obs)) {
-      nonself <- seq_len(n_obs) != i
-      ranks_in <- rank(
-        din[i, nonself],
-        na.last = TRUE,
-        ties.method = "first"
-      )
-      ranks_out <- rank(
-        dout[i, nonself],
-        na.last = TRUE,
-        ties.method = "first"
-      )
-      neighborhood_ranks <- if (continuity) ranks_in else ranks_out
-      penalty_ranks <- if (continuity) ranks_out else ranks_in
-      penalized <- neighborhood_ranks <= k & penalty_ranks > k
-      penalty <- penalty + sum(penalty_ranks[penalized] - k)
-    }
+test_that("distance-matrix metrics ignore diagonal values", {
+  dm <- distance_matrix(matrix(c(0, 1, 4, 9, 16), ncol = 1))
+  nonfinite_diagonal <- dm
+  diag(nonfinite_diagonal) <- c(NA_real_, NaN, Inf, -Inf, 0)
+  metrics <- list(
+    nbr_pres = function(din, dout) nbr_pres(din, dout, k = 1),
+    trustworthiness = function(din, dout) {
+      trustworthiness(din, dout, k = 1)
+    },
+    continuity = function(din, dout) continuity(din, dout, k = 1),
+    rnx_auc = rnx_auc
+  )
 
-    normalization <- n_obs * k * ((2 * n_obs) - (3 * k) - 1)
-    1 - ((2 * penalty) / normalization)
+  for (metric_name in names(metrics)) {
+    metric <- metrics[[metric_name]]
+    expected <- metric(dm, dm)
+    expect_equal(
+      metric(nonfinite_diagonal, dm),
+      expected,
+      info = paste(metric_name, "din")
+    )
+    expect_equal(
+      metric(dm, nonfinite_diagonal),
+      expected,
+      info = paste(metric_name, "dout")
+    )
   }
-
-  # fmt: skip
-  din <- matrix(
-    c(
-         0, -Inf,    1,  Inf,  NA,
-      -Inf,    0,  NaN,    2, Inf,
-         1,  NaN,    0, -Inf,   1,
-       Inf,    2, -Inf,    0, NaN,
-        NA,  Inf,    1,  NaN,   0
-    ),
-    nrow = 5,
-    byrow = TRUE
-  )
-  # fmt: skip
-  dout <- matrix(
-    c(
-         0,    1, -Inf,   NA, Inf,
-         1,    0,  Inf, -Inf, NaN,
-      -Inf,  Inf,    0,    2, NaN,
-        NA, -Inf,    2,    0,   1,
-       Inf,  NaN,  NaN,    1,   0
-    ),
-    nrow = 5,
-    byrow = TRUE
-  )
-
-  expect_equal(
-    rnx_auc(din, dout),
-    rnx_auc_crm(coranking_matrix(din, dout))
-  )
-  expect_equal(
-    trustworthiness(din, dout, k = 1),
-    rank_penalty_reference(din, dout, k = 1)
-  )
-  expect_equal(
-    continuity(din, dout, k = 1),
-    rank_penalty_reference(din, dout, k = 1, continuity = TRUE)
-  )
 })
 
 test_that("trustworthiness and continuity are one for exact rank preservation", {
