@@ -13,9 +13,9 @@ empty average is `NA_real_`.
 Both `roc_auc()` and `pr_auc()` require a finite square distance matrix and one
 nonmissing label per observation. The query itself is excluded.
 
-Each function returns `list(av_auc, label_av)`. `av_auc` weights each defined
-query equally; `label_av` contains per-label means in first-appearance order.
-Labels without a defined query remain `NA_real_`.
+By default, each function returns `list(av_auc, label_av)`. `av_auc` weights
+each defined query equally; `label_av` contains per-label means in
+first-appearance order. Labels without a defined query remain `NA_real_`.
 
 Set `ret_extra = TRUE` to append the row-aligned `query_auc` vector and its
 defined-query count. Undefined queries are `NA_real_`.

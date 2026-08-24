@@ -1,7 +1,7 @@
 
 # quadra 0.2.1
 
-## Bug fixes and minor improvements
+## New features
 
 * Random-pair distance metrics and `random_triplet_accuracy()` now accept
 reusable samples from `sample_pairs()` and `sample_triplets()`. With
@@ -11,6 +11,9 @@ triplet agreement outcomes.
 `trustworthiness()` and `continuity()` now accept multiple `k` values.
 * `roc_auc()` and `pr_auc()` now accept `ret_extra = TRUE` to return
 row-aligned query AUCs and the number of defined queries.
+
+## Bug fixes and minor improvements
+
 * `nbr_pres()`, `trustworthiness()`, `continuity()`, and `rnx_auc()` now reject
 nonfinite off-diagonal distances; diagonal values remain ignored.
 
