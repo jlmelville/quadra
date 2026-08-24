@@ -14,11 +14,13 @@ continuity(din, dout, k)
 
 \item{dout}{Distance matrix to compare with \code{din}.}
 
-\item{k}{Neighborhood size. Must be less than half the number of
-observations.}
+\item{k}{One or more unique neighborhood sizes, each less than half the
+number of observations.}
 }
 \value{
-Scalar rank-preservation score; 1 indicates no penalty.
+For scalar \code{k}, an unnamed rank-preservation score. For multiple
+values, a named numeric vector with items \verb{trustworthiness<k>} or
+\verb{continuity<k>}. A value of 1 indicates no penalty.
 }
 \description{
 \code{trustworthiness()} penalizes observations that appear among the \code{k} nearest
@@ -37,6 +39,7 @@ din <- as.matrix(stats::dist(iris[, -5]))
 dout <- as.matrix(stats::dist(iris_pca))
 trustworthiness(din, dout, k = 15)
 continuity(din, dout, k = 15)
+trustworthiness(din, dout, k = c(5, 15, 30))
 }
 \references{
 Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear

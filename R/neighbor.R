@@ -93,9 +93,11 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #'
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
-#' @param k Neighborhood size. Must be less than half the number of
-#'   observations.
-#' @return Scalar rank-preservation score; 1 indicates no penalty.
+#' @param k One or more unique neighborhood sizes, each less than half the
+#'   number of observations.
+#' @return For scalar `k`, an unnamed rank-preservation score. For multiple
+#'   values, a named numeric vector with items `trustworthiness<k>` or
+#'   `continuity<k>`. A value of 1 indicates no penalty.
 #' @references
 #' Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
 #' projection methods: An experimental study. In *Artificial Neural Networks -
@@ -106,11 +108,18 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' dout <- as.matrix(stats::dist(iris_pca))
 #' trustworthiness(din, dout, k = 15)
 #' continuity(din, dout, k = 15)
+#' trustworthiness(din, dout, k = c(5, 15, 30))
 #' @export
 trustworthiness <- function(din, dout, k) {
   validate_distance_matrix_pair(din, dout)
   k <- validate_rank_penalty_k(k, nrow(din))
-  trustworthiness_exact(din, dout, k)
+  if (length(k) == 1L) {
+    return(trustworthiness_exact(din, dout, k))
+  }
+  stats::setNames(
+    trustworthiness_exact_multi(din, dout, k),
+    paste0("trustworthiness", k)
+  )
 }
 
 #' @rdname trustworthiness
@@ -118,7 +127,49 @@ trustworthiness <- function(din, dout, k) {
 continuity <- function(din, dout, k) {
   validate_distance_matrix_pair(din, dout)
   k <- validate_rank_penalty_k(k, nrow(din))
-  continuity_exact(din, dout, k)
+  if (length(k) == 1L) {
+    return(continuity_exact(din, dout, k))
+  }
+  stats::setNames(continuity_exact_multi(din, dout, k), paste0("continuity", k))
+}
+
+#' RNX Curve
+#'
+#' Returns exact rank-based neighborhood agreement at selected neighborhood
+#' sizes. A value of 1 is perfect, 0 is the random-neighborhood baseline, and
+#' values may be negative. Diagonal entries are excluded; off-diagonal entries
+#' must be finite. Ties follow column order. The curve diagnoses scale-specific
+#' preservation; it does not establish a universally preferred embedding.
+#'
+#' @param din Reference distance matrix.
+#' @param dout Distance matrix to compare with `din`.
+#' @param k Optional unique neighborhood sizes from 1 through `n - 2`, where
+#'   `n` is the number of observations. By default, return all of them.
+#' @return A named numeric vector. Items are named `rnx<k>`.
+#' @seealso [rnx_auc()] for a weighted summary of the complete curve.
+#' @references
+#' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
+#' Multi-scale similarities in stochastic neighbour embedding: Reducing
+#' dimensionality while preserving both local and global structure.
+#' *Neurocomputing*, *169*, 246-261.
+#' @examples
+#' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
+#' din <- as.matrix(stats::dist(iris[, -5]))
+#' dout <- as.matrix(stats::dist(iris_pca))
+#' rnx_curve(din, dout, k = c(5, 15, 30))
+#' @export
+rnx_curve <- function(din, dout, k = NULL) {
+  validate_distance_matrix_pair(din, dout)
+  n_obs <- nrow(din)
+  if (n_obs < 3L) {
+    stop("RNX curve requires at least three observations", call. = FALSE)
+  }
+  if (is.null(k)) {
+    k <- seq_len(n_obs - 2L)
+  } else {
+    k <- validate_rnx_k(k, n_obs)
+  }
+  stats::setNames(rnx_curve_direct(din, dout, k), paste0("rnx", k))
 }
 
 #' Area Under the RNX Curve
@@ -132,6 +183,7 @@ continuity <- function(din, dout, k) {
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
 #' @return Area under the RNX curve.
+#' @seealso [rnx_curve()] for agreement at individual neighborhood sizes.
 #' @references
 #' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
 #' Multi-scale similarities in stochastic neighbour embedding: Reducing
@@ -376,16 +428,31 @@ validate_finite_off_diagonal <- function(x, name) {
 }
 
 validate_rank_penalty_k <- function(k, n_obs) {
-  k <- validate_positive_integer(k, "k")
+  if (length(k) == 1L) {
+    k <- validate_positive_integer(k, "k")
+  } else {
+    k <- validate_positive_integer_vector(k, "k")
+  }
   if (n_obs < 3L) {
     stop(
       "trustworthiness and continuity require at least three observations",
       call. = FALSE
     )
   }
-  if ((2L * k) >= n_obs) {
+  if (any((2 * k) >= n_obs)) {
     stop(
       "k must be less than half the number of observations",
+      call. = FALSE
+    )
+  }
+  k
+}
+
+validate_rnx_k <- function(k, n_obs) {
+  k <- validate_positive_integer_vector(k, "k")
+  if (any(k >= (n_obs - 1L))) {
+    stop(
+      "k must be less than the number of non-self observations",
       call. = FALSE
     )
   }

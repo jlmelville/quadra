@@ -26,7 +26,8 @@ scale to larger datasets.
 `trustworthiness()` and `continuity()` are also local-neighborhood metrics, but
 they use rank penalties rather than only counting shared neighbors. They are
 exact distance-matrix functions for small datasets. `rnx_auc()` summarizes
-rank-based neighborhood agreement over many neighborhood sizes.
+rank-based neighborhood agreement over many neighborhood sizes;
+`rnx_curve()` retains the individual scales.
 
 See the [local preservation](local-preservation.html) article for examples and
 related local diagnostics.

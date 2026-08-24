@@ -13,12 +13,24 @@ rnx_auc_direct <- function(din, dout) {
     .Call(`_quadra_rnx_auc_direct`, din, dout)
 }
 
+rnx_curve_direct <- function(din, dout, k) {
+    .Call(`_quadra_rnx_curve_direct`, din, dout, k)
+}
+
 trustworthiness_exact <- function(din, dout, k) {
     .Call(`_quadra_trustworthiness_exact`, din, dout, k)
 }
 
 continuity_exact <- function(din, dout, k) {
     .Call(`_quadra_continuity_exact`, din, dout, k)
+}
+
+trustworthiness_exact_multi <- function(din, dout, k) {
+    .Call(`_quadra_trustworthiness_exact_multi`, din, dout, k)
+}
+
+continuity_exact_multi <- function(din, dout, k) {
+    .Call(`_quadra_continuity_exact_multi`, din, dout, k)
 }
 
 triplet_sample <- function(triplets, xin, xout, metric_in = "sqeuclidean", metric_out = "sqeuclidean", n_threads = 0) {

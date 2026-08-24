@@ -7,6 +7,8 @@
 reusable samples from `sample_pairs()` and `sample_triplets()`. With
 `ret_extra = TRUE`, they return the sampled comparisons with pair distances or
 triplet agreement outcomes.
+* New `rnx_curve()` returns exact rank agreement by neighborhood size.
+`trustworthiness()` and `continuity()` now accept multiple `k` values.
 * `nbr_pres()`, `trustworthiness()`, `continuity()`, and `rnx_auc()` now reject
 nonfinite off-diagonal distances; diagonal values remain ignored.
 

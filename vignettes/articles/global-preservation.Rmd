@@ -54,6 +54,11 @@ default.
 `rnx_auc()` summarizes exact rank-based neighborhood agreement across
 neighborhood sizes, giving more weight to smaller neighborhoods.
 
+Use `rnx_curve()` to inspect individual neighborhood sizes. By default it
+returns the complete curve; pass `k` to select particular scales.
+The curve diagnoses scale-specific preservation; it does not establish a
+universally preferred embedding.
+
 An RNX AUC of 1 is perfect, 0 is the random-neighborhood baseline, and negative
 values indicate worse-than-random rank agreement.
 
@@ -63,6 +68,7 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 din <- as.matrix(stats::dist(iris_x))
 dout <- as.matrix(stats::dist(pca_iris))
 rnx_auc(din, dout)
+rnx_curve(din, dout, k = c(5, 15, 30))
 ```
 
 ## Further Reading

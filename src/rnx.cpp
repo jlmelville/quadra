@@ -53,6 +53,27 @@ std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
   return ranks;
 }
 
+std::vector<double> max_rank_histogram(const NumericMatrix &din,
+                                       const NumericMatrix &dout,
+                                       std::size_t n_obs) {
+  const std::size_t n_ranks = n_obs - 1;
+  std::vector<double> histogram(n_ranks + 1, 0);
+
+  for (std::size_t i = 0; i < n_obs; ++i) {
+    const auto ranks_in = row_ranks_first_ties(din, i);
+    const auto ranks_out = row_ranks_first_ties(dout, i);
+
+    for (std::size_t j = 0; j < n_obs; ++j) {
+      if (j == i) {
+        continue;
+      }
+      const std::size_t max_rank = std::max(ranks_in[j], ranks_out[j]);
+      ++histogram[max_rank];
+    }
+  }
+  return histogram;
+}
+
 double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
                                        std::size_t n_obs) {
   const std::size_t n_ranks = n_obs - 1;
@@ -101,6 +122,66 @@ double rank_penalty_score(const NumericMatrix &din, const NumericMatrix &dout,
   return 1.0 - ((2.0 * penalty) / normalization);
 }
 
+std::vector<std::size_t> validate_rank_penalty_ks(const IntegerVector &k,
+                                                  std::size_t n_obs) {
+  if (k.size() < 1) {
+    stop("k must be nonempty");
+  }
+
+  std::vector<std::size_t> rank_ks;
+  rank_ks.reserve(k.size());
+  for (R_xlen_t i = 0; i < k.size(); ++i) {
+    const int rank_k = k[i];
+    if (rank_k == NA_INTEGER || rank_k < 1) {
+      stop("k must contain positive integers");
+    }
+    const auto rank_k_size = static_cast<std::size_t>(rank_k);
+    if ((2 * rank_k_size) >= n_obs) {
+      stop("k must be less than half the number of observations");
+    }
+    rank_ks.push_back(rank_k_size);
+  }
+  return rank_ks;
+}
+
+NumericVector rank_penalty_scores(const NumericMatrix &din,
+                                  const NumericMatrix &dout,
+                                  const IntegerVector &k, bool continuity) {
+  const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
+  const auto rank_ks = validate_rank_penalty_ks(k, n_obs);
+  std::vector<double> penalties(rank_ks.size(), 0);
+
+  for (std::size_t i = 0; i < n_obs; ++i) {
+    const auto ranks_in = row_ranks_first_ties(din, i);
+    const auto ranks_out = row_ranks_first_ties(dout, i);
+
+    for (std::size_t j = 0; j < n_obs; ++j) {
+      if (j == i) {
+        continue;
+      }
+      const std::size_t neighborhood_rank =
+          continuity ? ranks_in[j] : ranks_out[j];
+      const std::size_t penalty_rank = continuity ? ranks_out[j] : ranks_in[j];
+      for (std::size_t k_idx = 0; k_idx < rank_ks.size(); ++k_idx) {
+        const std::size_t rank_k = rank_ks[k_idx];
+        if (neighborhood_rank <= rank_k && penalty_rank > rank_k) {
+          penalties[k_idx] += static_cast<double>(penalty_rank - rank_k);
+        }
+      }
+    }
+  }
+
+  NumericVector scores(rank_ks.size());
+  for (std::size_t k_idx = 0; k_idx < rank_ks.size(); ++k_idx) {
+    const std::size_t rank_k = rank_ks[k_idx];
+    const double normalization =
+        static_cast<double>(n_obs) * static_cast<double>(rank_k) *
+        static_cast<double>((2 * n_obs) - (3 * rank_k) - 1);
+    scores[k_idx] = 1.0 - ((2.0 * penalties[k_idx]) / normalization);
+  }
+  return scores;
+}
+
 double exact_rank_penalty_metric(const NumericMatrix &din,
                                  const NumericMatrix &dout, int k,
                                  bool continuity) {
@@ -117,36 +198,76 @@ double exact_rank_penalty_metric(const NumericMatrix &din,
   return rank_penalty_score(din, dout, rank_k, continuity);
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 double rnx_auc_direct(const NumericMatrix &din, const NumericMatrix &dout) {
   const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
-  const std::size_t n_ranks = n_obs - 1;
-
-  std::vector<double> max_rank_histogram(n_ranks + 1, 0);
-  for (std::size_t i = 0; i < n_obs; ++i) {
-    const auto ranks_in = row_ranks_first_ties(din, i);
-    const auto ranks_out = row_ranks_first_ties(dout, i);
-
-    for (std::size_t j = 0; j < n_obs; ++j) {
-      if (j == i) {
-        continue;
-      }
-      const std::size_t max_rank = std::max(ranks_in[j], ranks_out[j]);
-      ++max_rank_histogram[max_rank];
-    }
-  }
-
-  return rnx_auc_from_max_rank_histogram(max_rank_histogram, n_obs);
+  const auto histogram = max_rank_histogram(din, dout, n_obs);
+  return rnx_auc_from_max_rank_histogram(histogram, n_obs);
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
+NumericVector rnx_curve_direct(const NumericMatrix &din,
+                               const NumericMatrix &dout,
+                               const IntegerVector &k) {
+  const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
+  const std::size_t n_ranks = n_obs - 1;
+  if (k.size() < 1) {
+    stop("k must be nonempty");
+  }
+
+  std::vector<std::size_t> rank_ks;
+  rank_ks.reserve(k.size());
+  for (R_xlen_t i = 0; i < k.size(); ++i) {
+    const int rank_k = k[i];
+    if (rank_k == NA_INTEGER || rank_k < 1) {
+      stop("k must contain positive integers");
+    }
+    const auto rank_k_size = static_cast<std::size_t>(rank_k);
+    if (rank_k_size >= n_ranks) {
+      stop("k must be less than the number of non-self observations");
+    }
+    rank_ks.push_back(rank_k_size);
+  }
+
+  const auto histogram = max_rank_histogram(din, dout, n_obs);
+  std::vector<double> full_curve(n_ranks, 0);
+  double top_left = 0;
+  for (std::size_t rank_k = 1; rank_k < n_ranks; ++rank_k) {
+    top_left += histogram[rank_k];
+    const double qnx = top_left / (static_cast<double>(rank_k) * n_obs);
+    full_curve[rank_k] =
+        ((qnx * n_ranks) - rank_k) / static_cast<double>(n_ranks - rank_k);
+  }
+
+  NumericVector curve(rank_ks.size());
+  for (std::size_t i = 0; i < rank_ks.size(); ++i) {
+    curve[i] = full_curve[rank_ks[i]];
+  }
+  return curve;
+}
+
+// [[Rcpp::export(rng = false)]]
 double trustworthiness_exact(const NumericMatrix &din,
                              const NumericMatrix &dout, int k) {
   return exact_rank_penalty_metric(din, dout, k, false);
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 double continuity_exact(const NumericMatrix &din, const NumericMatrix &dout,
                         int k) {
   return exact_rank_penalty_metric(din, dout, k, true);
+}
+
+// [[Rcpp::export(rng = false)]]
+NumericVector trustworthiness_exact_multi(const NumericMatrix &din,
+                                          const NumericMatrix &dout,
+                                          const IntegerVector &k) {
+  return rank_penalty_scores(din, dout, k, false);
+}
+
+// [[Rcpp::export(rng = false)]]
+NumericVector continuity_exact_multi(const NumericMatrix &din,
+                                     const NumericMatrix &dout,
+                                     const IntegerVector &k) {
+  return rank_penalty_scores(din, dout, k, true);
 }

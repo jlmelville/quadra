@@ -93,8 +93,26 @@ test_that("exact-rank native boundaries protect matrix indexing", {
 
   expect_error(rnx_auc_direct(empty, empty), "at least three observations")
   expect_error(rnx_auc_direct(square, nonsquare), "same dimensions")
+  expect_error(rnx_curve_direct(square, square, integer()), "nonempty")
+  expect_error(rnx_curve_direct(square, square, 0L), "positive integers")
+  expect_error(
+    rnx_curve_direct(square, square, 2L),
+    "less than the number of non-self observations"
+  )
   expect_error(trustworthiness_exact(square, nonsquare, 1L), "same dimensions")
   expect_error(continuity_exact(nonsquare, nonsquare, 1L), "square distance")
+  expect_error(
+    trustworthiness_exact_multi(square, square, integer()),
+    "nonempty"
+  )
+  expect_error(
+    continuity_exact_multi(square, square, 0L),
+    "positive integers"
+  )
+  expect_error(
+    trustworthiness_exact_multi(square, square, 2L),
+    "less than half"
+  )
 })
 
 test_that("explicit-triplet native boundary protects native indexing", {

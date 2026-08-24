@@ -46,10 +46,21 @@ double rnx_auc_direct(const NumericMatrix& din, const NumericMatrix& dout);
 RcppExport SEXP _quadra_rnx_auc_direct(SEXP dinSEXP, SEXP doutSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
     rcpp_result_gen = Rcpp::wrap(rnx_auc_direct(din, dout));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rnx_curve_direct
+NumericVector rnx_curve_direct(const NumericMatrix& din, const NumericMatrix& dout, const IntegerVector& k);
+RcppExport SEXP _quadra_rnx_curve_direct(SEXP dinSEXP, SEXP doutSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(rnx_curve_direct(din, dout, k));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -58,7 +69,6 @@ double trustworthiness_exact(const NumericMatrix& din, const NumericMatrix& dout
 RcppExport SEXP _quadra_trustworthiness_exact(SEXP dinSEXP, SEXP doutSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
@@ -71,11 +81,34 @@ double continuity_exact(const NumericMatrix& din, const NumericMatrix& dout, int
 RcppExport SEXP _quadra_continuity_exact(SEXP dinSEXP, SEXP doutSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     rcpp_result_gen = Rcpp::wrap(continuity_exact(din, dout, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// trustworthiness_exact_multi
+NumericVector trustworthiness_exact_multi(const NumericMatrix& din, const NumericMatrix& dout, const IntegerVector& k);
+RcppExport SEXP _quadra_trustworthiness_exact_multi(SEXP dinSEXP, SEXP doutSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(trustworthiness_exact_multi(din, dout, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// continuity_exact_multi
+NumericVector continuity_exact_multi(const NumericMatrix& din, const NumericMatrix& dout, const IntegerVector& k);
+RcppExport SEXP _quadra_continuity_exact_multi(SEXP dinSEXP, SEXP doutSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(continuity_exact_multi(din, dout, k));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -131,8 +164,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_quadra_neighbor_overlap_counts", (DL_FUNC) &_quadra_neighbor_overlap_counts, 4},
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 8},
     {"_quadra_rnx_auc_direct", (DL_FUNC) &_quadra_rnx_auc_direct, 2},
+    {"_quadra_rnx_curve_direct", (DL_FUNC) &_quadra_rnx_curve_direct, 3},
     {"_quadra_trustworthiness_exact", (DL_FUNC) &_quadra_trustworthiness_exact, 3},
     {"_quadra_continuity_exact", (DL_FUNC) &_quadra_continuity_exact, 3},
+    {"_quadra_trustworthiness_exact_multi", (DL_FUNC) &_quadra_trustworthiness_exact_multi, 3},
+    {"_quadra_continuity_exact_multi", (DL_FUNC) &_quadra_continuity_exact_multi, 3},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {"_quadra_triplet_plan_sample", (DL_FUNC) &_quadra_triplet_plan_sample, 7},
     {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 7},

@@ -51,4 +51,9 @@ test_that("README quick-start examples run", {
   dout <- as.matrix(stats::dist(iris_pca2))
   expect_length(nbr_pres(din, dout, k = 5), nrow(iris_x))
   expect_length(rnx_auc(din, dout), 1)
+  expect_named(rnx_curve(din, dout, k = c(5, 15)), c("rnx5", "rnx15"))
+  expect_named(
+    trustworthiness(din, dout, k = c(5, 15)),
+    c("trustworthiness5", "trustworthiness15")
+  )
 })
