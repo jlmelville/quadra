@@ -5,9 +5,9 @@ title: "Global preservation"
 For the sampled metrics in this article, `Xin` and `metric_in` define the
 reference geometry.
 
-Create reusable pair samples with `sample_pairs()` and supply them with
-`pairs`. Set `ret_extra = TRUE` to return the evaluated pairs and their raw
-input and output distances.
+Create reusable samples with `sample_pairs()` or `sample_triplets()` and supply
+them with `pairs` or `triplets`. Set `ret_extra = TRUE` to inspect the sampled
+comparisons behind a score.
 
 ## Random Triplet Accuracy
 
@@ -18,8 +18,9 @@ Triplets with tied input-space distances are excluded from the denominator
 because they do not define a relative ordering. If no sampled input triplets
 define an ordering, the result is `NA_real_`.
 
-Reset the R seed and keep `n_threads` fixed to reuse the same sample across
-embeddings.
+Detailed results contain the evaluated triplets and a row-aligned agreement
+vector; input-distance ties are `NA`. Reset the R seed and keep `n_threads`
+fixed to repeat implicit sampling.
 
 ## Random Pair Distance Correlation
 

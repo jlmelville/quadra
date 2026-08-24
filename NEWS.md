@@ -3,9 +3,10 @@
 
 ## Bug fixes and minor improvements
 
-* Random-pair distance metrics now accept reusable samples from
-`sample_pairs()` and can return the sampled pairs and raw distances with
-`ret_extra = TRUE`.
+* Random-pair distance metrics and `random_triplet_accuracy()` now accept
+reusable samples from `sample_pairs()` and `sample_triplets()`. With
+`ret_extra = TRUE`, they return the sampled comparisons with pair distances or
+triplet agreement outcomes.
 * `nbr_pres()`, `trustworthiness()`, `continuity()`, and `rnx_auc()` now reject
 nonfinite off-diagonal distances; diagonal values remain ignored.
 

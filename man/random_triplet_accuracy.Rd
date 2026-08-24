@@ -11,7 +11,9 @@ random_triplet_accuracy(
   metric_in = "sqeuclidean",
   metric_out = "sqeuclidean",
   is_transposed = FALSE,
-  n_threads = 0
+  n_threads = 0,
+  triplets = NULL,
+  ret_extra = FALSE
 )
 }
 \arguments{
@@ -38,10 +40,19 @@ rows.}
 
 \item{n_threads}{Maximum number of threads to use. \code{0} or \code{1} runs
 serially.}
+
+\item{triplets}{Optional one-based matrix with columns for the anchor and two
+endpoints. All three indices in a row must differ. If supplied,
+numeric \code{n_triplets} is ignored.}
+
+\item{ret_extra}{Whether to return the triplets and their row-aligned
+agreement outcomes.}
 }
 \value{
 Triplet accuracy in \verb{[0, 1]}, or \code{NA_real_} if every input comparison
-is tied.
+is tied. With \code{ret_extra = TRUE}, returns a list with \code{accuracy},
+\code{triplets}, and \code{agreement}. Agreement is \code{NA} for input-distance ties,
+\code{TRUE} for matching strict orderings, and \code{FALSE} otherwise.
 }
 \description{
 Returns the proportion of sampled anchored triplets whose relative distance
@@ -49,9 +60,9 @@ ordering in \code{Xin} is preserved in \code{Xout}. Input-space ties are exclude
 result is \code{NA_real_} if no triplet defines an ordering.
 }
 \details{
-\code{Xin} and \code{metric_in} define the reference geometry. Reset the R seed and
-keep \code{n_threads} fixed to reuse the same triplets across calls. A
-matrix-valued \code{n_triplets} bypasses sampling.
+\code{Xin} and \code{metric_in} define the reference geometry. Supply \code{triplets} to
+reuse exact comparisons, or reset the R seed and keep \code{n_threads} fixed. A
+matrix-valued \code{n_triplets} uses its documented zero-based column layout.
 }
 \examples{
 iris_x <- iris[, -5]

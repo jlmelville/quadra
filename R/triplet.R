@@ -1,12 +1,52 @@
+#' Sample Anchored Triplets
+#'
+#' Generates anchored triplets for reuse with [random_triplet_accuracy()].
+#'
+#' @param n_obs Number of observations.
+#' @param n_triplets Number of triplets to sample per observation.
+#' @return An integer matrix with columns `anchor`, `endpoint1`, and
+#'   `endpoint2`, ordered by anchor.
+#' @examples
+#' set.seed(42)
+#' sample_triplets(5, 2)
+#' @export
+sample_triplets <- function(n_obs, n_triplets = 5) {
+  n_obs <- validate_positive_integer(n_obs, "n_obs")
+  if (n_obs < 3L) {
+    stop("n_obs must describe at least 3 observations", call. = FALSE)
+  }
+  n_triplets <- validate_positive_integer(n_triplets, "n_triplets")
+  if (n_obs > .Machine$integer.max %/% n_triplets) {
+    stop(
+      "n_obs * n_triplets exceeds the supported integer range",
+      call. = FALSE
+    )
+  }
+
+  n_comparisons <- n_obs * n_triplets
+  anchor <- rep(seq_len(n_obs), each = n_triplets)
+
+  endpoint1 <- sample.int(n_obs - 1L, n_comparisons, replace = TRUE)
+  endpoint1 <- endpoint1 + (endpoint1 >= anchor)
+
+  endpoint2 <- sample.int(n_obs - 2L, n_comparisons, replace = TRUE)
+  excluded1 <- pmin(anchor, endpoint1)
+  excluded2 <- pmax(anchor, endpoint1)
+  endpoint2 <- endpoint2 + (endpoint2 >= excluded1)
+  endpoint2 <- endpoint2 + (endpoint2 >= excluded2)
+
+  cbind(anchor = anchor, endpoint1 = endpoint1, endpoint2 = endpoint2)
+}
+
 #' Random Triplet Accuracy
 #'
 #' Returns the proportion of sampled anchored triplets whose relative distance
 #' ordering in `Xin` is preserved in `Xout`. Input-space ties are excluded; the
 #' result is `NA_real_` if no triplet defines an ordering.
 #'
-#' `Xin` and `metric_in` define the reference geometry. Reset the R seed and
-#' keep `n_threads` fixed to reuse the same triplets across calls. A
-#' matrix-valued `n_triplets` bypasses sampling.
+#' `Xin` and `metric_in` define the reference geometry. Supply `triplets` to
+#' reuse exact comparisons, or reset the R seed and keep `n_threads` fixed. A
+#' matrix-valued `n_triplets` uses its documented zero-based column layout.
 #'
 #' @param Xin Input data, with observations in rows by default. Data must be
 #'   dense and finite; nonnumeric data-frame columns are ignored.
@@ -25,8 +65,15 @@
 #'   rows.
 #' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
+#' @param triplets Optional one-based matrix with columns for the anchor and two
+#'   endpoints. All three indices in a row must differ. If supplied,
+#'   numeric `n_triplets` is ignored.
+#' @param ret_extra Whether to return the triplets and their row-aligned
+#'   agreement outcomes.
 #' @return Triplet accuracy in `[0, 1]`, or `NA_real_` if every input comparison
-#'   is tied.
+#'   is tied. With `ret_extra = TRUE`, returns a list with `accuracy`,
+#'   `triplets`, and `agreement`. Agreement is `NA` for input-distance ties,
+#'   `TRUE` for matching strict orderings, and `FALSE` otherwise.
 #' @references Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
 #' Understanding how dimension reduction tools work: an empirical approach to
 #' deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
@@ -47,9 +94,12 @@ random_triplet_accuracy <-
     metric_in = "sqeuclidean",
     metric_out = "sqeuclidean",
     is_transposed = FALSE,
-    n_threads = 0
+    n_threads = 0,
+    triplets = NULL,
+    ret_extra = FALSE
   ) {
     is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
+    ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
     n_threads <- validate_n_threads(n_threads)
     metric_in <- validate_distance(metric_in)
     metric_out <- validate_distance(metric_out)
@@ -74,18 +124,51 @@ random_triplet_accuracy <-
       )
     }
 
-    if (is.matrix(n_triplets)) {
-      triplets <-
-        validate_triplet_matrix(n_obs, n_triplets)
-
+    if (!is.null(triplets)) {
+      if (is.matrix(n_triplets)) {
+        stop(
+          "only one of n_triplets and triplets may supply a triplet sample",
+          call. = FALSE
+        )
+      }
+      triplets <- validate_triplet_sample(triplets, n_obs)
       return(
-        triplet_sample(
+        triplet_plan_sample(
           triplets,
           Xin,
           Xout,
           metric_in = metric_in,
           metric_out = metric_out,
-          n_threads = n_threads
+          n_threads = n_threads,
+          ret_triplets = ret_extra
+        )
+      )
+    }
+
+    if (is.matrix(n_triplets)) {
+      triplet_matrix <- validate_triplet_matrix(n_obs, n_triplets)
+      if (!ret_extra) {
+        return(
+          triplet_sample(
+            triplet_matrix,
+            Xin,
+            Xout,
+            metric_in = metric_in,
+            metric_out = metric_out,
+            n_threads = n_threads
+          )
+        )
+      }
+      triplets <- canonicalize_triplet_matrix(n_obs, triplet_matrix)
+      return(
+        triplet_plan_sample(
+          triplets,
+          Xin,
+          Xout,
+          metric_in = metric_in,
+          metric_out = metric_out,
+          n_threads = n_threads,
+          ret_triplets = ret_extra
         )
       )
     }
@@ -97,9 +180,64 @@ random_triplet_accuracy <-
       n_triplets = n_triplets,
       metric_in = metric_in,
       metric_out = metric_out,
-      n_threads = n_threads
+      n_threads = n_threads,
+      ret_triplets = ret_extra
     )
   }
+
+validate_triplet_sample <- function(triplets, n_obs) {
+  if (
+    !is.matrix(triplets) ||
+      !is.numeric(triplets) ||
+      is.complex(triplets) ||
+      nrow(triplets) < 1L ||
+      ncol(triplets) != 3L
+  ) {
+    stop(
+      "triplets must be a nonempty numeric matrix with 3 columns",
+      call. = FALSE
+    )
+  }
+  if (
+    anyNA(triplets) ||
+      any(!is.finite(triplets)) ||
+      any(triplets != floor(triplets))
+  ) {
+    stop("triplets must contain finite whole-number indices", call. = FALSE)
+  }
+  if (any(triplets < 1 | triplets > n_obs)) {
+    stop(
+      "triplets indices must be between 1 and the number of observations",
+      call. = FALSE
+    )
+  }
+  if (
+    any(triplets[, 1L] == triplets[, 2L]) ||
+      any(triplets[, 1L] == triplets[, 3L]) ||
+      any(triplets[, 2L] == triplets[, 3L])
+  ) {
+    stop("triplets must contain three distinct indices per row", call. = FALSE)
+  }
+
+  matrix(
+    as.integer(triplets),
+    nrow = nrow(triplets),
+    ncol = 3L,
+    dimnames = list(NULL, c("anchor", "endpoint1", "endpoint2"))
+  )
+}
+
+canonicalize_triplet_matrix <- function(n_obs, triplets) {
+  endpoint1_rows <- seq.int(1L, nrow(triplets), by = 2L)
+  endpoint2_rows <- endpoint1_rows + 1L
+  n_triplets <- length(endpoint1_rows)
+
+  cbind(
+    anchor = rep(seq_len(n_obs), each = n_triplets),
+    endpoint1 = as.integer(triplets[endpoint1_rows, , drop = FALSE]) + 1L,
+    endpoint2 = as.integer(triplets[endpoint2_rows, , drop = FALSE]) + 1L
+  )
+}
 
 # Validate a pre-generated zero-indexed triplet matrix.
 validate_triplet_matrix <- function(n_obs, triplets) {

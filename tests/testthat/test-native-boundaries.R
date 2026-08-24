@@ -100,7 +100,7 @@ test_that("exact-rank native boundaries protect matrix indexing", {
 test_that("explicit-triplet native boundary protects native indexing", {
   xin <- matrix(c(0, 1, 2), nrow = 1)
   # fmt: skip
-  valid <- matrix(
+  legacy <- matrix(
     c(
       1, 0, 0,
       2, 2, 1
@@ -108,9 +108,10 @@ test_that("explicit-triplet native boundary protects native indexing", {
     nrow = 2,
     byrow = TRUE
   )
+  plan <- matrix(c(1L, 2L, 3L), nrow = 1)
 
   expect_error(
-    triplet_sample(valid, xin, matrix(c(0, 1, 2, 3), nrow = 1)),
+    triplet_sample(legacy, xin, matrix(c(0, 1, 2, 3), nrow = 1)),
     "same number of observations"
   )
   expect_error(
@@ -123,12 +124,29 @@ test_that("explicit-triplet native boundary protects native indexing", {
   )
 
   expect_error(
-    triplet_sample(valid, xin, xin, n_threads = -1),
+    triplet_plan_sample(matrix(integer(), nrow = 0, ncol = 3), xin, xin),
+    "at least one row"
+  )
+  expect_error(
+    triplet_plan_sample(matrix(c(1L, 2L, NA_integer_), nrow = 1), xin, xin),
+    "indices between 1"
+  )
+  expect_error(
+    triplet_plan_sample(matrix(c(1L, 2L, 4L), nrow = 1), xin, xin),
+    "indices between 1"
+  )
+  expect_error(
+    triplet_plan_sample(matrix(c(1L, 2L, 2L), nrow = 1), xin, xin),
+    "three distinct indices"
+  )
+
+  expect_error(
+    triplet_sample(legacy, xin, xin, n_threads = -1),
     "n_threads must be one finite, whole, nonnegative value"
   )
   expect_error(
-    triplet_sample(
-      valid,
+    triplet_plan_sample(
+      plan,
       xin,
       xin,
       n_threads = .Machine$integer.max + 1

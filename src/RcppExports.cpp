@@ -84,7 +84,6 @@ double triplet_sample(const NumericMatrix& triplets, const NumericMatrix& xin, c
 RcppExport SEXP _quadra_triplet_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type triplets(tripletsSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
@@ -95,19 +94,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// random_triplet_sample
-double random_triplet_sample(const NumericMatrix& xin, const NumericMatrix& xout, double n_triplets, const std::string& metric_in, const std::string& metric_out, double n_threads);
-RcppExport SEXP _quadra_random_triplet_sample(SEXP xinSEXP, SEXP xoutSEXP, SEXP n_tripletsSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
+// triplet_plan_sample
+SEXP triplet_plan_sample(const IntegerMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, double n_threads, bool ret_triplets);
+RcppExport SEXP _quadra_triplet_plan_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP, SEXP ret_tripletsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type triplets(tripletsSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
+    Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type ret_triplets(ret_tripletsSEXP);
+    rcpp_result_gen = Rcpp::wrap(triplet_plan_sample(triplets, xin, xout, metric_in, metric_out, n_threads, ret_triplets));
+    return rcpp_result_gen;
+END_RCPP
+}
+// random_triplet_sample
+SEXP random_triplet_sample(const NumericMatrix& xin, const NumericMatrix& xout, double n_triplets, const std::string& metric_in, const std::string& metric_out, double n_threads, bool ret_triplets);
+RcppExport SEXP _quadra_random_triplet_sample(SEXP xinSEXP, SEXP xoutSEXP, SEXP n_tripletsSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP, SEXP ret_tripletsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
     Rcpp::traits::input_parameter< double >::type n_triplets(n_tripletsSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
     Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(random_triplet_sample(xin, xout, n_triplets, metric_in, metric_out, n_threads));
+    Rcpp::traits::input_parameter< bool >::type ret_triplets(ret_tripletsSEXP);
+    rcpp_result_gen = Rcpp::wrap(random_triplet_sample(xin, xout, n_triplets, metric_in, metric_out, n_threads, ret_triplets));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -119,7 +134,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_quadra_trustworthiness_exact", (DL_FUNC) &_quadra_trustworthiness_exact, 3},
     {"_quadra_continuity_exact", (DL_FUNC) &_quadra_continuity_exact, 3},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
-    {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 6},
+    {"_quadra_triplet_plan_sample", (DL_FUNC) &_quadra_triplet_plan_sample, 7},
+    {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 7},
     {NULL, NULL, 0}
 };
 
