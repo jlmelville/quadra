@@ -9,6 +9,8 @@ reusable samples from `sample_pairs()` and `sample_triplets()`. With
 triplet agreement outcomes.
 * New `rnx_curve()` returns exact rank agreement by neighborhood size.
 `trustworthiness()` and `continuity()` now accept multiple `k` values.
+* `roc_auc()` and `pr_auc()` now accept `ret_extra = TRUE` to return
+row-aligned query AUCs and the number of defined queries.
 * `nbr_pres()`, `trustworthiness()`, `continuity()`, and `rnx_auc()` now reject
 nonfinite off-diagonal distances; diagonal values remain ignored.
 

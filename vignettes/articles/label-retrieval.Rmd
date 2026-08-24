@@ -17,6 +17,9 @@ Each function returns `list(av_auc, label_av)`. `av_auc` weights each defined
 query equally; `label_av` contains per-label means in first-appearance order.
 Labels without a defined query remain `NA_real_`.
 
+Set `ret_extra = TRUE` to append the row-aligned `query_auc` vector and its
+defined-query count. Undefined queries are `NA_real_`.
+
 ```R
 iris_x <- as.matrix(iris[, -5])
 pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
@@ -29,6 +32,10 @@ roc$label_av
 pr <- pr_auc(dout, iris$Species)
 pr$av_auc
 pr$label_av
+
+roc_detail <- roc_auc(dout, iris$Species, ret_extra = TRUE)
+head(roc_detail$query_auc)
+roc_detail$n_defined
 ```
 
 ## Further Reading

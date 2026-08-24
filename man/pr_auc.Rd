@@ -4,20 +4,26 @@
 \alias{pr_auc}
 \title{Average Precision-Recall AUC for Label Retrieval}
 \usage{
-pr_auc(dm, labels)
+pr_auc(dm, labels, ret_extra = FALSE)
 }
 \arguments{
 \item{dm}{Finite square numeric distance matrix. The query itself is excluded.}
 
 \item{labels}{A label vector without missing values, with one label per row
 of \code{dm}.}
+
+\item{ret_extra}{Whether to append row-aligned query AUCs and the number of
+defined queries.}
 }
 \value{
-A list with components in this order:
+A list whose first components are:
 \itemize{
 \item \code{av_auc}: the mean PR AUC over defined queries.
 \item \code{label_av}: a named list of per-label means in first-appearance order.
 }
+
+With \code{ret_extra = TRUE}, the list also contains \code{query_auc}, with
+\code{NA_real_} for undefined queries, and the integer \code{n_defined}.
 }
 \description{
 Precision-recall counterpart to \code{\link[=roc_auc]{roc_auc()}}, often more informative for

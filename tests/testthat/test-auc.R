@@ -1,3 +1,18 @@
+retrieval_query_oracle <- function(dm, labels, i, curve) {
+  other <- seq_len(nrow(dm))[-i]
+  positive <- labels[other] == labels[i]
+  if (!any(positive) || all(positive)) {
+    return(NA_real_)
+  }
+
+  scores0 <- -dm[i, other[positive]]
+  scores1 <- -dm[i, other[!positive]]
+  if (curve == "roc") {
+    return(as.numeric(PRROC::roc.curve(scores0, scores1)$auc))
+  }
+  as.numeric(PRROC::pr.curve(scores0, scores1)$auc.davis.goadrich)
+}
+
 test_that("public AUC metrics reject invalid distance matrices", {
   skip_if_not_installed("PRROC")
 
@@ -173,5 +188,155 @@ test_that("public AUC metrics exclude diagonal distances", {
 
   for (auc_fn in list(roc_auc, pr_auc)) {
     expect_equal(auc_fn(changed_diagonal, labels), auc_fn(dm, labels))
+  }
+})
+
+test_that("public AUC details expose row-aligned query values", {
+  skip_if_not_installed("PRROC")
+
+  # Classes b and a have two and three defined queries; c is undefined.
+  # fmt: skip
+  dm <- matrix(
+    c(
+      0, 3, 4, 1, 5, 6,
+      4, 0, 1, 5, 2, 6,
+      4, 1, 0, 5, 2, 6,
+      1, 3, 4, 0, 5, 6,
+      1, 5, 6, 2, 0, 3,
+      1, 2, 3, 4, 5, 0
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+  labels <- c("b", "a", "a", "b", "a", "c")
+  cases <- list(
+    list(metric = roc_auc, curve = "roc"),
+    list(metric = pr_auc, curve = "pr")
+  )
+
+  for (case in cases) {
+    compact <- case$metric(dm, labels)
+    detailed <- case$metric(dm, labels, ret_extra = TRUE)
+    expected_query <- vapply(
+      seq_len(nrow(dm)),
+      function(i) retrieval_query_oracle(dm, labels, i, case$curve),
+      numeric(1)
+    )
+
+    expect_identical(case$metric(dm, labels, ret_extra = FALSE), compact)
+    expect_identical(case$metric(dm, labels, TRUE), detailed)
+    expect_identical(
+      names(detailed),
+      c(
+        "av_auc",
+        "label_av",
+        "query_auc",
+        "n_defined"
+      )
+    )
+    expect_identical(detailed[1:2], compact)
+    expect_equal(detailed$query_auc, expected_query)
+    expect_identical(detailed$n_defined, 5L)
+
+    defined <- is.finite(detailed$query_auc)
+    total <- 0
+    for (auc in detailed$query_auc[defined]) {
+      total <- total + auc
+    }
+    expect_identical(detailed$av_auc, total / detailed$n_defined)
+    expect_equal(
+      unlist(detailed$label_av[c("b", "a")], use.names = FALSE),
+      c(
+        mean(detailed$query_auc[labels == "b"]),
+        mean(detailed$query_auc[labels == "a"])
+      )
+    )
+    expect_true(is.na(detailed$label_av$c))
+  }
+})
+
+test_that("public AUC details preserve label and row identities", {
+  skip_if_not_installed("PRROC")
+
+  # fmt: skip
+  dm <- matrix(
+    c(
+      0, 3, 4, 1, 5, 6,
+      4, 0, 1, 5, 2, 6,
+      4, 1, 0, 5, 2, 6,
+      1, 3, 4, 0, 5, 6,
+      1, 5, 6, 2, 0, 3,
+      1, 2, 3, 4, 5, 0
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+  labels <- c("b", "a", "a", "b", "a", "c")
+  factor_labels <- factor(labels, levels = c("c", "b", "a", "unused"))
+  permutation <- c(6, 3, 1, 5, 2, 4)
+
+  for (auc_fn in list(roc_auc, pr_auc)) {
+    original <- auc_fn(dm, labels, ret_extra = TRUE)
+    factor_result <- auc_fn(dm, factor_labels, ret_extra = TRUE)
+    permuted <- auc_fn(
+      dm[permutation, permutation],
+      labels[permutation],
+      ret_extra = TRUE
+    )
+
+    expect_identical(factor_result, original)
+    expect_equal(permuted$query_auc, original$query_auc[permutation])
+    expect_equal(permuted$av_auc, original$av_auc)
+    expect_identical(
+      names(permuted$label_av),
+      unique(labels[permutation])
+    )
+    expect_equal(
+      unlist(permuted$label_av[names(original$label_av)]),
+      unlist(original$label_av)
+    )
+  }
+})
+
+test_that("public AUC details retain all undefined queries", {
+  skip_if_not_installed("PRROC")
+
+  # fmt: skip
+  dm <- matrix(
+    c(
+      0, 1, 2,
+      1, 0, 3,
+      2, 3, 0
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+
+  for (auc_fn in list(roc_auc, pr_auc)) {
+    for (labels in list(rep(TRUE, 3), seq_len(3))) {
+      compact <- auc_fn(dm, labels)
+      detailed <- auc_fn(dm, labels, ret_extra = TRUE)
+
+      expect_identical(detailed[1:2], compact)
+      expect_identical(detailed$query_auc, rep(NA_real_, 3))
+      expect_identical(detailed$n_defined, 0L)
+    }
+  }
+})
+
+test_that("public AUC metrics validate ret_extra", {
+  skip_if_not_installed("PRROC")
+
+  dm <- diag(3)
+  labels <- c("a", "a", "b")
+  for (auc_fn in list(roc_auc, pr_auc)) {
+    expect_error(
+      auc_fn(dm, labels, ret_extra = NA),
+      "ret_extra must be TRUE or FALSE"
+    )
+    expect_error(
+      auc_fn(dm, labels, ret_extra = 1),
+      "ret_extra must be TRUE or FALSE"
+    )
   }
 })

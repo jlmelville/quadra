@@ -12,17 +12,23 @@
 #' @param dm Finite square numeric distance matrix. The query itself is excluded.
 #' @param labels A label vector without missing values, with one label per row
 #'   of `dm`.
-#' @return A list with components in this order:
+#' @param ret_extra Whether to append row-aligned query AUCs and the number of
+#'   defined queries.
+#' @return A list whose first components are:
 #'
 #'   * `av_auc`: the mean AUC over defined queries.
 #'   * `label_av`: a named list of per-label means in first-appearance order.
+#'
+#'   With `ret_extra = TRUE`, the list also contains `query_auc`, with
+#'   `NA_real_` for undefined queries, and the integer `n_defined`.
 #' @export
-roc_auc <- function(dm, labels) {
+roc_auc <- function(dm, labels, ret_extra = FALSE) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("roc_auc function requires 'PRROC' package")
   }
+  ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
   validate_auc_inputs(dm, labels)
-  summarize_retrieval_auc(dm, labels, roc_auc_row)
+  summarize_retrieval_auc(dm, labels, roc_auc_row, ret_extra)
 }
 
 #' Average Precision-Recall AUC for Label Retrieval
@@ -35,10 +41,13 @@ roc_auc <- function(dm, labels) {
 #' @note Requires the `PRROC` package.
 #'
 #' @inheritParams roc_auc
-#' @return A list with components in this order:
+#' @return A list whose first components are:
 #'
 #'   * `av_auc`: the mean PR AUC over defined queries.
 #'   * `label_av`: a named list of per-label means in first-appearance order.
+#'
+#'   With `ret_extra = TRUE`, the list also contains `query_auc`, with
+#'   `NA_real_` for undefined queries, and the integer `n_defined`.
 #' @references
 #' Keilwagen, J., Grosse, I., & Grau, J. (2014).
 #' Area under precision-recall curves for weighted and unweighted data.
@@ -49,12 +58,13 @@ roc_auc <- function(dm, labels) {
 #' In *Proceedings of the 23rd international conference on Machine learning*
 #' (pp. 233-240). ACM.
 #' @export
-pr_auc <- function(dm, labels) {
+pr_auc <- function(dm, labels, ret_extra = FALSE) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
     stop("pr_auc function requires 'PRROC' package")
   }
+  ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
   validate_auc_inputs(dm, labels)
-  summarize_retrieval_auc(dm, labels, pr_auc_row)
+  summarize_retrieval_auc(dm, labels, pr_auc_row, ret_extra)
 }
 
 validate_auc_inputs <- function(dm, labels) {
@@ -218,10 +228,11 @@ roc_auc_row <- function(dm, labels, i) {
 # \item{av_auc}{Area Under the curve, averaged over each observation.}
 # The list also contains the average AUC per class label, with each average
 # being named after the class label.
-summarize_retrieval_auc <- function(dm, labels, auc_row_fn) {
+summarize_retrieval_auc <- function(dm, labels, auc_row_fn, ret_extra) {
   av_auc <- 0
   av_n <- 0
   n <- nrow(dm)
+  query_auc <- if (ret_extra) rep(NA_real_, n) else NULL
   label_names <- unique(as.character(labels))
   ns <- stats::setNames(as.list(integer(length(label_names))), label_names)
   label_av <- stats::setNames(
@@ -237,6 +248,9 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn) {
       av_n <- av_n + 1
       label_av[[label_index]] <- label_av[[label_index]] + auc
       ns[[label_index]] <- ns[[label_index]] + 1L
+      if (ret_extra) {
+        query_auc[[i]] <- auc
+      }
     }
   }
   for (label_index in seq_along(ns)) {
@@ -246,8 +260,15 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn) {
       label_av[[label_index]] <- label_av[[label_index]] / ns[[label_index]]
     }
   }
-  list(
+  result <- list(
     av_auc = if (av_n == 0L) NA_real_ else av_auc / av_n,
     label_av = label_av
+  )
+  if (!ret_extra) {
+    return(result)
+  }
+  c(
+    result,
+    list(query_auc = query_auc, n_defined = as.integer(av_n))
   )
 }
