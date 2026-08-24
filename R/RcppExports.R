@@ -5,8 +5,8 @@ neighbor_overlap_counts <- function(idx, ref_idx, k, n_threads = 0) {
     .Call(`_quadra_neighbor_overlap_counts`, idx, ref_idx, k, n_threads)
 }
 
-random_distances <- function(xin, xout, metric_in = "euclidean", metric_out = "euclidean", n_pairs = 10000, n_threads = 0) {
-    .Call(`_quadra_random_distances`, xin, xout, metric_in, metric_out, n_pairs, n_threads)
+random_distances <- function(xin, xout, metric_in = "euclidean", metric_out = "euclidean", n_pairs = 10000, n_threads = 0, pairs = NULL, ret_pairs = FALSE) {
+    .Call(`_quadra_random_distances`, xin, xout, metric_in, metric_out, n_pairs, n_threads, pairs, ret_pairs)
 }
 
 rnx_auc_direct <- function(din, dout) {

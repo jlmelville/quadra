@@ -25,18 +25,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // random_distances
-List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, double n_pairs, double n_threads);
-RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP) {
+List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, double n_pairs, double n_threads, Nullable<IntegerMatrix> pairs, bool ret_pairs);
+RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP, SEXP pairsSEXP, SEXP ret_pairsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type xin(xinSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xout(xoutSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
     Rcpp::traits::input_parameter< double >::type n_pairs(n_pairsSEXP);
     Rcpp::traits::input_parameter< double >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(random_distances(xin, xout, metric_in, metric_out, n_pairs, n_threads));
+    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type pairs(pairsSEXP);
+    Rcpp::traits::input_parameter< bool >::type ret_pairs(ret_pairsSEXP);
+    rcpp_result_gen = Rcpp::wrap(random_distances(xin, xout, metric_in, metric_out, n_pairs, n_threads, pairs, ret_pairs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -113,7 +114,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_quadra_neighbor_overlap_counts", (DL_FUNC) &_quadra_neighbor_overlap_counts, 4},
-    {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 6},
+    {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 8},
     {"_quadra_rnx_auc_direct", (DL_FUNC) &_quadra_rnx_auc_direct, 2},
     {"_quadra_trustworthiness_exact", (DL_FUNC) &_quadra_trustworthiness_exact, 3},
     {"_quadra_continuity_exact", (DL_FUNC) &_quadra_continuity_exact, 3},

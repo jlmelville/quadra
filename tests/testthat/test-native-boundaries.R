@@ -64,6 +64,26 @@ test_that("random-distance native boundary protects native setup", {
     ),
     "supported integer range"
   )
+  expect_error(
+    random_distances(
+      xin,
+      xin,
+      pairs = matrix(integer(), nrow = 0, ncol = 2)
+    ),
+    "at least one row and exactly two columns"
+  )
+  expect_error(
+    random_distances(xin, xin, pairs = matrix(1L, nrow = 1, ncol = 1)),
+    "at least one row and exactly two columns"
+  )
+  expect_error(
+    random_distances(xin, xin, pairs = matrix(c(0L, 2L), nrow = 1)),
+    "indices between 1 and the number of observations"
+  )
+  expect_error(
+    random_distances(xin, xin, pairs = matrix(c(1L, NA_integer_), nrow = 1)),
+    "indices between 1 and the number of observations"
+  )
 })
 
 test_that("exact-rank native boundaries protect matrix indexing", {

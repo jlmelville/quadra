@@ -12,7 +12,9 @@ random_pair_distance_stress(
   metric_out = "sqeuclidean",
   range_scale = TRUE,
   is_transposed = FALSE,
-  n_threads = 0
+  n_threads = 0,
+  pairs = NULL,
+  ret_extra = FALSE
 )
 }
 \arguments{
@@ -38,17 +40,23 @@ rows.}
 
 \item{n_threads}{Maximum number of threads to use. \code{0} or \code{1} runs
 serially.}
+
+\item{pairs}{Optional one-based matrix with one pair per row. The endpoints
+in each row must differ. If supplied, \code{n_pairs} is ignored.}
+
+\item{ret_extra}{Whether to return the pairs and their raw distances.}
 }
 \value{
-Root mean squared difference between the sampled distances.
+The stress, or a list with \code{stress}, \code{pairs}, \code{distance_in}, and
+\code{distance_out} when \code{ret_extra = TRUE}.
 }
 \description{
 Returns the root mean squared difference between matched sampled input and
 output distances. Each distance vector is scaled to \verb{[0, 1]} by default.
 }
 \details{
-\code{Xin} and \code{metric_in} define the reference geometry. Reset the R seed and
-keep \code{n_threads} fixed to reuse the same pairs across calls.
+\code{Xin} and \code{metric_in} define the reference geometry. Supply \code{pairs} to reuse
+exact comparisons, or reset the R seed and keep \code{n_threads} fixed.
 }
 \examples{
 iris_x <- iris[, -5]

@@ -12,7 +12,9 @@ random_pair_distance_emd(
   metric_out = "sqeuclidean",
   range_scale = TRUE,
   is_transposed = FALSE,
-  n_threads = 0
+  n_threads = 0,
+  pairs = NULL,
+  ret_extra = FALSE
 )
 }
 \arguments{
@@ -38,9 +40,15 @@ rows.}
 
 \item{n_threads}{Maximum number of threads to use. \code{0} or \code{1} runs
 serially.}
+
+\item{pairs}{Optional one-based matrix with one pair per row. The endpoints
+in each row must differ. If supplied, \code{n_pairs} is ignored.}
+
+\item{ret_extra}{Whether to return the pairs and their raw distances.}
 }
 \value{
-Earth Mover's Distance between the sampled distance distributions.
+The EMD, or a list with \code{emd}, \code{pairs}, \code{distance_in}, and
+\code{distance_out} when \code{ret_extra = TRUE}.
 }
 \description{
 Compares the empirical distributions of sampled input and output distances
@@ -49,8 +57,8 @@ default.
 }
 \details{
 EMD compares marginal distributions, not corresponding pairs. \code{Xin} and
-\code{metric_in} define the reference geometry. Reset the R seed and keep
-\code{n_threads} fixed to reuse the same pairs across calls.
+\code{metric_in} define the reference geometry. Supply \code{pairs} to reuse exact
+comparisons, or reset the R seed and keep \code{n_threads} fixed.
 }
 \examples{
 iris_x <- iris[, -5]

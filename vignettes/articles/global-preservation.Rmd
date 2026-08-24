@@ -5,6 +5,10 @@ title: "Global preservation"
 For the sampled metrics in this article, `Xin` and `metric_in` define the
 reference geometry.
 
+Create reusable pair samples with `sample_pairs()` and supply them with
+`pairs`. Set `ret_extra = TRUE` to return the evaluated pairs and their raw
+input and output distances.
+
 ## Random Triplet Accuracy
 
 Random triplet accuracy is the proportion of sampled anchored triplets whose
