@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,33 +60,33 @@
 
     
     
+<p>For the sampled metrics in this article, <code>Xin</code> and
+<code>metric_in</code> define the reference geometry.</p>
+<p>Create reusable samples with <code><a href="../reference/sample_pairs.html">sample_pairs()</a></code> or
+<code><a href="../reference/sample_triplets.html">sample_triplets()</a></code> and supply them with <code>pairs</code>
+or <code>triplets</code>. Set <code>ret_extra = TRUE</code> to inspect
+the sampled comparisons behind a score.</p>
 <div class="section level2">
 <h2 id="random-triplet-accuracy">Random Triplet Accuracy<a class="anchor" aria-label="anchor" href="#random-triplet-accuracy"></a>
 </h2>
-<p>Random triplet accuracy is the proportion of triangle distances where
-the relative ordering is retained. It was used by Wang et al. (2021) to
-measure global structure preservation.</p>
+<p>Random triplet accuracy is the proportion of sampled anchored
+triplets whose input-space distance ordering is retained in the
+embedding.</p>
 <p>Triplets with tied input-space distances are excluded from the
 denominator because they do not define a relative ordering. If no
 sampled input triplets define an ordering, the result is
 <code>NA_real_</code>.</p>
-<p>For internally sampled metrics, results are reproducible when both
-the R seed and <code>n_threads</code> are unchanged. Reset the seed and
-keep the thread count fixed before comparing embeddings; changing the
-thread count can change the sample.</p>
-<p>For an explicit reusable triplet calculation, <code>n_triplets</code>
-can be a zero-based endpoint matrix with one column per
-observation/anchor and successive row pairs holding the endpoints. This
-route performs no internal sampling.</p>
+<p>Detailed results contain the evaluated triplets and a row-aligned
+agreement vector; input-distance ties are <code>NA</code>. Reset the R
+seed and keep <code>n_threads</code> fixed to repeat implicit
+sampling.</p>
 </div>
 <div class="section level2">
 <h2 id="random-pair-distance-correlation">Random Pair Distance Correlation<a class="anchor" aria-label="anchor" href="#random-pair-distance-correlation"></a>
 </h2>
 <p><code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code> measures Pearson
-correlation between equivalent input and output distances by default,
-similar to the method used by Becht and co-workers. Set
-<code>method = "spearman"</code> to compare the sampled distance ranks
-instead of their linear agreement.</p>
+correlation between matched input and output distances by default. Set
+<code>method = "spearman"</code> to compare their ranks.</p>
 <p>Euclidean and squared Euclidean have the same ordering, so their
 Spearman interpretation is equivalent. Squaring changes magnitudes and
 can change the default Pearson result.</p>
@@ -94,9 +94,11 @@ can change the default Pearson result.</p>
 <div class="section level2">
 <h2 id="earth-movers-distance">Earth-Mover’s Distance<a class="anchor" aria-label="anchor" href="#earth-movers-distance"></a>
 </h2>
-<p><code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code> converts distances to an
-empirical distribution and compares them via Earth Mover’s Distance (1D
-Wasserstein), based on the method used by Heiser and Lau.</p>
+<p><code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code> compares the empirical input
+and output distance distributions using Earth Mover’s Distance (1D
+Wasserstein).</p>
+<p>EMD compares marginal distributions rather than pairwise
+correspondence.</p>
 <p>EMD and stress below are magnitude statistics. Squared Euclidean can
 change both results relative to Euclidean distance, even when each
 sampled distance vector is range-scaled.</p>
@@ -105,29 +107,29 @@ sampled distance vector is range-scaled.</p>
 <h2 id="random-pair-distance-stress">Random Pair Distance Stress<a class="anchor" aria-label="anchor" href="#random-pair-distance-stress"></a>
 </h2>
 <p><code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares the matched
-sampled distances with a root mean squared difference. By default, each
-sampled distance vector is scaled to the range 0-1 first, so the value
-is most useful when comparing embeddings under the same sampling and
-scaling settings.</p>
+sampled distances with a root mean squared difference, after scaling
+each distance vector to <code>[0, 1]</code> by default.</p>
 </div>
 <div class="section level2">
 <h2 id="rnx-auc">RNX AUC<a class="anchor" aria-label="anchor" href="#rnx-auc"></a>
 </h2>
 <p><code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes exact rank-based neighborhood
-agreement over all neighborhood sizes from a pair of distance matrices.
-It gives more weight to smaller neighborhoods, so it is useful when you
-want one score for the local-to-global rank structure of a small or
-medium dataset.</p>
-<p>An RNX AUC of 1 is perfect and 0 is the random-neighborhood baseline.
-Zero is not a lower bound: worse-than-random rank agreement can produce
-negative values. Distance ties are ranked by first occurrence in
-original column order after the diagonal self-neighbor is removed.</p>
+agreement across neighborhood sizes, giving more weight to smaller
+neighborhoods.</p>
+<p>Use <code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> to inspect individual neighborhood
+sizes. By default it returns the complete curve; pass <code>k</code> to
+select particular scales. The curve diagnoses scale-specific
+preservation; it does not establish a universally preferred
+embedding.</p>
+<p>An RNX AUC of 1 is perfect, 0 is the random-neighborhood baseline,
+and negative values indicate worse-than-random rank agreement.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
 <span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/rnx_curve.html">rnx_curve</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>

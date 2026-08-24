@@ -1,9 +1,8 @@
-# Random Pair Distance Earth Mover's Distance
+# Earth Mover's Distance Between Random-Pair Distances
 
-Evaluates the preservation of global structure of dimensionality
-reduction results using the Earth Mover's Distances between the
-distribution of randomly selected pairs of distances, similar to the
-method of Heiser and Lau (2020).
+Compares the empirical distributions of sampled input and output
+distances using Earth Mover's Distance. Each distance vector is scaled
+to `[0, 1]` by default.
 
 ## Usage
 
@@ -16,7 +15,9 @@ random_pair_distance_emd(
   metric_out = "sqeuclidean",
   range_scale = TRUE,
   is_transposed = FALSE,
-  n_threads = 0
+  n_threads = 0,
+  pairs = NULL,
+  ret_extra = FALSE
 )
 ```
 
@@ -24,72 +25,59 @@ random_pair_distance_emd(
 
 - Xin:
 
-  the input data (usually high-dimensional), a matrix or data frame with
-  one observation per row, or if `is_transposed = TRUE`, one observation
-  per column. Nonnumeric data-frame columns are ignored; sparse matrices
-  are unsupported and retained values must be finite.
+  Input data, with observations in rows by default. Data must be dense
+  and finite; nonnumeric data-frame columns are ignored.
 
 - Xout:
 
-  the output data (usually lower dimensional than `Xin`), a matrix or
-  data frame with one observation per row, or if `is_transposed = TRUE`,
-  one observation per column, with the same input requirements as `Xin`.
+  Output data, with the same input conventions and number of
+  observations as `Xin`.
 
 - n_pairs:
 
-  the number of random pairs of observations to calculate distances for
-  in the input and output space.
+  Number of pairs to sample.
 
 - metric_in:
 
-  the distance calculation to apply to `Xin`. One of `"euclidean"`,
-  `"sqeuclidean"` (squared Euclidean), `"cosine"`, `"manhattan"`,
-  `"correlation"` (1 minus the Pearson correlation), or `"hamming"`.
+  Distance metric for `Xin`. One of `"euclidean"`, `"sqeuclidean"`
+  (squared Euclidean), `"cosine"`, `"manhattan"`, `"correlation"` (1
+  minus the Pearson correlation), or `"hamming"`.
 
 - metric_out:
 
-  the distance metric to apply to `Xout`. See `metric_in` for details.
+  Distance metric for `Xout`. See `metric_in` for details.
 
 - range_scale:
 
-  if `TRUE` (the default) then scale each distance vector to the range
-  0-1 before converting to a distribution.
+  Whether to scale each distance vector to `[0, 1]`.
 
 - is_transposed:
 
-  if `TRUE` then `Xin` and `Xout` are assumed to have been passed in
-  transposed format, i.e. with one observation per column. Otherwise,
-  `Xin` and `Xout` will be transposed. For large datasets, transposing
-  can be slow, so if this function will be called multiple times with
-  the same input data, it is more efficient to transpose the input data
-  once outside of this function and set `is_transposed = TRUE`.
+  Whether observations are stored in columns rather than rows.
 
 - n_threads:
 
-  the maximum number of threads to use. `0` or `1` runs serially.
+  Maximum number of threads to use. `0` or `1` runs serially.
+
+- pairs:
+
+  Optional one-based matrix with one pair per row. The endpoints in each
+  row must differ. If supplied, `n_pairs` is ignored.
+
+- ret_extra:
+
+  Whether to return the pairs and their raw distances.
 
 ## Value
 
-The Earth Mover's distance between the empirical distributions formed
-from the distances in the input and output space.
+The EMD, or a list with `emd`, `pairs`, `distance_in`, and
+`distance_out` when `ret_extra = TRUE`.
 
 ## Details
 
-This function repeatedly samples random pairs of observations and
-calculates the distance between the points in both the original data and
-the embedding space. Each set of distances are scaled between `(0, 1)`,
-converted into an empirical distribution and the Earth Mover's (or
-Wasserstein) distance is calculated.
-
-This function differs slightly from the procedure in the Heiser and Lau
-paper which considers all pair-wise distances.
-
-Reset the R seed and keep `n_threads` fixed to reuse the same sampled
-pairs across calls. Changing the thread count can change the sample.
-
-Squared Euclidean preserves pair-distance ordering but changes distance
-magnitudes. It can therefore produce a different EMD from Euclidean
-distance, even when `range_scale = TRUE`.
+EMD compares marginal distributions, not corresponding pairs. `Xin` and
+`metric_in` define the reference geometry. Supply `pairs` to reuse exact
+comparisons, or reset the R seed and keep `n_threads` fixed.
 
 ## References
 
@@ -104,27 +92,13 @@ reduction techniques. *Cell reports*, *31*(5), 107576.
 [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md),
 and
 [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
-for another measure of global structure preservation.
+for other global preservation measures.
 
 ## Examples
 
 ``` r
-iris_pca2 <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
-random_pair_distance_emd(iris, iris_pca2)
-#> [1] 0.003197086
-
-# For fair comparisons, reset the seed and keep n_threads fixed before each
-# call. Pre-transposing the input data can also save time.
-tiris <- t(iris[, -5])
-iris_pca1 <- stats::prcomp(iris[, -5], rank. = 1, scale = FALSE, retx = TRUE)$x
-iris_pca3 <- stats::prcomp(iris[, -5], rank. = 3, scale = FALSE, retx = TRUE)$x
-set.seed(42)
-random_pair_distance_emd(tiris, t(iris_pca1), is_transposed = TRUE)
-#> [1] 0.01522219
-set.seed(42)
-random_pair_distance_emd(tiris, t(iris_pca2), is_transposed = TRUE)
-#> [1] 0.003995315
-set.seed(42)
-random_pair_distance_emd(tiris, t(iris_pca3), is_transposed = TRUE)
-#> [1] 0.0009722546
+iris_x <- iris[, -5]
+iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
+random_pair_distance_emd(iris_x, iris_pca2)
+#> [1] 0.003741
 ```

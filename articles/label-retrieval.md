@@ -1,38 +1,30 @@
 # Label retrieval
 
-If some sort of labelling is applied to the points, each point can be
-treated as the target in a retrieval procedure:
+[`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
+and
+[`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
+treat each observation as a query, rank the remaining observations by
+distance, and regard matching labels as relevant. These are supervised
+retrieval summaries. Both functions require the [PRROC
+package](https://cran.r-project.org/package=PRROC).
 
-1.  Rank all the other points by distance to the target point.
-2.  See how highly in the ranked list the points with the same label are
-    found.
-3.  Construct a Receiver Operating Characteristic (ROC) curve, or
-    something like it (e.g. Precision-Recall curve)
-4.  Calculate the Area Under the Curve (AUC).
-5.  Average over all points.
-
-This only needs the output distance matrix, but requires the sort of
-labeling usually reserved for data intended for supervised
-classification. Quadra can also provide some help with this, but
-requires the [PRROC package](https://cran.r-project.org/package=PRROC)
-to be installed.
-
-Rows with undefined AUC values, such as rows that cannot define both
-positive and negative examples, are excluded from overall and per-label
-averages. If no rows remain for an average, that average is `NA_real_`.
+Queries without both relevant and irrelevant observations are excluded.
+An empty average is `NA_real_`.
 
 Both
 [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
 and
 [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
 require a finite square distance matrix and one nonmissing label per
-observation. The diagonal query is excluded.
+observation. The query itself is excluded.
 
-Each function returns `list(av_auc, label_av)`. `av_auc` weights every
-defined observation row equally; it is not an unweighted mean of the
-label summaries. `label_av` is a named list of per-label means in label
-first-appearance order. Labels with no defined row remain represented
-with `NA_real_`.
+By default, each function returns `list(av_auc, label_av)`. `av_auc`
+weights each defined query equally; `label_av` contains per-label means
+in first-appearance order. Labels without a defined query remain
+`NA_real_`.
+
+Set `ret_extra = TRUE` to append the row-aligned `query_auc` vector and
+its defined-query count. Undefined queries are `NA_real_`.
 
 ``` r
 
@@ -47,6 +39,10 @@ roc$label_av
 pr <- pr_auc(dout, iris$Species)
 pr$av_auc
 pr$label_av
+
+roc_detail <- roc_auc(dout, iris$Species, ret_extra = TRUE)
+head(roc_detail$query_auc)
+roc_detail$n_defined
 ```
 
 ## Further Reading

@@ -1,60 +1,49 @@
-# Area Under the Precision-Recall Curve for an Embedding
+# Average Precision-Recall AUC for Label Retrieval
 
-Embedding quality measure.
+Precision-recall counterpart to
+[`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md),
+often more informative for imbalanced labels.
 
 ## Usage
 
 ``` r
-pr_auc(dm, labels)
+pr_auc(dm, labels, ret_extra = FALSE)
 ```
 
 ## Arguments
 
 - dm:
 
-  A finite square numeric distance matrix. The diagonal is excluded from
-  each retrieval problem.
+  Finite square numeric distance matrix. The query itself is excluded.
 
 - labels:
 
   A label vector without missing values, with one label per row of `dm`.
 
+- ret_extra:
+
+  Whether to append row-aligned query AUCs and the number of defined
+  queries.
+
 ## Value
 
-A list with components in this order:
+A list whose first components are:
 
-- `av_auc`: the PR AUC averaged over defined observation rows.
+- `av_auc`: the mean PR AUC over defined queries.
 
 - `label_av`: a named list of per-label means in first-appearance order.
 
+With `ret_extra = TRUE`, the list also contains `query_auc`, with
+`NA_real_` for undefined queries, and the integer `n_defined`.
+
 ## Details
 
-The PR curve plots precision (also known as positive predictive value,
-PPV) against recall (also known as the true positive rate). The area
-under the curve provides similar information compared to the area under
-the ROC curve, but may be more appropriate when classes are highly
-imbalanced.
-
-This function calculates the PR curve N times, where N is the number of
-the observations. The label of the Nth observation is set as the
-positive class and then the other observations are ranked according to
-their distance from the Nth observation in the output coordinates (lower
-distances being better). Observations with the same label as the Nth
-observation count as positive observations. The final reported result is
-the average over all observations. Rows with undefined AUC values, such
-as rows that cannot define both positive and negative examples, are
-excluded from overall and per-label averages. If no rows remain for an
-average, that average is `NA_real_`.
-
-`av_auc` weights each defined query equally; `label_av` reports
-per-label means in first-appearance order.
-
-Perfect retrieval results in an AUC of 1. For random retrieval, the
-value is the proportion of the positive class labels for that curve.
+Aggregation and undefined-query handling are the same as for
+[`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md).
 
 ## Note
 
-Use of this function requires that the `PRROC` package be installed.
+Requires the `PRROC` package.
 
 ## References
 

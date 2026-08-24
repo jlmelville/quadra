@@ -1,20 +1,10 @@
 # Area Under the RNX Curve
 
-The RNX curve is formed by calculating the `rnx_crm` metric for
-different sizes of neighborhood. Each value of RNX is scaled according
-to the natural log of the neighborhood size, to give a higher weight to
-smaller neighborhoods. An AUC of 1 indicates perfect neighborhood
-preservation and an AUC of 0 is the random-neighborhood baseline. Zero
-is not a lower bound: worse-than-random rank agreement can produce
-negative RNX values and a negative RNX AUC. Self-neighbors on the
-distance-matrix diagonal are excluded before the co-ranking matrix is
-calculated. Nonmissing values use ordinary numeric ordering: `-Inf`
-ranks before finite values and `Inf` after them. `NA` and `NaN` rank
-after all nonmissing values. Original column order resolves equal values
-and the order among missing values, matching
-`rank(na.last = TRUE, ties.method = "first")` after self-neighbor
-exclusion. Consequently, nonfinite distances can produce an ordinary
-finite score rather than an error or `NA`.
+Summarizes rank-based neighborhood agreement across neighborhood sizes,
+weighting smaller neighborhoods more heavily. A value of 1 is perfect, 0
+is the random-neighborhood baseline, and values may be negative.
+Diagonal entries are excluded; off-diagonal entries must be finite. Ties
+follow column order.
 
 ## Usage
 
@@ -26,16 +16,15 @@ rnx_auc(din, dout)
 
 - din:
 
-  Input distance matrix.
+  Reference distance matrix.
 
 - dout:
 
-  Output distance matrix.
+  Distance matrix to compare with `din`.
 
 ## Value
 
-Area under the RNX curve. A value of 1 is perfect, 0 is the random
-baseline, and negative values indicate worse-than-random rank agreement.
+Area under the RNX curve.
 
 ## References
 
@@ -43,3 +32,8 @@ Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015). Multi-scale
 similarities in stochastic neighbour embedding: Reducing dimensionality
 while preserving both local and global structure. *Neurocomputing*,
 *169*, 246-261.
+
+## See also
+
+[`rnx_curve()`](https://jlmelville.github.io/quadra/reference/rnx_curve.md)
+for agreement at individual neighborhood sizes.

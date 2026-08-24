@@ -17,51 +17,29 @@ continuity(din, dout, k)
 
 - din:
 
-  Input distance matrix. The "ground truth" or reference distances.
+  Reference distance matrix.
 
 - dout:
 
-  Output distance matrix. A set of distances to compare to the reference
-  distances.
+  Distance matrix to compare with `din`.
 
 - k:
 
-  The size of the neighborhood. Must be a positive integer less than
-  half the number of observations so the standard 0-1 normalization
-  remains bounded.
+  One or more unique neighborhood sizes, each less than half the number
+  of observations.
 
 ## Value
 
-A scalar score. A value of 1 indicates no rank-penalty errors at
-neighborhood size `k`; lower values indicate worse preservation.
+For scalar `k`, an unnamed rank-preservation score. For multiple values,
+a named numeric vector with items `trustworthiness<k>` or
+`continuity<k>`. A value of 1 indicates no penalty.
 
 ## Details
 
-Both functions use exact ranks from the supplied distance matrices and
-exclude the diagonal self-neighbor from each row. Nonmissing values use
-ordinary numeric ordering: `-Inf` ranks before finite values and `Inf`
-after them. `NA` and `NaN` rank after all nonmissing values. Original
-column order resolves equal values and the order among missing values,
-matching `rank(na.last = TRUE, ties.method = "first")` after
-self-neighbor exclusion. Consequently, nonfinite distances can produce
-an ordinary finite score rather than an error or `NA`.
-
-Because these functions require full `n` by `n` distance matrices, they
-are practical only for small datasets. For larger datasets, use
-nearest-neighbor preservation metrics such as
-[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
-or
-[`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md).
-
+Diagonal entries are excluded; off-diagonal entries must be finite.
 Unlike
 [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md),
-which only counts shared neighbors, these metrics weight each unexpected
-or missing neighbor by how far its rank lies outside the
-`k`-neighborhood.
-[`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
-also uses rank-based neighborhood agreement, but aggregates across
-neighborhood sizes; these functions report the standard trustworthiness
-or continuity score at one `k`.
+the penalty reflects how far a misplaced neighbor falls beyond `k`.
 
 ## References
 
@@ -79,4 +57,7 @@ trustworthiness(din, dout, k = 15)
 #> [1] 0.9859563
 continuity(din, dout, k = 15)
 #> [1] 0.9927384
+trustworthiness(din, dout, k = c(5, 15, 30))
+#>  trustworthiness5 trustworthiness15 trustworthiness30 
+#>         0.9786667         0.9859563         0.9935587 
 ```

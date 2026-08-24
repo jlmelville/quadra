@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,30 +105,21 @@ in the embedding.</td>
 </tr>
 </tbody>
 </table>
-<p>These are starting points rather than interchangeable scores. The
-sections below explain the related metrics and the input conventions
-that affect their interpretation.</p>
+<p>Choose metrics to match the relationships an embedding should
+preserve. The table gives starting points.</p>
 </div>
 <div class="section level2">
 <h2 id="local-neighborhood-preservation">Local Neighborhood Preservation<a class="anchor" aria-label="anchor" href="#local-neighborhood-preservation"></a>
 </h2>
-<p>The most generic approach is to consider “neighborhood
-preservation”:</p>
-<ol style="list-style-type: decimal">
-<li>Find the <em>k</em>-nearest neighbors of a point in the input
-space.</li>
-<li>Do the same in the output space.</li>
-<li>Count the overlap.</li>
-</ol>
-<p><code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> does this from exact distance matrices.
-<code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code> work with
-nearest-neighbor graphs, which is the more practical route for larger
-datasets.</p>
+<p><code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> compares neighborhoods from exact distance
+matrices. <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code>
+work with nearest-neighbor graphs and scale to larger datasets.</p>
 <p><code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> are also
 local-neighborhood metrics, but they use rank penalties rather than only
 counting shared neighbors. They are exact distance-matrix functions for
 small datasets. <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes rank-based
-neighborhood agreement over many neighborhood sizes.</p>
+neighborhood agreement over many neighborhood sizes;
+<code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> retains the individual scales.</p>
 <p>See the <a href="local-preservation.html">local preservation</a>
 article for examples and related local diagnostics.</p>
 </div>
@@ -169,48 +160,31 @@ distributions using Earth Mover’s Distance.</li>
 <code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares matched sampled
 distances with a root mean squared difference.</li>
 </ul>
+<p>For these metrics, <code>Xin</code> and <code>metric_in</code> define
+the reference geometry.</p>
 <p>See the <a href="global-preservation.html">global preservation</a>
 article for those metrics.</p>
 </div>
 <div class="section level2">
-<h2 id="current-input-and-ordering-conventions">Current input and ordering conventions<a class="anchor" aria-label="anchor" href="#current-input-and-ordering-conventions"></a>
+<h2 id="input-and-ordering-conventions">Input and Ordering Conventions<a class="anchor" aria-label="anchor" href="#input-and-ordering-conventions"></a>
 </h2>
 <p>Sampled pair and triplet metrics require dense, finite inputs; graph
-metrics can pass supported sparse inputs to <code>rnndescent</code>.
-Nonnumeric data-frame columns are ignored. Exact distance-matrix metrics
-do not screen nonfinite values.</p>
-<p>Tie handling differs by representation. <code><a href="../reference/nbr_pres.html">nbr_pres()</a></code>
-includes every item tied at the <code>k</code>th distance boundary and
-caps the overlap at <code>k</code>. Trustworthiness, continuity, and RNX
-break distance ties by original column order. Supplied-graph metrics use
-the first <code>k</code> indices in the provider or caller’s fixed
+metrics accept the sparse inputs supported by
+<code>rnndescent</code>.</p>
+<p><code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> includes boundary ties, exact-rank metrics
+break ties by column order, and supplied-graph metrics use their stored
 order.</p>
-<p>Euclidean and squared Euclidean preserve neighbor, triplet, and
-Spearman ordering. Squaring changes distance magnitudes, so it can
-change Pearson distance or local-radius correlations, EMD, stress, and
-local radius/mean summaries. The <code>"sqeuclidean"</code> default is
-therefore part of those magnitude statistics, not merely a faster
-spelling of Euclidean distance.</p>
+<p>Euclidean and squared Euclidean induce the same ordering but
+different magnitudes. This distinction affects Pearson correlation, EMD,
+stress, and local-scale summaries, but not neighbor, triplet, or
+Spearman ordering.</p>
 </div>
 <div class="section level2">
 <h2 id="label-retrieval">Label Retrieval<a class="anchor" aria-label="anchor" href="#label-retrieval"></a>
 </h2>
-<p>Alternatively, if some sort of labelling is applied to the points,
-each point can be treated as the target in a retrieval procedure:</p>
-<ol style="list-style-type: decimal">
-<li>Rank all the other points by distance to the target point.</li>
-<li>See how highly in the ranked list the points with the same label are
-found.</li>
-<li>Construct a Receiver Operating Characteristic (ROC) curve, or
-something like it (e.g. Precision-Recall curve)</li>
-<li>Calculate the Area Under the Curve (AUC).</li>
-<li>Average over all points.</li>
-</ol>
-<p>This only needs the output distance matrix, but requires the sort of
-labeling usually reserved for data intended for supervised
-classification. Quadra can also provide some help with this, but
-requires the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC
-package</a> to be installed.</p>
+<p><code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> rank each
+observation’s neighbors by output distance and treat matching labels as
+relevant. They require the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC package</a>.</p>
 <p>See the <a href="label-retrieval.html">label retrieval</a> article
 for examples and return value details.</p>
 </div>

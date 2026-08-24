@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,21 @@
       <small>Source: <a href="https://github.com/jlmelville/quadra/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.1" id="quadra-021">quadra 0.2.1<a class="anchor" aria-label="anchor" href="#quadra-021"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-2-1">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-1"></a></h3>
+<ul><li>Random-pair distance metrics and <code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code> now accept reusable samples from <code><a href="../reference/sample_pairs.html">sample_pairs()</a></code> and <code><a href="../reference/sample_triplets.html">sample_triplets()</a></code>. With <code>ret_extra = TRUE</code>, they return the sampled comparisons with pair distances or triplet agreement outcomes.</li>
+<li>New <code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> returns exact rank agreement by neighborhood size. <code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> now accept multiple <code>k</code> values.</li>
+<li>
+<code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> now accept <code>ret_extra = TRUE</code> to return row-aligned query AUCs and the number of defined queries.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-and-minor-improvements-0-2-1">Bug fixes and minor improvements<a class="anchor" aria-label="anchor" href="#bug-fixes-and-minor-improvements-0-2-1"></a></h3>
+<ul><li>
+<code><a href="../reference/nbr_pres.html">nbr_pres()</a></code>, <code><a href="../reference/trustworthiness.html">trustworthiness()</a></code>, <code><a href="../reference/trustworthiness.html">continuity()</a></code>, and <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> now reject nonfinite off-diagonal distances; diagonal values remain ignored.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="quadra-020">quadra 0.2.0<a class="anchor" aria-label="anchor" href="#quadra-020"></a></h2>
 <div class="section level3">

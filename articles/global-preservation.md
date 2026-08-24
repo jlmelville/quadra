@@ -1,32 +1,33 @@
 # Global preservation
 
+For the sampled metrics in this article, `Xin` and `metric_in` define
+the reference geometry.
+
+Create reusable samples with
+[`sample_pairs()`](https://jlmelville.github.io/quadra/reference/sample_pairs.md)
+or
+[`sample_triplets()`](https://jlmelville.github.io/quadra/reference/sample_triplets.md)
+and supply them with `pairs` or `triplets`. Set `ret_extra = TRUE` to
+inspect the sampled comparisons behind a score.
+
 ## Random Triplet Accuracy
 
-Random triplet accuracy is the proportion of triangle distances where
-the relative ordering is retained. It was used by Wang et al. (2021) to
-measure global structure preservation.
+Random triplet accuracy is the proportion of sampled anchored triplets
+whose input-space distance ordering is retained in the embedding.
 
 Triplets with tied input-space distances are excluded from the
 denominator because they do not define a relative ordering. If no
 sampled input triplets define an ordering, the result is `NA_real_`.
 
-For internally sampled metrics, results are reproducible when both the R
-seed and `n_threads` are unchanged. Reset the seed and keep the thread
-count fixed before comparing embeddings; changing the thread count can
-change the sample.
-
-For an explicit reusable triplet calculation, `n_triplets` can be a
-zero-based endpoint matrix with one column per observation/anchor and
-successive row pairs holding the endpoints. This route performs no
-internal sampling.
+Detailed results contain the evaluated triplets and a row-aligned
+agreement vector; input-distance ties are `NA`. Reset the R seed and
+keep `n_threads` fixed to repeat implicit sampling.
 
 ## Random Pair Distance Correlation
 
 [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md)
-measures Pearson correlation between equivalent input and output
-distances by default, similar to the method used by Becht and
-co-workers. Set `method = "spearman"` to compare the sampled distance
-ranks instead of their linear agreement.
+measures Pearson correlation between matched input and output distances
+by default. Set `method = "spearman"` to compare their ranks.
 
 Euclidean and squared Euclidean have the same ordering, so their
 Spearman interpretation is equivalent. Squaring changes magnitudes and
@@ -35,9 +36,10 @@ can change the default Pearson result.
 ## Earth-Mover’s Distance
 
 [`random_pair_distance_emd()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.md)
-converts distances to an empirical distribution and compares them via
-Earth Mover’s Distance (1D Wasserstein), based on the method used by
-Heiser and Lau.
+compares the empirical input and output distance distributions using
+Earth Mover’s Distance (1D Wasserstein).
+
+EMD compares marginal distributions rather than pairwise correspondence.
 
 EMD and stress below are magnitude statistics. Squared Euclidean can
 change both results relative to Euclidean distance, even when each
@@ -47,22 +49,23 @@ sampled distance vector is range-scaled.
 
 [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
 compares the matched sampled distances with a root mean squared
-difference. By default, each sampled distance vector is scaled to the
-range 0-1 first, so the value is most useful when comparing embeddings
-under the same sampling and scaling settings.
+difference, after scaling each distance vector to `[0, 1]` by default.
 
 ## RNX AUC
 
 [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
-summarizes exact rank-based neighborhood agreement over all neighborhood
-sizes from a pair of distance matrices. It gives more weight to smaller
-neighborhoods, so it is useful when you want one score for the
-local-to-global rank structure of a small or medium dataset.
+summarizes exact rank-based neighborhood agreement across neighborhood
+sizes, giving more weight to smaller neighborhoods.
 
-An RNX AUC of 1 is perfect and 0 is the random-neighborhood baseline.
-Zero is not a lower bound: worse-than-random rank agreement can produce
-negative values. Distance ties are ranked by first occurrence in
-original column order after the diagonal self-neighbor is removed.
+Use
+[`rnx_curve()`](https://jlmelville.github.io/quadra/reference/rnx_curve.md)
+to inspect individual neighborhood sizes. By default it returns the
+complete curve; pass `k` to select particular scales. The curve
+diagnoses scale-specific preservation; it does not establish a
+universally preferred embedding.
+
+An RNX AUC of 1 is perfect, 0 is the random-neighborhood baseline, and
+negative values indicate worse-than-random rank agreement.
 
 ``` r
 
@@ -71,6 +74,7 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 din <- as.matrix(stats::dist(iris_x))
 dout <- as.matrix(stats::dist(pca_iris))
 rnx_auc(din, dout)
+rnx_curve(din, dout, k = c(5, 15, 30))
 ```
 
 ## Further Reading

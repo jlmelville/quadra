@@ -13,7 +13,7 @@ longer among the k nearest neighbors in dout."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,43 +59,29 @@ longer among the <code>k</code> nearest neighbors in <code>dout</code>.</p>
 
 
 <dl><dt id="arg-din">din<a class="anchor" aria-label="anchor" href="#arg-din"></a></dt>
-<dd><p>Input distance matrix. The "ground truth" or reference distances.</p></dd>
+<dd><p>Reference distance matrix.</p></dd>
 
 
 <dt id="arg-dout">dout<a class="anchor" aria-label="anchor" href="#arg-dout"></a></dt>
-<dd><p>Output distance matrix. A set of distances to compare to the
-reference distances.</p></dd>
+<dd><p>Distance matrix to compare with <code>din</code>.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>The size of the neighborhood. Must be a positive integer less than
-half the number of observations so the standard 0-1 normalization remains
-bounded.</p></dd>
+<dd><p>One or more unique neighborhood sizes, each less than half the
+number of observations.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A scalar score. A value of 1 indicates no rank-penalty errors at
-neighborhood size <code>k</code>; lower values indicate worse preservation.</p>
+    <p>For scalar <code>k</code>, an unnamed rank-preservation score. For multiple
+values, a named numeric vector with items <code>trustworthiness&lt;k&gt;</code> or
+<code>continuity&lt;k&gt;</code>. A value of 1 indicates no penalty.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Both functions use exact ranks from the supplied distance matrices and
-exclude the diagonal self-neighbor from each row. Nonmissing values use
-ordinary numeric ordering: <code>-Inf</code> ranks before finite values and <code>Inf</code> after
-them. <code>NA</code> and <code>NaN</code> rank after all nonmissing values. Original column order
-resolves equal values and the order among missing values, matching
-<code>rank(na.last = TRUE, ties.method = "first")</code> after self-neighbor exclusion.
-Consequently, nonfinite distances can produce an ordinary finite score
-rather than an error or <code>NA</code>.</p>
-<p>Because these functions require full <code>n</code> by <code>n</code> distance matrices, they are
-practical only for small datasets. For larger datasets, use nearest-neighbor
-preservation metrics such as <code><a href="nn_preservation.html">nn_preservation()</a></code> or <code><a href="nbr_pres_knn.html">nbr_pres_knn()</a></code>.</p>
-<p>Unlike <code><a href="nbr_pres.html">nbr_pres()</a></code>, which only counts shared neighbors, these metrics weight
-each unexpected or missing neighbor by how far its rank lies outside the
-<code>k</code>-neighborhood. <code><a href="rnx_auc.html">rnx_auc()</a></code> also uses rank-based neighborhood agreement,
-but aggregates across neighborhood sizes; these functions report the standard
-trustworthiness or continuity score at one <code>k</code>.</p>
+    <p>Diagonal entries are excluded; off-diagonal entries must be finite. Unlike
+<code><a href="nbr_pres.html">nbr_pres()</a></code>, the penalty reflects how far a misplaced neighbor falls beyond
+<code>k</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -113,6 +99,9 @@ ICANN 2001</em> (pp. 485-491).</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9859563</span>
 <span class="r-in"><span><span class="fu">continuity</span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9927384</span>
+<span class="r-in"><span><span class="fu">trustworthiness</span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  trustworthiness5 trustworthiness15 trustworthiness30 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         0.9786667         0.9859563         0.9935587 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

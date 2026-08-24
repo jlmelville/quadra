@@ -1,5 +1,40 @@
 # Changelog
 
+## quadra 0.2.1
+
+### New features
+
+- Random-pair distance metrics and
+  [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
+  now accept reusable samples from
+  [`sample_pairs()`](https://jlmelville.github.io/quadra/reference/sample_pairs.md)
+  and
+  [`sample_triplets()`](https://jlmelville.github.io/quadra/reference/sample_triplets.md).
+  With `ret_extra = TRUE`, they return the sampled comparisons with pair
+  distances or triplet agreement outcomes.
+- New
+  [`rnx_curve()`](https://jlmelville.github.io/quadra/reference/rnx_curve.md)
+  returns exact rank agreement by neighborhood size.
+  [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  and
+  [`continuity()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
+  now accept multiple `k` values.
+- [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
+  and
+  [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
+  now accept `ret_extra = TRUE` to return row-aligned query AUCs and the
+  number of defined queries.
+
+### Bug fixes and minor improvements
+
+- [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md),
+  [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md),
+  [`continuity()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md),
+  and
+  [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
+  now reject nonfinite off-diagonal distances; diagonal values remain
+  ignored.
+
 ## quadra 0.2.0
 
 ### New features

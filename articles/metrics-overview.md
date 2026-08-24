@@ -12,25 +12,17 @@ embedding. They fall into four broad families.
 | Are broad distance orderings retained? | [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md) | Whether the embedding preserves enough global ordering for the intended use. |
 | Do known labels remain retrievable? | [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md) or [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md) | Whether same-label observations remain separated from other labels in the embedding. |
 
-These are starting points rather than interchangeable scores. The
-sections below explain the related metrics and the input conventions
-that affect their interpretation.
+Choose metrics to match the relationships an embedding should preserve.
+The table gives starting points.
 
 ## Local Neighborhood Preservation
 
-The most generic approach is to consider “neighborhood preservation”:
-
-1.  Find the *k*-nearest neighbors of a point in the input space.
-2.  Do the same in the output space.
-3.  Count the overlap.
-
 [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
-does this from exact distance matrices.
+compares neighborhoods from exact distance matrices.
 [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
 and
 [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
-work with nearest-neighbor graphs, which is the more practical route for
-larger datasets.
+work with nearest-neighbor graphs and scale to larger datasets.
 
 [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)
 and
@@ -40,7 +32,9 @@ than only counting shared neighbors. They are exact distance-matrix
 functions for small datasets.
 [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
 summarizes rank-based neighborhood agreement over many neighborhood
-sizes.
+sizes;
+[`rnx_curve()`](https://jlmelville.github.io/quadra/reference/rnx_curve.md)
+retains the individual scales.
 
 See the [local
 preservation](https://jlmelville.github.io/quadra/articles/local-preservation.md)
@@ -79,49 +73,34 @@ for global structure preservation:
   compares matched sampled distances with a root mean squared
   difference.
 
+For these metrics, `Xin` and `metric_in` define the reference geometry.
+
 See the [global
 preservation](https://jlmelville.github.io/quadra/articles/global-preservation.md)
 article for those metrics.
 
-## Current input and ordering conventions
+## Input and Ordering Conventions
 
 Sampled pair and triplet metrics require dense, finite inputs; graph
-metrics can pass supported sparse inputs to `rnndescent`. Nonnumeric
-data-frame columns are ignored. Exact distance-matrix metrics do not
-screen nonfinite values.
+metrics accept the sparse inputs supported by `rnndescent`.
 
-Tie handling differs by representation.
 [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
-includes every item tied at the `k`th distance boundary and caps the
-overlap at `k`. Trustworthiness, continuity, and RNX break distance ties
-by original column order. Supplied-graph metrics use the first `k`
-indices in the provider or caller’s fixed order.
+includes boundary ties, exact-rank metrics break ties by column order,
+and supplied-graph metrics use their stored order.
 
-Euclidean and squared Euclidean preserve neighbor, triplet, and Spearman
-ordering. Squaring changes distance magnitudes, so it can change Pearson
-distance or local-radius correlations, EMD, stress, and local
-radius/mean summaries. The `"sqeuclidean"` default is therefore part of
-those magnitude statistics, not merely a faster spelling of Euclidean
-distance.
+Euclidean and squared Euclidean induce the same ordering but different
+magnitudes. This distinction affects Pearson correlation, EMD, stress,
+and local-scale summaries, but not neighbor, triplet, or Spearman
+ordering.
 
 ## Label Retrieval
 
-Alternatively, if some sort of labelling is applied to the points, each
-point can be treated as the target in a retrieval procedure:
-
-1.  Rank all the other points by distance to the target point.
-2.  See how highly in the ranked list the points with the same label are
-    found.
-3.  Construct a Receiver Operating Characteristic (ROC) curve, or
-    something like it (e.g. Precision-Recall curve)
-4.  Calculate the Area Under the Curve (AUC).
-5.  Average over all points.
-
-This only needs the output distance matrix, but requires the sort of
-labeling usually reserved for data intended for supervised
-classification. Quadra can also provide some help with this, but
-requires the [PRROC package](https://cran.r-project.org/package=PRROC)
-to be installed.
+[`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
+and
+[`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
+rank each observation’s neighbors by output distance and treat matching
+labels as relevant. They require the [PRROC
+package](https://cran.r-project.org/package=PRROC).
 
 See the [label
 retrieval](https://jlmelville.github.io/quadra/articles/label-retrieval.md)

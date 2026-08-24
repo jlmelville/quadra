@@ -39,8 +39,8 @@ nearby in the embedding.
 
 din <- as.matrix(stats::dist(iris_x))
 dout <- as.matrix(stats::dist(pca_iris))
-trustworthiness(din, dout, k = 15)
-continuity(din, dout, k = 15)
+trustworthiness(din, dout, k = c(5, 15, 30))
+continuity(din, dout, k = c(5, 15, 30))
 ```
 
 These functions use full `n` by `n` distance matrices and require `k` to

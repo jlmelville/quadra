@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,34 +60,23 @@
 
     
     
-<p>If some sort of labelling is applied to the points, each point can be
-treated as the target in a retrieval procedure:</p>
-<ol style="list-style-type: decimal">
-<li>Rank all the other points by distance to the target point.</li>
-<li>See how highly in the ranked list the points with the same label are
-found.</li>
-<li>Construct a Receiver Operating Characteristic (ROC) curve, or
-something like it (e.g. Precision-Recall curve)</li>
-<li>Calculate the Area Under the Curve (AUC).</li>
-<li>Average over all points.</li>
-</ol>
-<p>This only needs the output distance matrix, but requires the sort of
-labeling usually reserved for data intended for supervised
-classification. Quadra can also provide some help with this, but
-requires the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC
-package</a> to be installed.</p>
-<p>Rows with undefined AUC values, such as rows that cannot define both
-positive and negative examples, are excluded from overall and per-label
-averages. If no rows remain for an average, that average is
-<code>NA_real_</code>.</p>
+<p><code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> treat each
+observation as a query, rank the remaining observations by distance, and
+regard matching labels as relevant. These are supervised retrieval
+summaries. Both functions require the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC package</a>.</p>
+<p>Queries without both relevant and irrelevant observations are
+excluded. An empty average is <code>NA_real_</code>.</p>
 <p>Both <code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> require a
 finite square distance matrix and one nonmissing label per observation.
-The diagonal query is excluded.</p>
-<p>Each function returns <code>list(av_auc, label_av)</code>.
-<code>av_auc</code> weights every defined observation row equally; it is
-not an unweighted mean of the label summaries. <code>label_av</code> is
-a named list of per-label means in label first-appearance order. Labels
-with no defined row remain represented with <code>NA_real_</code>.</p>
+The query itself is excluded.</p>
+<p>By default, each function returns
+<code>list(av_auc, label_av)</code>. <code>av_auc</code> weights each
+defined query equally; <code>label_av</code> contains per-label means in
+first-appearance order. Labels without a defined query remain
+<code>NA_real_</code>.</p>
+<p>Set <code>ret_extra = TRUE</code> to append the row-aligned
+<code>query_auc</code> vector and its defined-query count. Undefined
+queries are <code>NA_real_</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
@@ -99,7 +88,11 @@ with no defined row remain represented with <code>NA_real_</code>.</p>
 <span></span>
 <span><span class="va">pr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pr_auc.html">pr_auc</a></span><span class="op">(</span><span class="va">dout</span>, <span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">)</span></span>
 <span><span class="va">pr</span><span class="op">$</span><span class="va">av_auc</span></span>
-<span><span class="va">pr</span><span class="op">$</span><span class="va">label_av</span></span></code></pre></div>
+<span><span class="va">pr</span><span class="op">$</span><span class="va">label_av</span></span>
+<span></span>
+<span><span class="va">roc_detail</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roc_auc.html">roc_auc</a></span><span class="op">(</span><span class="va">dout</span>, <span class="va">iris</span><span class="op">$</span><span class="va">Species</span>, ret_extra <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">roc_detail</span><span class="op">$</span><span class="va">query_auc</span><span class="op">)</span></span>
+<span><span class="va">roc_detail</span><span class="op">$</span><span class="va">n_defined</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h2>

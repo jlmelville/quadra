@@ -1,52 +1,47 @@
-# Average Area Under the ROC Curve
+# Average ROC AUC for Label Retrieval
 
-Embedding quality measure.
+Ranks other observations by distance from each query and treats matching
+labels as relevant.
 
 ## Usage
 
 ``` r
-roc_auc(dm, labels)
+roc_auc(dm, labels, ret_extra = FALSE)
 ```
 
 ## Arguments
 
 - dm:
 
-  A finite square numeric distance matrix. The diagonal is excluded from
-  each retrieval problem.
+  Finite square numeric distance matrix. The query itself is excluded.
 
 - labels:
 
   A label vector without missing values, with one label per row of `dm`.
 
+- ret_extra:
+
+  Whether to append row-aligned query AUCs and the number of defined
+  queries.
+
 ## Value
 
-A list with components in this order:
+A list whose first components are:
 
-- `av_auc`: the AUC averaged over defined observation rows.
+- `av_auc`: the mean AUC over defined queries.
 
 - `label_av`: a named list of per-label means in first-appearance order.
 
+With `ret_extra = TRUE`, the list also contains `query_auc`, with
+`NA_real_` for undefined queries, and the integer `n_defined`.
+
 ## Details
 
-The ROC curve plots the true positive rate vs false positive rate. This
-function calculates the curve N times, where N is the number of the
-observations. The label of the Nth observation is set as the positive
-class and then the other observations are ranked according to their
-distance from the Nth observation in the output coordinates (lower
-distances being better). Observations with the same label as the Nth
-observation count as positive observations. The final reported result is
-the average over all observations. Rows with undefined AUC values, such
-as rows that cannot define both positive and negative examples, are
-excluded from overall and per-label averages. If no rows remain for an
-average, that average is `NA_real_`.
-
-`av_auc` weights each defined query equally; `label_av` reports
-per-label means in first-appearance order.
-
-Perfect retrieval results in an AUC of 1. For random retrieval gives a
-value of 0.5.
+`av_auc` is the mean ROC AUC over defined queries; `label_av` gives
+per-label means in first-appearance order. Queries without both relevant
+and irrelevant observations are excluded. An empty average is
+`NA_real_`.
 
 ## Note
 
-Use of this function requires that the `PRROC` package be installed.
+Requires the `PRROC` package.
