@@ -24,6 +24,12 @@ sample_triplets(n_obs, n_triplets = 5)
 An integer matrix with columns `anchor`, `endpoint1`, and `endpoint2`,
 ordered by anchor.
 
+## Details
+
+For each anchor, ordered endpoint pairs are sampled independently with
+replacement across rows, so a triplet may occur more than once. The
+anchor and endpoints within each row are distinct.
+
 ## Examples
 
 ``` r

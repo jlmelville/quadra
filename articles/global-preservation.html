@@ -66,6 +66,23 @@
 <code><a href="../reference/sample_triplets.html">sample_triplets()</a></code> and supply them with <code>pairs</code>
 or <code>triplets</code>. Set <code>ret_extra = TRUE</code> to inspect
 the sampled comparisons behind a score.</p>
+<p>For example, reuse one pair sample to compare two embeddings on
+exactly the same input-space relationships:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">pca_unscaled</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale. <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<span><span class="va">pca_scaled</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale. <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">pair_plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_pairs.html">sample_pairs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span>, n_pairs <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  pca_unscaled <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span></span>
+<span>    <span class="va">iris_x</span>, <span class="va">pca_unscaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  pca_scaled <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span></span>
+<span>    <span class="va">iris_x</span>, <span class="va">pca_scaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="random-triplet-accuracy">Random Triplet Accuracy<a class="anchor" aria-label="anchor" href="#random-triplet-accuracy"></a>
 </h2>
@@ -123,7 +140,7 @@ preservation; it does not establish a universally preferred
 embedding.</p>
 <p>An RNX AUC of 1 is perfect, 0 is the random-neighborhood baseline,
 and negative values indicate worse-than-random rank agreement.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
 <span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
