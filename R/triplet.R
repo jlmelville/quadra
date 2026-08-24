@@ -2,6 +2,10 @@
 #'
 #' Generates anchored triplets for reuse with [random_triplet_accuracy()].
 #'
+#' For each anchor, ordered endpoint pairs are sampled independently with
+#' replacement across rows, so a triplet may occur more than once. The anchor
+#' and endpoints within each row are distinct.
+#'
 #' @param n_obs Number of observations.
 #' @param n_triplets Number of triplets to sample per observation.
 #' @return An integer matrix with columns `anchor`, `endpoint1`, and

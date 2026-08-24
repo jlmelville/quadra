@@ -9,6 +9,26 @@ Create reusable samples with `sample_pairs()` or `sample_triplets()` and supply
 them with `pairs` or `triplets`. Set `ret_extra = TRUE` to inspect the sampled
 comparisons behind a score.
 
+For example, reuse one pair sample to compare two embeddings on exactly the
+same input-space relationships:
+
+```R
+iris_x <- as.matrix(iris[, -5])
+pca_unscaled <- stats::prcomp(iris_x, rank. = 2, scale. = FALSE)$x
+pca_scaled <- stats::prcomp(iris_x, rank. = 2, scale. = TRUE)$x
+
+set.seed(42)
+pair_plan <- sample_pairs(nrow(iris_x), n_pairs = 1000)
+c(
+  pca_unscaled = random_pair_distance_correlation(
+    iris_x, pca_unscaled, pairs = pair_plan
+  ),
+  pca_scaled = random_pair_distance_correlation(
+    iris_x, pca_scaled, pairs = pair_plan
+  )
+)
+```
+
 ## Random Triplet Accuracy
 
 Random triplet accuracy is the proportion of sampled anchored triplets whose

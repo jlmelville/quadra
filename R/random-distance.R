@@ -2,6 +2,9 @@
 #'
 #' Generates pairs for reuse with the random-pair distance metrics.
 #'
+#' Pairs are sampled independently with replacement across rows, so repeated
+#' or reversed pairs can occur. Endpoints within each row are distinct.
+#'
 #' @param n_obs Number of observations.
 #' @param n_pairs Number of pairs to sample.
 #' @return An integer matrix with one row per pair and columns `endpoint1` and

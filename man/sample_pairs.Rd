@@ -18,6 +18,10 @@ An integer matrix with one row per pair and columns \code{endpoint1} and
 \description{
 Generates pairs for reuse with the random-pair distance metrics.
 }
+\details{
+Pairs are sampled independently with replacement across rows, so repeated
+or reversed pairs can occur. Endpoints within each row are distinct.
+}
 \examples{
 set.seed(42)
 sample_pairs(5, 3)

@@ -18,6 +18,11 @@ An integer matrix with columns \code{anchor}, \code{endpoint1}, and
 \description{
 Generates anchored triplets for reuse with \code{\link[=random_triplet_accuracy]{random_triplet_accuracy()}}.
 }
+\details{
+For each anchor, ordered endpoint pairs are sampled independently with
+replacement across rows, so a triplet may occur more than once. The anchor
+and endpoints within each row are distinct.
+}
 \examples{
 set.seed(42)
 sample_triplets(5, 2)
