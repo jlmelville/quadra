@@ -33,7 +33,7 @@ auc_summary <- rbind(
   ROC = c(overall = roc$av_auc, unlist(roc$label_av)),
   PR = c(overall = pr$av_auc, unlist(pr$label_av))
 )
-round(auc_summary, 3)
+signif(auc_summary, 5)
 ```
 
 ```{r overall-and-label-auc-check, include=FALSE}
@@ -43,18 +43,27 @@ stopifnot(
   all(is.finite(auc_summary)),
   all(auc_summary >= 0 & auc_summary <= 1),
   roc$av_auc > 0.5,
-  all(unlist(pr$label_av) > iris_pr_baseline)
+  all(unlist(pr$label_av) > iris_pr_baseline),
+  all(auc_summary[, "setosa"] > 0.999),
+  all(auc_summary[, "setosa"] < 1),
+  all(
+    sweep(
+      auc_summary[, c("versicolor", "virginica"), drop = FALSE],
+      1,
+      auc_summary[, "setosa"],
+      FUN = "<"
+    )
+  )
 )
 ```
 
 Every Iris class has 50 observations, so each query has 49 relevant candidates
 among the other 149 and a random PR baseline of about 0.329. The overall Iris
-scores are above their random baselines. Setosa is retrieved perfectly in this
-PCA embedding, while the lower versicolor and virginica scores identify labels
-for which nearby observations are less consistently from the same class. The
-difference between ROC and PR values is not itself a winner-takes-all
-comparison: the measures use different baselines and emphasize different
-retrieval behavior.
+scores are above their random baselines. Setosa is retrieved almost perfectly
+in this PCA embedding; for versicolor and virginica, same-label observations
+are less consistently ranked ahead of the other classes. The difference
+between ROC and PR values is not itself a winner-takes-all comparison: the
+measures use different baselines and emphasize different retrieval behavior.
 
 ## Inspecting Query-Level Results
 
