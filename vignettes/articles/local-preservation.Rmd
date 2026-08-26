@@ -1,27 +1,56 @@
 ---
 title: "Local preservation"
+description: "Choose and interpret metrics for neighbor identity, rank, local scale, graph structure, and multiple neighborhood sizes."
 ---
+
+Use this guide to choose a local metric from the relationship that matters for
+your analysis. Start with `nn_preservation()` when neighbor identity is the
+main concern. Use trustworthiness or continuity for rank-sensitive penalties,
+local radius correlation for relative neighborhood scale, mutual-neighbor
+correlation for reciprocal graph structure, and RNX to inspect agreement over
+multiple neighborhood sizes.
+
+The examples use exact brute-force neighbors so their results are deterministic
+on this small dataset.
+
+```{r local-setup}
+library(quadra)
+
+iris_x <- as.matrix(iris[, -5])
+pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
+```
 
 ## Neighborhood Preservation
 
-For local preservation use nearest neighbor preservation. Pass a vector to `k`
-to get back the preservation for different numbers of neighbors.
+Nearest-neighbor preservation is a useful default: it reports the mean fraction
+of input neighbors retained in the embedding. Pass a vector to `k` to inspect
+more than one neighborhood size.
 
-```R
-iris_x <- as.matrix(iris[, -5])
-pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
-nn_preservation(iris_x, pca_iris, k = c(15, 30))
+```{r nearest-neighbor-preservation}
+neighbor_scores <- nn_preservation(
+  iris_x,
+  pca_iris,
+  k = c(15, 30),
+  nn_method_in = "brute",
+  nn_method_out = "brute",
+  n_threads = 1
+)
+round(neighbor_scores, 3)
 ```
 
-Supplied graphs use one-based indices in nearest-first order. Quadra checks all
-columns, removes self-indices, and retains the first `k` non-self neighbors, so
-self-inclusive graphs need at least `k + 1` columns. Supplied order resolves
-ties; `nbr_pres()` includes boundary ties, while exact rank metrics break ties
-by distance-matrix column order.
+```{r nearest-neighbor-preservation-check, include=FALSE}
+stopifnot(
+  identical(names(neighbor_scores), c("nnp15", "nnp30")),
+  all(is.finite(neighbor_scores)),
+  all(neighbor_scores >= 0 & neighbor_scores <= 1),
+  neighbor_scores[["nnp30"]] > neighbor_scores[["nnp15"]]
+)
+```
 
-Graph searches pass supported sparse inputs to `rnndescent`; nonnumeric
-data-frame columns are ignored. Exact Euclidean and squared-Euclidean searches
-have the same ordering, subject to ties and approximation.
+For this two-dimensional Iris PCA, about 80% of the 15-neighbor identities and
+92% of the 30-neighbor identities are retained on average. The higher score at
+`k = 30` describes this dataset and scale; it does not make the larger
+neighborhood universally preferable.
 
 ## Trustworthiness and Continuity
 
@@ -31,12 +60,35 @@ appear as low-dimensional neighbors even though they are not close in the input
 space. Continuity applies the dual penalty to input-space neighbors that are no
 longer nearby in the embedding.
 
-```R
+```{r trustworthiness-continuity}
 din <- as.matrix(stats::dist(iris_x))
 dout <- as.matrix(stats::dist(pca_iris))
-trustworthiness(din, dout, k = c(5, 15, 30))
-continuity(din, dout, k = c(5, 15, 30))
+rank_k <- c(5, 15, 30)
+trust_scores <- trustworthiness(din, dout, k = rank_k)
+continuity_scores <- continuity(din, dout, k = rank_k)
+round(
+  data.frame(
+    k = rank_k,
+    trustworthiness = unname(trust_scores),
+    continuity = unname(continuity_scores)
+  ),
+  3
+)
 ```
+
+```{r trustworthiness-continuity-check, include=FALSE}
+stopifnot(
+  identical(names(trust_scores), paste0("trustworthiness", rank_k)),
+  identical(names(continuity_scores), paste0("continuity", rank_k)),
+  all(c(trust_scores, continuity_scores) >= 0),
+  all(c(trust_scores, continuity_scores) <= 1),
+  min(c(trust_scores, continuity_scores)) > 0.9
+)
+```
+
+Values nearer 1 mean smaller rank penalties. Both metrics are above 0.9 at the
+shown scales, so this embedding introduces relatively small trustworthiness and
+continuity penalties for these Iris neighborhoods.
 
 These functions use full `n` by `n` distance matrices and require `k` to be
 less than half the number of observations, so they are intended for exact
@@ -50,14 +102,31 @@ Nearest neighbor preservation asks whether the same observations remain nearby.
 dense or sparse regions of the input data still have relatively small or large
 nearest-neighbor radii in the embedding?
 
-```R
-local_radius_correlation(
+```{r local-radius-correlation}
+radius_scores <- local_radius_correlation(
   iris_x,
   pca_iris,
   k = c(15, 30),
-  nn_method_in = "brute"
+  nn_method_in = "brute",
+  nn_method_out = "brute",
+  n_threads = 1
+)
+round(radius_scores, 3)
+```
+
+```{r local-radius-correlation-check, include=FALSE}
+stopifnot(
+  identical(names(radius_scores), c("lrc15", "lrc30")),
+  all(is.finite(radius_scores)),
+  all(radius_scores >= -1 & radius_scores <= 1),
+  all(radius_scores > 0.8)
 )
 ```
+
+The strong positive correlations show that observations with relatively small
+or large input-space radii tend to retain that relative scale in this Iris
+embedding. This conclusion concerns scale, not which observations are
+neighbors.
 
 By default, the metric uses Spearman correlation between the distance to the
 `k`th nearest non-self neighbor in the input data and output embedding. Set
@@ -70,17 +139,32 @@ Euclidean.
 If you already have nearest-neighbor graphs with distance matrices, you can
 reuse them:
 
-```R
+```{r reuse-local-radius-graphs}
 cached <- local_radius_correlation(
   iris_x,
   pca_iris,
   k = c(15, 30),
   nn_method_in = "brute",
+  nn_method_out = "brute",
+  n_threads = 1,
   ret_extra = TRUE
 )
 
-local_radius_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
+cached_scores <- local_radius_correlation(
+  cached$nn_in,
+  cached$nn_out,
+  k = c(15, 30),
+  n_threads = 1
+)
+round(cached_scores, 3)
 ```
+
+```{r reuse-local-radius-graphs-check, include=FALSE}
+stopifnot(isTRUE(all.equal(cached$lrc, cached_scores)))
+```
+
+The reused graphs give the same result because they retain both the indices and
+distances required by the radius calculation.
 
 This metric is a radius or scale diagnostic. It does not estimate local density
 directly and should be interpreted alongside neighbor-identity metrics such as
@@ -93,71 +177,121 @@ each observation, the mutual-neighbor count is the number of its first `k`
 nearest neighbors that also include the observation among their first `k`
 nearest neighbors.
 
-```R
-mutual_neighbor_correlation(
+```{r mutual-neighbor-correlation}
+mutual_scores <- mutual_neighbor_correlation(
   iris_x,
   pca_iris,
   k = c(15, 30),
-  nn_method_in = "brute"
+  nn_method_in = "brute",
+  nn_method_out = "brute",
+  n_threads = 1
+)
+round(mutual_scores, 3)
+```
+
+```{r mutual-neighbor-correlation-check, include=FALSE}
+stopifnot(
+  identical(names(mutual_scores), c("mnc15", "mnc30")),
+  all(is.finite(mutual_scores)),
+  all(mutual_scores >= -1 & mutual_scores <= 1),
+  all(mutual_scores > 0)
 )
 ```
+
+Both correlations are positive, so observations with high or low reciprocal
+neighbor counts in the input tend to retain that pattern in this embedding.
+The result is about graph structure, not direct neighbor overlap.
 
 This is a graph diagnostic. It does not require neighbor distances, so cached
 idx-only nearest-neighbor graphs are enough. It should be interpreted alongside
 neighbor-identity metrics such as `nn_preservation()` and scale metrics such as
 `local_radius_correlation()`.
 
-For larger datasets, `nn_preservation()` can use approximate nearest neighbors
-via [rnndescent](https://github.com/jlmelville/rnndescent). If you have
-nearest-neighbor matrices from another approximate nearest neighbor package,
-e.g. [RcppAnnoy](https://cran.r-project.org/package=RcppAnnoy), use the
-`nbr_pres_knn` function:
+## Multi-Scale RNX Agreement
 
-```R
-# A function to wrap the RcppAnnoy API to return a matrix of the nearest
-# neighbor indices
-find_nn <- function(
-  X,
-  k = 10,
-  n_trees = 50,
-  search_k = (k + 1) * n_trees
-) {
-  nr <- nrow(X)
-  nc <- ncol(X)
-  requested_k <- k + 1
+`rnx_auc()` summarizes exact rank-based neighborhood agreement across all
+available neighborhood sizes, weighting smaller neighborhoods more heavily.
+Use `rnx_curve()` when the scale-specific pattern matters.
 
-  ann <- methods::new(RcppAnnoy::AnnoyEuclidean, nc)
-  for (i in seq_len(nr)) {
-    ann$addItem(i - 1, X[i, ])
-  }
-  ann$build(n_trees)
-
-  idx <- matrix(nrow = nr, ncol = k)
-  for (i in seq_len(nr)) {
-    res <- ann$getNNsByItemList(i - 1, requested_k, search_k, FALSE)
-    non_self <- res$item[res$item != i - 1]
-    if (length(non_self) < k) {
-      stop(
-        "search_k/n_trees settings were unable to find ",
-        k,
-        " non-self neighbors for item ",
-        i
-      )
-    }
-    idx[i, ] <- non_self[seq_len(k)]
-  }
-  idx + 1
-}
-
-kin <- find_nn(as.matrix(iris[, -5]), k = 5)
-kout <- find_nn(pca_iris, k = 5)
-
-# This should give very similar results to using nbr_pres on the distance
-# matrices, subject to the approximations employed by Annoy
-nbr_pres_knn(kin, kout, k = 5)
+```{r rnx-agreement}
+rnx_scores <- c(
+  auc = rnx_auc(din, dout),
+  rnx_curve(din, dout, k = c(5, 15, 30))
+)
+round(rnx_scores, 3)
 ```
 
+```{r rnx-agreement-check, include=FALSE}
+stopifnot(
+  identical(names(rnx_scores), c("auc", "rnx5", "rnx15", "rnx30")),
+  all(is.finite(rnx_scores)),
+  all(rnx_scores <= 1),
+  rnx_scores[["auc"]] > 0,
+  all(diff(rnx_scores[c("rnx5", "rnx15", "rnx30")]) > 0)
+)
+```
+
+An RNX value of 1 is perfect, 0 is the random-neighborhood baseline, and
+negative values indicate worse-than-random agreement. The Iris curve rises over
+the displayed values of `k`, so this embedding preserves rank neighborhoods
+better at the broader shown scales. That pattern diagnoses this embedding; it
+does not establish a universally preferred embedding or neighborhood size.
+
+## Using Existing Neighbor Graphs
+
+For larger datasets, `nn_preservation()` can use approximate neighbors through
+[rnndescent](https://github.com/jlmelville/rnndescent). If another tool already
+provides one-based nearest-neighbor index matrices, pass them directly to
+`nbr_pres_knn()`. Rows are observations and columns are neighbors in
+nearest-first order.
+
+```{r supplied-neighbor-indices}
+input_idx <- matrix(
+  c(2, 3, 1, 3, 2, 1, 5, 3, 4, 3),
+  ncol = 2,
+  byrow = TRUE
+)
+output_idx <- matrix(
+  c(2, 4, 1, 3, 2, 5, 5, 1, 4, 3),
+  ncol = 2,
+  byrow = TRUE
+)
+
+external_overlap <- nbr_pres_knn(
+  input_idx,
+  output_idx,
+  k = 2,
+  n_threads = 1
+)
+external_overlap
+```
+
+```{r supplied-neighbor-indices-check, include=FALSE}
+stopifnot(
+  length(external_overlap) == nrow(input_idx),
+  all(external_overlap >= 0 & external_overlap <= 1),
+  sum(external_overlap == 1) == 2,
+  sum(external_overlap == 0.5) == 3
+)
+```
+
+Two rows retain both neighbors and the other three retain one of two. This
+per-observation result makes the supplied-graph contract visible without tying
+the article to a particular graph-construction package.
+
+Supplied graphs use one-based indices in nearest-first order. Quadra checks all
+columns, removes self-indices, and retains the first `k` non-self neighbors, so
+self-inclusive graphs need at least `k + 1` columns. Supplied order resolves
+ties; `nbr_pres()` includes boundary ties, while exact rank metrics break ties
+by distance-matrix column order.
+
+Graph searches pass supported sparse inputs to `rnndescent`; nonnumeric
+data-frame columns are ignored. Exact Euclidean and squared-Euclidean searches
+have the same ordering, subject to ties and approximation.
+
 ## Further Reading
+
+### Neighbor Overlap and Rank Criteria
 
 France, S., & Carroll, D. (2007, July).
 Development of an agreement metric based upon the RAND index for the evaluation
@@ -182,6 +316,8 @@ Multi-scale similarities in stochastic neighbour embedding: Reducing
 dimensionality while preserving both local and global structure.
 *Neurocomputing*, *169*, 246-261.
 <https://dx.doi.org/10.1016/j.neucom.2014.12.095>
+
+### Local Scale and Density Context
 
 Cooley, S. M., Hamilton, T., Deeds, E. J., & Ray, J. C. J. (2019).
 A novel metric reveals previously unrecognized distortion in dimensionality reduction of scRNA-Seq data.
