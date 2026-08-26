@@ -10,7 +10,7 @@ embedding. They fall into four broad families.
 | Are the same nearby observations retained? | [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md) | Whether local-neighborhood identity is preserved well enough for the intended use. |
 | Do dense and sparse regions keep their relative local scale? | [`local_radius_correlation()`](https://jlmelville.github.io/quadra/reference/local_radius_correlation.md) | Whether scale distortion needs attention even when neighbor identities look acceptable. |
 | Are broad distance orderings retained? | [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md) | Whether the embedding preserves enough global ordering for the intended use. |
-| Do known labels remain retrievable? | [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md) or [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md) | Whether same-label observations remain separated from other labels in the embedding. |
+| Do known labels remain retrievable? | [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md) or [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md) | Whether same-label observations rank ahead of other labels in the embedding. |
 
 Choose metrics to match the relationships an embedding should preserve.
 The table gives starting points.
@@ -32,7 +32,7 @@ than only counting shared neighbors. They are exact distance-matrix
 functions for small datasets.
 [`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
 summarizes rank-based neighborhood agreement over many neighborhood
-sizes;
+sizes, while
 [`rnx_curve()`](https://jlmelville.github.io/quadra/reference/rnx_curve.md)
 retains the individual scales.
 
@@ -98,7 +98,7 @@ ordering.
 [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
 and
 [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
-rank each observation’s neighbors by output distance and treat matching
+rank other observations by distance from each query and treat matching
 labels as relevant. They require the [PRROC
 package](https://cran.r-project.org/package=PRROC).
 

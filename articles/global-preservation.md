@@ -1,7 +1,15 @@
 # Global preservation
 
-For the sampled metrics in this article, `Xin` and `metric_in` define
-the reference geometry.
+Use this guide to choose a sampled global-distance metric and compare
+embeddings on the same sampled relationships. For every metric here,
+`Xin` and `metric_in` define the reference geometry.
+
+| Question | Metric | Better direction | What is compared? |
+|----|----|----|----|
+| Are anchored distance orderings retained? | [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md) | Higher; 1 is perfect | Which of two endpoints is closer to the same anchor |
+| Are sampled distances associated? | [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md) | Higher; 1 is perfect positive association | Matched input/output pairs, linearly (Pearson) or by rank (Spearman) |
+| Do sampled distance distributions have similar shapes? | [`random_pair_distance_emd()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.md) | Lower; 0 is perfect | Marginal distributions, without preserving pair correspondence |
+| Are matched sampled distance magnitudes close? | [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md) | Lower; 0 is perfect | The same input/output pairs after optional range scaling |
 
 Create reusable samples with
 [`sample_pairs()`](https://jlmelville.github.io/quadra/reference/sample_pairs.md)
@@ -15,21 +23,36 @@ the same input-space relationships:
 
 ``` r
 
+library(quadra)
+
 iris_x <- as.matrix(iris[, -5])
 pca_unscaled <- stats::prcomp(iris_x, rank. = 2, scale. = FALSE)$x
 pca_scaled <- stats::prcomp(iris_x, rank. = 2, scale. = TRUE)$x
+```
+
+``` r
 
 set.seed(42)
 pair_plan <- sample_pairs(nrow(iris_x), n_pairs = 1000)
-c(
+distance_correlation <- c(
   pca_unscaled = random_pair_distance_correlation(
-    iris_x, pca_unscaled, pairs = pair_plan
+    iris_x, pca_unscaled, pairs = pair_plan, n_threads = 1
   ),
   pca_scaled = random_pair_distance_correlation(
-    iris_x, pca_scaled, pairs = pair_plan
+    iris_x, pca_scaled, pairs = pair_plan, n_threads = 1
   )
 )
+signif(distance_correlation, 5)
 ```
+
+    ## pca_unscaled   pca_scaled 
+    ##      0.99967      0.94536
+
+On this fixed Iris pair sample, the unscaled PCA has the higher Pearson
+correlation, so its sampled output distances are more linearly
+associated with the corresponding input distances. This is evidence
+about these embeddings and this sample, not a universal ranking of
+scaled and unscaled PCA.
 
 ## Random Triplet Accuracy
 
@@ -72,31 +95,11 @@ sampled distance vector is range-scaled.
 compares the matched sampled distances with a root mean squared
 difference, after scaling each distance vector to `[0, 1]` by default.
 
-## RNX AUC
-
-[`rnx_auc()`](https://jlmelville.github.io/quadra/reference/rnx_auc.md)
-summarizes exact rank-based neighborhood agreement across neighborhood
-sizes, giving more weight to smaller neighborhoods.
-
-Use
-[`rnx_curve()`](https://jlmelville.github.io/quadra/reference/rnx_curve.md)
-to inspect individual neighborhood sizes. By default it returns the
-complete curve; pass `k` to select particular scales. The curve
-diagnoses scale-specific preservation; it does not establish a
-universally preferred embedding.
-
-An RNX AUC of 1 is perfect, 0 is the random-neighborhood baseline, and
-negative values indicate worse-than-random rank agreement.
-
-``` r
-
-iris_x <- as.matrix(iris[, -5])
-pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
-din <- as.matrix(stats::dist(iris_x))
-dout <- as.matrix(stats::dist(pca_iris))
-rnx_auc(din, dout)
-rnx_curve(din, dout, k = c(5, 15, 30))
-```
+RNX is sometimes described as spanning local and global scales, but it
+measures rank-based neighborhood agreement rather than sampled global
+distances. See the [local
+preservation](https://jlmelville.github.io/quadra/articles/local-preservation.html#multi-scale-rnx-agreement)
+guide for its AUC, scale-specific curve, and interpretation.
 
 ## Further Reading
 
@@ -120,10 +123,3 @@ Heiser, C. N., & Lau, K. S. (2020). A quantitative framework for
 evaluating single-cell data structure preservation by dimensionality
 reduction techniques. *Cell reports*, *31*(5), 107576.
 <https://doi.org/10.1016/j.celrep.2020.107576>
-
-### RNX AUC
-
-Lee, J. A., Peluffo-Ordonez, D. H., & Verleysen, M. (2015). Multi-scale
-similarities in stochastic neighbour embedding: Reducing dimensionality
-while preserving both local and global structure. *Neurocomputing*,
-*169*, 246-261. <https://dx.doi.org/10.1016/j.neucom.2014.12.095>

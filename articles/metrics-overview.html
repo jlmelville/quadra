@@ -11,6 +11,8 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Metric overview">
+<meta name="description" content="Choose a metric from the relationship your embedding should preserve.">
+<meta property="og:description" content="Choose a metric from the relationship your embedding should preserve.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -100,8 +102,8 @@ intended use.</td>
 <td>
 <code><a href="../reference/roc_auc.html">roc_auc()</a></code> or <code><a href="../reference/pr_auc.html">pr_auc()</a></code>
 </td>
-<td>Whether same-label observations remain separated from other labels
-in the embedding.</td>
+<td>Whether same-label observations rank ahead of other labels in the
+embedding.</td>
 </tr>
 </tbody>
 </table>
@@ -118,7 +120,7 @@ work with nearest-neighbor graphs and scale to larger datasets.</p>
 local-neighborhood metrics, but they use rank penalties rather than only
 counting shared neighbors. They are exact distance-matrix functions for
 small datasets. <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes rank-based
-neighborhood agreement over many neighborhood sizes;
+neighborhood agreement over many neighborhood sizes, while
 <code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> retains the individual scales.</p>
 <p>See the <a href="local-preservation.html">local preservation</a>
 article for examples and related local diagnostics.</p>
@@ -182,8 +184,8 @@ Spearman ordering.</p>
 <div class="section level2">
 <h2 id="label-retrieval">Label Retrieval<a class="anchor" aria-label="anchor" href="#label-retrieval"></a>
 </h2>
-<p><code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> rank each
-observation’s neighbors by output distance and treat matching labels as
+<p><code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> rank other
+observations by distance from each query and treat matching labels as
 relevant. They require the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC package</a>.</p>
 <p>See the <a href="label-retrieval.html">label retrieval</a> article
 for examples and return value details.</p>

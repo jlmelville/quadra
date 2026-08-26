@@ -11,6 +11,8 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Global preservation">
+<meta name="description" content="Choose and interpret sampled metrics for global distance order, association, distributions, and matched magnitudes.">
+<meta property="og:description" content="Choose and interpret sampled metrics for global distance order, association, distributions, and matched magnitudes.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -60,8 +62,51 @@
 
     
     
-<p>For the sampled metrics in this article, <code>Xin</code> and
-<code>metric_in</code> define the reference geometry.</p>
+<p>Use this guide to choose a sampled global-distance metric and compare
+embeddings on the same sampled relationships. For every metric here,
+<code>Xin</code> and <code>metric_in</code> define the reference
+geometry.</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th>Question</th>
+<th>Metric</th>
+<th>Better direction</th>
+<th>What is compared?</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Are anchored distance orderings retained?</td>
+<td><code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code></td>
+<td>Higher; 1 is perfect</td>
+<td>Which of two endpoints is closer to the same anchor</td>
+</tr>
+<tr class="even">
+<td>Are sampled distances associated?</td>
+<td><code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code></td>
+<td>Higher; 1 is perfect positive association</td>
+<td>Matched input/output pairs, linearly (Pearson) or by rank
+(Spearman)</td>
+</tr>
+<tr class="odd">
+<td>Do sampled distance distributions have similar shapes?</td>
+<td><code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code></td>
+<td>Lower; 0 is perfect</td>
+<td>Marginal distributions, without preserving pair correspondence</td>
+</tr>
+<tr class="even">
+<td>Are matched sampled distance magnitudes close?</td>
+<td><code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code></td>
+<td>Lower; 0 is perfect</td>
+<td>The same input/output pairs after optional range scaling</td>
+</tr>
+</tbody>
+</table>
 <p>Create reusable samples with <code><a href="../reference/sample_pairs.html">sample_pairs()</a></code> or
 <code><a href="../reference/sample_triplets.html">sample_triplets()</a></code> and supply them with <code>pairs</code>
 or <code>triplets</code>. Set <code>ret_extra = TRUE</code> to inspect
@@ -69,20 +114,30 @@ the sampled comparisons behind a score.</p>
 <p>For example, reuse one pair sample to compare two embeddings on
 exactly the same input-space relationships:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">pca_unscaled</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale. <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
-<span><span class="va">pca_scaled</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale. <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jlmelville.github.io/quadra/">quadra</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">pca_unscaled</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale. <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<span><span class="va">pca_scaled</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale. <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">pair_plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_pairs.html">sample_pairs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span>, n_pairs <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="va">distance_correlation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  pca_unscaled <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span></span>
-<span>    <span class="va">iris_x</span>, <span class="va">pca_unscaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span></span>
+<span>    <span class="va">iris_x</span>, <span class="va">pca_unscaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span>, n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  pca_scaled <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span></span>
-<span>    <span class="va">iris_x</span>, <span class="va">pca_scaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span></span>
+<span>    <span class="va">iris_x</span>, <span class="va">pca_scaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span>, n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">distance_correlation</span>, <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## pca_unscaled   pca_scaled </span></span>
+<span><span class="co">##      0.99967      0.94536</span></span></code></pre>
+<p>On this fixed Iris pair sample, the unscaled PCA has the higher
+Pearson correlation, so its sampled output distances are more linearly
+associated with the corresponding input distances. This is evidence
+about these embeddings and this sample, not a universal ranking of
+scaled and unscaled PCA.</p>
 <div class="section level2">
 <h2 id="random-triplet-accuracy">Random Triplet Accuracy<a class="anchor" aria-label="anchor" href="#random-triplet-accuracy"></a>
 </h2>
@@ -126,27 +181,11 @@ sampled distance vector is range-scaled.</p>
 <p><code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares the matched
 sampled distances with a root mean squared difference, after scaling
 each distance vector to <code>[0, 1]</code> by default.</p>
-</div>
-<div class="section level2">
-<h2 id="rnx-auc">RNX AUC<a class="anchor" aria-label="anchor" href="#rnx-auc"></a>
-</h2>
-<p><code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes exact rank-based neighborhood
-agreement across neighborhood sizes, giving more weight to smaller
-neighborhoods.</p>
-<p>Use <code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> to inspect individual neighborhood
-sizes. By default it returns the complete curve; pass <code>k</code> to
-select particular scales. The curve diagnoses scale-specific
-preservation; it does not establish a universally preferred
-embedding.</p>
-<p>An RNX AUC of 1 is perfect, 0 is the random-neighborhood baseline,
-and negative values indicate worse-than-random rank agreement.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
-<span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rnx_curve.html">rnx_curve</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>RNX is sometimes described as spanning local and global scales, but
+it measures rank-based neighborhood agreement rather than sampled global
+distances. See the <a href="local-preservation.html#multi-scale-rnx-agreement">local
+preservation</a> guide for its AUC, scale-specific curve, and
+interpretation.</p>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
@@ -173,14 +212,6 @@ visualizing single-cell data using UMAP. <em>Nature biotechnology</em>,
 <p>Heiser, C. N., &amp; Lau, K. S. (2020). A quantitative framework for
 evaluating single-cell data structure preservation by dimensionality
 reduction techniques. <em>Cell reports</em>, <em>31</em>(5), 107576. <a href="https://doi.org/10.1016/j.celrep.2020.107576" class="external-link uri">https://doi.org/10.1016/j.celrep.2020.107576</a></p>
-</div>
-<div class="section level3">
-<h3 id="rnx-auc-1">RNX AUC<a class="anchor" aria-label="anchor" href="#rnx-auc-1"></a>
-</h3>
-<p>Lee, J. A., Peluffo-Ordonez, D. H., &amp; Verleysen, M. (2015).
-Multi-scale similarities in stochastic neighbour embedding: Reducing
-dimensionality while preserving both local and global structure.
-<em>Neurocomputing</em>, <em>169</em>, 246-261. <a href="https://dx.doi.org/10.1016/j.neucom.2014.12.095" class="external-link uri">https://dx.doi.org/10.1016/j.neucom.2014.12.095</a></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

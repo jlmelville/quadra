@@ -11,6 +11,8 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Local preservation">
+<meta name="description" content="Choose and interpret metrics for neighbor identity, rank, local scale, graph structure, and multiple neighborhood sizes.">
+<meta property="og:description" content="Choose and interpret metrics for neighbor identity, rank, local scale, graph structure, and multiple neighborhood sizes.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -60,26 +62,43 @@
 
     
     
+<p>Use this guide to choose a local metric from the relationship that
+matters for your analysis. Start with <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code>
+when neighbor identity is the main concern. Use trustworthiness or
+continuity for rank-sensitive penalties, local radius correlation for
+relative neighborhood scale, mutual-neighbor correlation for reciprocal
+graph structure, and RNX to inspect agreement over multiple neighborhood
+sizes.</p>
+<p>The examples use exact brute-force neighbors so their results are
+deterministic on this small dataset.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jlmelville.github.io/quadra/">quadra</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="neighborhood-preservation">Neighborhood Preservation<a class="anchor" aria-label="anchor" href="#neighborhood-preservation"></a>
 </h2>
-<p>For local preservation use nearest neighbor preservation. Pass a
-vector to <code>k</code> to get back the preservation for different
-numbers of neighbors.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">pca_iris</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
-<span><span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">pca_iris</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Supplied graphs use one-based indices in nearest-first order. Quadra
-checks all columns, removes self-indices, and retains the first
-<code>k</code> non-self neighbors, so self-inclusive graphs need at
-least <code>k + 1</code> columns. Supplied order resolves ties;
-<code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> includes boundary ties, while exact rank metrics
-break ties by distance-matrix column order.</p>
-<p>Graph searches pass supported sparse inputs to
-<code>rnndescent</code>; nonnumeric data-frame columns are ignored.
-Exact Euclidean and squared-Euclidean searches have the same ordering,
-subject to ties and approximation.</p>
+<p>Nearest-neighbor preservation is a useful default: it reports the
+mean fraction of input neighbors retained in the embedding. Pass a
+vector to <code>k</code> to inspect more than one neighborhood size.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">neighbor_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span></span>
+<span>  <span class="va">iris_x</span>,</span>
+<span>  <span class="va">pca_iris</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  nn_method_out <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">neighbor_scores</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## nnp15 nnp30 </span></span>
+<span><span class="co">## 0.801 0.916</span></span></code></pre>
+<p>For this two-dimensional Iris PCA, about 80% of the 15-neighbor
+identities and 92% of the 30-neighbor identities are retained on
+average. The higher score at <code>k = 30</code> describes this dataset
+and scale; it does not make the larger neighborhood universally
+preferable.</p>
 </div>
 <div class="section level2">
 <h2 id="trustworthiness-and-continuity">Trustworthiness and Continuity<a class="anchor" aria-label="anchor" href="#trustworthiness-and-continuity"></a>
@@ -90,11 +109,28 @@ Trustworthiness penalizes observations that appear as low-dimensional
 neighbors even though they are not close in the input space. Continuity
 applies the dual penalty to input-space neighbors that are no longer
 nearby in the embedding.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/trustworthiness.html">trustworthiness</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/trustworthiness.html">continuity</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">rank_k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span></span>
+<span><span class="va">trust_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/trustworthiness.html">trustworthiness</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="va">rank_k</span><span class="op">)</span></span>
+<span><span class="va">continuity_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/trustworthiness.html">continuity</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="va">rank_k</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    k <span class="op">=</span> <span class="va">rank_k</span>,</span>
+<span>    trustworthiness <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">trust_scores</span><span class="op">)</span>,</span>
+<span>    continuity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">continuity_scores</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fl">3</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##    k trustworthiness continuity</span></span>
+<span><span class="co">## 1  5           0.979      0.990</span></span>
+<span><span class="co">## 2 15           0.986      0.993</span></span>
+<span><span class="co">## 3 30           0.994      0.996</span></span></code></pre>
+<p>Values nearer 1 mean smaller rank penalties. Both metrics are above
+0.9 at the shown scales, so this embedding introduces relatively small
+trustworthiness and continuity penalties for these Iris
+neighborhoods.</p>
 <p>These functions use full <code>n</code> by <code>n</code> distance
 matrices and require <code>k</code> to be less than half the number of
 observations, so they are intended for exact small-dataset checks. For
@@ -109,13 +145,22 @@ remain nearby. <code><a href="../reference/local_radius_correlation.html">local_
 local-scale question: do points in dense or sparse regions of the input
 data still have relatively small or large nearest-neighbor radii in the
 embedding?</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">radius_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
 <span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
-<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  nn_method_out <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">radius_scores</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## lrc15 lrc30 </span></span>
+<span><span class="co">## 0.893 0.940</span></span></code></pre>
+<p>The strong positive correlations show that observations with
+relatively small or large input-space radii tend to retain that relative
+scale in this Iris embedding. This conclusion concerns scale, not which
+observations are neighbors.</p>
 <p>By default, the metric uses Spearman correlation between the distance
 to the <code>k</code>th nearest non-self neighbor in the input data and
 output embedding. Set <code>statistic = "mean"</code> to use the mean
@@ -126,16 +171,28 @@ positive.</p>
 differ from Euclidean.</p>
 <p>If you already have nearest-neighbor graphs with distance matrices,
 you can reuse them:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cached</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
 <span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
 <span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  nn_method_out <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  n_threads <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  ret_extra <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span><span class="va">cached</span><span class="op">$</span><span class="va">nn_in</span>, <span class="va">cached</span><span class="op">$</span><span class="va">nn_out</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">cached_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
+<span>  <span class="va">cached</span><span class="op">$</span><span class="va">nn_in</span>,</span>
+<span>  <span class="va">cached</span><span class="op">$</span><span class="va">nn_out</span>,</span>
+<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">cached_scores</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## lrc15 lrc30 </span></span>
+<span><span class="co">## 0.893 0.940</span></span></code></pre>
+<p>The reused graphs give the same result because they retain both the
+indices and distances required by the radius calculation.</p>
 <p>This metric is a radius or scale diagnostic. It does not estimate
 local density directly and should be interpreted alongside
 neighbor-identity metrics such as <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code>.</p>
@@ -147,69 +204,99 @@ neighbor-identity metrics such as <code><a href="../reference/nn_preservation.ht
 count patterns. For each observation, the mutual-neighbor count is the
 number of its first <code>k</code> nearest neighbors that also include
 the observation among their first <code>k</code> nearest neighbors.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mutual_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
 <span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
-<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  nn_method_out <span class="op">=</span> <span class="st">"brute"</span>,</span>
+<span>  n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">mutual_scores</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## mnc15 mnc30 </span></span>
+<span><span class="co">## 0.768 0.910</span></span></code></pre>
+<p>Both correlations are positive, so observations with high or low
+reciprocal neighbor counts in the input tend to retain that pattern in
+this embedding. The result is about graph structure, not direct neighbor
+overlap.</p>
 <p>This is a graph diagnostic. It does not require neighbor distances,
 so cached idx-only nearest-neighbor graphs are enough. It should be
 interpreted alongside neighbor-identity metrics such as
 <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and scale metrics such as
 <code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="multi-scale-rnx-agreement">Multi-Scale RNX Agreement<a class="anchor" aria-label="anchor" href="#multi-scale-rnx-agreement"></a>
+</h2>
+<p><code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes exact rank-based neighborhood
+agreement across all available neighborhood sizes, weighting smaller
+neighborhoods more heavily. Use <code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> when the
+scale-specific pattern matters.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rnx_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  auc <span class="op">=</span> <span class="fu"><a href="../reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rnx_curve.html">rnx_curve</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">rnx_scores</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   auc  rnx5 rnx15 rnx30 </span></span>
+<span><span class="co">## 0.692 0.622 0.777 0.894</span></span></code></pre>
+<p>An RNX value of 1 is perfect, 0 is the random-neighborhood baseline,
+and negative values indicate worse-than-random agreement. The Iris curve
+rises over the displayed values of <code>k</code>, so this embedding
+preserves rank neighborhoods better at the broader shown scales. That
+pattern diagnoses this embedding; it does not establish a universally
+preferred embedding or neighborhood size.</p>
+</div>
+<div class="section level2">
+<h2 id="using-existing-neighbor-graphs">Using Existing Neighbor Graphs<a class="anchor" aria-label="anchor" href="#using-existing-neighbor-graphs"></a>
+</h2>
 <p>For larger datasets, <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> can use
-approximate nearest neighbors via <a href="https://github.com/jlmelville/rnndescent" class="external-link">rnndescent</a>. If you
-have nearest-neighbor matrices from another approximate nearest neighbor
-package, e.g. <a href="https://cran.r-project.org/package=RcppAnnoy" class="external-link">RcppAnnoy</a>, use
-the <code>nbr_pres_knn</code> function:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># A function to wrap the RcppAnnoy API to return a matrix of the nearest</span></span>
-<span><span class="co"># neighbor indices</span></span>
-<span><span class="va">find_nn</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
-<span>  <span class="va">X</span>,</span>
-<span>  <span class="va">k</span> <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  <span class="va">n_trees</span> <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  <span class="va">search_k</span> <span class="op">=</span> <span class="op">(</span><span class="va">k</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="va">n_trees</span></span>
-<span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">nr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
-<span>  <span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
-<span>  <span class="va">requested_k</span> <span class="op">&lt;-</span> <span class="va">k</span> <span class="op">+</span> <span class="fl">1</span></span>
+approximate neighbors through <a href="https://github.com/jlmelville/rnndescent" class="external-link">rnndescent</a>. If
+another tool already provides one-based nearest-neighbor index matrices,
+pass them directly to <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code>. Rows are observations
+and columns are neighbors in nearest-first order.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">input_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  ncol <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">output_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">5</span>, <span class="fl">5</span>, <span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  ncol <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span>  <span class="va">ann</span> <span class="op">&lt;-</span> <span class="fu">methods</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/methods/new.html" class="external-link">new</a></span><span class="op">(</span><span class="fu">RcppAnnoy</span><span class="fu">::</span><span class="va">AnnoyEuclidean</span>, <span class="va">nc</span><span class="op">)</span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nr</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">ann</span><span class="op">$</span><span class="fu">addItem</span><span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">X</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span>  <span class="va">ann</span><span class="op">$</span><span class="fu">build</span><span class="op">(</span><span class="va">n_trees</span><span class="op">)</span></span>
-<span></span>
-<span>  <span class="va">idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span>nrow <span class="op">=</span> <span class="va">nr</span>, ncol <span class="op">=</span> <span class="va">k</span><span class="op">)</span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nr</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">res</span> <span class="op">&lt;-</span> <span class="va">ann</span><span class="op">$</span><span class="fu">getNNsByItemList</span><span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">requested_k</span>, <span class="va">search_k</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>    <span class="va">non_self</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">item</span><span class="op">[</span><span class="va">res</span><span class="op">$</span><span class="va">item</span> <span class="op">!=</span> <span class="va">i</span> <span class="op">-</span> <span class="fl">1</span><span class="op">]</span></span>
-<span>    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">non_self</span><span class="op">)</span> <span class="op">&lt;</span> <span class="va">k</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span></span>
-<span>        <span class="st">"search_k/n_trees settings were unable to find "</span>,</span>
-<span>        <span class="va">k</span>,</span>
-<span>        <span class="st">" non-self neighbors for item "</span>,</span>
-<span>        <span class="va">i</span></span>
-<span>      <span class="op">)</span></span>
-<span>    <span class="op">}</span></span>
-<span>    <span class="va">idx</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="va">non_self</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">k</span><span class="op">)</span><span class="op">]</span></span>
-<span>  <span class="op">}</span></span>
-<span>  <span class="va">idx</span> <span class="op">+</span> <span class="fl">1</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">kin</span> <span class="op">&lt;-</span> <span class="fu">find_nn</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="va">kout</span> <span class="op">&lt;-</span> <span class="fu">find_nn</span><span class="op">(</span><span class="va">pca_iris</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># This should give very similar results to using nbr_pres on the distance</span></span>
-<span><span class="co"># matrices, subject to the approximations employed by Annoy</span></span>
-<span><span class="fu"><a href="../reference/nbr_pres_knn.html">nbr_pres_knn</a></span><span class="op">(</span><span class="va">kin</span>, <span class="va">kout</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">external_overlap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nbr_pres_knn.html">nbr_pres_knn</a></span><span class="op">(</span></span>
+<span>  <span class="va">input_idx</span>,</span>
+<span>  <span class="va">output_idx</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">external_overlap</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 0.5 1.0 0.5 0.5 1.0</span></span></code></pre>
+<p>Two rows retain both neighbors and the other three retain one of two.
+This per-observation result makes the supplied-graph contract visible
+without tying the article to a particular graph-construction
+package.</p>
+<p>Supplied graphs use one-based indices in nearest-first order. Quadra
+checks all columns, removes self-indices, and retains the first
+<code>k</code> non-self neighbors, so self-inclusive graphs need at
+least <code>k + 1</code> columns. Supplied order resolves ties;
+<code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> includes boundary ties, while exact rank metrics
+break ties by distance-matrix column order.</p>
+<p>Graph searches pass supported sparse inputs to
+<code>rnndescent</code>; nonnumeric data-frame columns are ignored.
+Exact Euclidean and squared-Euclidean searches have the same ordering,
+subject to ties and approximation.</p>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h2>
+<div class="section level3">
+<h3 id="neighbor-overlap-and-rank-criteria">Neighbor Overlap and Rank Criteria<a class="anchor" aria-label="anchor" href="#neighbor-overlap-and-rank-criteria"></a>
+</h3>
 <p>France, S., &amp; Carroll, D. (2007, July). Development of an
 agreement metric based upon the RAND index for the evaluation of
 dimensionality reduction techniques, with applications to mapping
@@ -227,12 +314,17 @@ dimensionality reduction: Rank-based criteria. <em>Neurocomputing</em>,
 Multi-scale similarities in stochastic neighbour embedding: Reducing
 dimensionality while preserving both local and global structure.
 <em>Neurocomputing</em>, <em>169</em>, 246-261. <a href="https://dx.doi.org/10.1016/j.neucom.2014.12.095" class="external-link uri">https://dx.doi.org/10.1016/j.neucom.2014.12.095</a></p>
+</div>
+<div class="section level3">
+<h3 id="local-scale-and-density-context">Local Scale and Density Context<a class="anchor" aria-label="anchor" href="#local-scale-and-density-context"></a>
+</h3>
 <p>Cooley, S. M., Hamilton, T., Deeds, E. J., &amp; Ray, J. C. J.
 (2019). A novel metric reveals previously unrecognized distortion in
 dimensionality reduction of scRNA-Seq data. <em>BioRxiv</em>, 689851. <a href="https://www.biorxiv.org/content/10.1101/689851v6" class="external-link uri">https://www.biorxiv.org/content/10.1101/689851v6</a></p>
 <p>Narayan, A., Berger, B., &amp; Cho, H. (2021). Assessing single-cell
 transcriptomic variability through density-preserving data
 visualization. <em>Nature Biotechnology</em>, <em>39</em>, 765-774. <a href="https://doi.org/10.1038/s41587-020-00801-7" class="external-link uri">https://doi.org/10.1038/s41587-020-00801-7</a></p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
