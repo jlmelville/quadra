@@ -28,24 +28,35 @@ fraction of input neighbors retained in the embedding. Pass a vector to
 
 ``` r
 
+neighbor_k <- c(15, 30)
 neighbor_scores <- nn_preservation(
   iris_x,
   pca_iris,
-  k = c(15, 30),
+  k = neighbor_k,
   nn_method_in = "brute",
   nn_method_out = "brute",
   n_threads = 1
 )
-round(neighbor_scores, 3)
+chance_baselines <- neighbor_k / (nrow(iris_x) - 1)
+round(
+  data.frame(
+    k = neighbor_k,
+    preservation = unname(neighbor_scores),
+    chance_baseline = chance_baselines
+  ),
+  3
+)
 ```
 
-    ## nnp15 nnp30 
-    ## 0.801 0.916
+    ##    k preservation chance_baseline
+    ## 1 15        0.801           0.101
+    ## 2 30        0.916           0.201
 
-For this two-dimensional Iris PCA, about 80% of the 15-neighbor
-identities and 92% of the 30-neighbor identities are retained on
-average. The higher score at `k = 30` describes this dataset and scale;
-it does not make the larger neighborhood universally preferable.
+For this two-dimensional Iris PCA, both preservation values are
+substantially above their scale-specific chance baselines. The raw
+values answer different neighborhood-scale questions, so the larger
+value at `k = 30` should not be read as evidence that 30 neighbors is
+universally preferable to 15.
 
 ## Trustworthiness and Continuity
 
@@ -128,8 +139,9 @@ embedding. Set `statistic = "mean"` to use the mean distance to the
 first `k` neighbors, or `log = TRUE` to compare log radii when all
 selected radii are positive.
 
-Local radius uses distance magnitudes, so squared Euclidean can differ
-from Euclidean.
+With exact neighbors, squared Euclidean preserves the default Spearman
+ordering of `k`th-neighbor radii. It can still change Pearson
+correlations, mean-neighbor summaries, or approximate-search results.
 
 If you already have nearest-neighbor graphs with distance matrices, you
 can reuse them:
@@ -265,8 +277,8 @@ external_overlap
     ## [1] 0.5 1.0 0.5 0.5 1.0
 
 Two rows retain both neighbors and the other three retain one of two.
-This per-observation result makes the supplied-graph contract visible
-without tying the article to a particular graph-construction package.
+This shows how to reuse one-based neighbor indices from any
+graph-construction tool without adding an adapter dependency.
 
 Supplied graphs use one-based indices in nearest-first order. Quadra
 checks all columns, removes self-indices, and retains the first `k`

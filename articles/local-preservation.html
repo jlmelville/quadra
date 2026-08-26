@@ -83,22 +83,32 @@ deterministic on this small dataset.</p>
 mean fraction of input neighbors retained in the embedding. Pass a
 vector to <code>k</code> to inspect more than one neighborhood size.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">neighbor_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">neighbor_k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span></span>
+<span><span class="va">neighbor_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
-<span>  k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>,</span>
+<span>  k <span class="op">=</span> <span class="va">neighbor_k</span>,</span>
 <span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span>,</span>
 <span>  nn_method_out <span class="op">=</span> <span class="st">"brute"</span>,</span>
 <span>  n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">neighbor_scores</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## nnp15 nnp30 </span></span>
-<span><span class="co">## 0.801 0.916</span></span></code></pre>
-<p>For this two-dimensional Iris PCA, about 80% of the 15-neighbor
-identities and 92% of the 30-neighbor identities are retained on
-average. The higher score at <code>k = 30</code> describes this dataset
-and scale; it does not make the larger neighborhood universally
-preferable.</p>
+<span><span class="va">chance_baselines</span> <span class="op">&lt;-</span> <span class="va">neighbor_k</span> <span class="op">/</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    k <span class="op">=</span> <span class="va">neighbor_k</span>,</span>
+<span>    preservation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">neighbor_scores</span><span class="op">)</span>,</span>
+<span>    chance_baseline <span class="op">=</span> <span class="va">chance_baselines</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fl">3</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##    k preservation chance_baseline</span></span>
+<span><span class="co">## 1 15        0.801           0.101</span></span>
+<span><span class="co">## 2 30        0.916           0.201</span></span></code></pre>
+<p>For this two-dimensional Iris PCA, both preservation values are
+substantially above their scale-specific chance baselines. The raw
+values answer different neighborhood-scale questions, so the larger
+value at <code>k = 30</code> should not be read as evidence that 30
+neighbors is universally preferable to 15.</p>
 </div>
 <div class="section level2">
 <h2 id="trustworthiness-and-continuity">Trustworthiness and Continuity<a class="anchor" aria-label="anchor" href="#trustworthiness-and-continuity"></a>
@@ -167,8 +177,10 @@ output embedding. Set <code>statistic = "mean"</code> to use the mean
 distance to the first <code>k</code> neighbors, or
 <code>log = TRUE</code> to compare log radii when all selected radii are
 positive.</p>
-<p>Local radius uses distance magnitudes, so squared Euclidean can
-differ from Euclidean.</p>
+<p>With exact neighbors, squared Euclidean preserves the default
+Spearman ordering of <code>k</code>th-neighbor radii. It can still
+change Pearson correlations, mean-neighbor summaries, or
+approximate-search results.</p>
 <p>If you already have nearest-neighbor graphs with distance matrices,
 you can reuse them:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -277,9 +289,8 @@ and columns are neighbors in nearest-first order.</p>
 <span><span class="va">external_overlap</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 0.5 1.0 0.5 0.5 1.0</span></span></code></pre>
 <p>Two rows retain both neighbors and the other three retain one of two.
-This per-observation result makes the supplied-graph contract visible
-without tying the article to a particular graph-construction
-package.</p>
+This shows how to reuse one-based neighbor indices from any
+graph-construction tool without adding an adapter dependency.</p>
 <p>Supplied graphs use one-based indices in nearest-first order. Quadra
 checks all columns, removes self-indices, and retains the first
 <code>k</code> non-self neighbors, so self-inclusive graphs need at

@@ -35,21 +35,21 @@ auc_summary <- rbind(
   ROC = c(overall = roc$av_auc, unlist(roc$label_av)),
   PR = c(overall = pr$av_auc, unlist(pr$label_av))
 )
-round(auc_summary, 3)
+signif(auc_summary, 5)
 ```
 
-    ##     overall setosa versicolor virginica
-    ## ROC   0.930      1      0.902     0.889
-    ## PR    0.876      1      0.822     0.808
+    ##     overall  setosa versicolor virginica
+    ## ROC 0.93036 0.99998    0.90212   0.88897
+    ## PR  0.87649 0.99995    0.82188   0.80764
 
 Every Iris class has 50 observations, so each query has 49 relevant
 candidates among the other 149 and a random PR baseline of about 0.329.
 The overall Iris scores are above their random baselines. Setosa is
-retrieved perfectly in this PCA embedding, while the lower versicolor
-and virginica scores identify labels for which nearby observations are
-less consistently from the same class. The difference between ROC and PR
-values is not itself a winner-takes-all comparison: the measures use
-different baselines and emphasize different retrieval behavior.
+retrieved almost perfectly in this PCA embedding; for versicolor and
+virginica, same-label observations are less consistently ranked ahead of
+the other classes. The difference between ROC and PR values is not
+itself a winner-takes-all comparison: the measures use different
+baselines and emphasize different retrieval behavior.
 
 ## Inspecting Query-Level Results
 
