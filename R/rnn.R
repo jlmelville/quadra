@@ -632,25 +632,9 @@ mutual_neighbor_values <- function(nn_graph, k) {
   idx <- nn_graph$idx
   vapply(
     k,
-    function(ki) mutual_neighbor_counts(idx, ki),
+    function(ki) mutual_neighbor_counts_cpp(idx, ki),
     integer(nrow(idx))
   )
-}
-
-mutual_neighbor_counts <- function(idx, k) {
-  if (ncol(idx) < k) {
-    stop("Not enough columns in idx for k = ", k, call. = FALSE)
-  }
-  idx_prefix <- idx[, seq_len(k), drop = FALSE]
-  counts <- integer(nrow(idx_prefix))
-  for (i in seq_len(nrow(idx_prefix))) {
-    counts[i] <- sum(vapply(
-      idx_prefix[i, ],
-      function(j) any(idx_prefix[j, ] == i),
-      logical(1)
-    ))
-  }
-  counts
 }
 
 local_scale_correlation <- function(x, y, method) {

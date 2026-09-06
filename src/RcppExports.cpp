@@ -10,6 +10,17 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// mutual_neighbor_counts_cpp
+Rcpp::IntegerVector mutual_neighbor_counts_cpp(const Rcpp::NumericMatrix& idx, int k);
+RcppExport SEXP _quadra_mutual_neighbor_counts_cpp(SEXP idxSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(mutual_neighbor_counts_cpp(idx, k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // neighbor_overlap_counts
 IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx, const NumericMatrix& ref_idx, const IntegerVector& k, double n_threads);
 RcppExport SEXP _quadra_neighbor_overlap_counts(SEXP idxSEXP, SEXP ref_idxSEXP, SEXP kSEXP, SEXP n_threadsSEXP) {
@@ -160,6 +171,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_quadra_mutual_neighbor_counts_cpp", (DL_FUNC) &_quadra_mutual_neighbor_counts_cpp, 2},
     {"_quadra_neighbor_overlap_counts", (DL_FUNC) &_quadra_neighbor_overlap_counts, 4},
     {"_quadra_random_distances", (DL_FUNC) &_quadra_random_distances, 8},
     {"_quadra_rnx_auc_direct", (DL_FUNC) &_quadra_rnx_auc_direct, 2},
