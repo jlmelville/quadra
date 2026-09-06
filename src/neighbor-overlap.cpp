@@ -97,7 +97,7 @@ void overlap_counts_inner(std::size_t begin, std::size_t end,
   }
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
                                       const NumericMatrix &ref_idx,
                                       const IntegerVector &k,

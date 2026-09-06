@@ -15,7 +15,6 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix& idx, const NumericMat
 RcppExport SEXP _quadra_neighbor_overlap_counts(SEXP idxSEXP, SEXP ref_idxSEXP, SEXP kSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type idx(idxSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type ref_idx(ref_idxSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);

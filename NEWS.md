@@ -1,3 +1,8 @@
+# quadra 0.2.1.9000
+
+* Make random-triplet result construction safe during garbage collection, without changing sampled
+  comparisons or random-number sequences.
+* Neighbor-overlap calculations no longer create `.Random.seed` when it is absent.
 
 # quadra 0.2.1
 

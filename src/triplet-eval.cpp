@@ -423,14 +423,17 @@ SEXP random_triplet_sample(const NumericMatrix &xin, const NumericMatrix &xout,
   const auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   const auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 
-  Rcpp::RNGScope rng_scope;
-  const double accuracy = random_triplet_sample(
-      triplet_count, n_obs, xin_cpp.begin(), xin_cpp.end(), xout_cpp.begin(),
-      xout_cpp.end(), dfunin, dfunout, thread_count,
-      ret_triplets ? &returned_anchor : nullptr,
-      ret_triplets ? &returned_endpoint1 : nullptr,
-      ret_triplets ? &returned_endpoint2 : nullptr,
-      ret_triplets ? &agreement : nullptr);
+  double accuracy;
+  {
+    Rcpp::RNGScope rng_scope;
+    accuracy = random_triplet_sample(
+        triplet_count, n_obs, xin_cpp.begin(), xin_cpp.end(), xout_cpp.begin(),
+        xout_cpp.end(), dfunin, dfunout, thread_count,
+        ret_triplets ? &returned_anchor : nullptr,
+        ret_triplets ? &returned_endpoint1 : nullptr,
+        ret_triplets ? &returned_endpoint2 : nullptr,
+        ret_triplets ? &agreement : nullptr);
+  }
 
   return triplet_result(accuracy, ret_triplets, returned_anchor,
                         returned_endpoint1, returned_endpoint2, agreement);
