@@ -6,6 +6,7 @@
 * Sampled pair and triplet metrics now report nonfinite computed distances as numerical failures.
 * `random_pair_distance_stress()` avoids overflow and underflow when squaring large or small
   residuals.
+* Exact-rank metrics can now be interrupted during calculation.
 * The global and local preservation guides now show how to detect collapsed embeddings whose scores
   appear perfect.
 

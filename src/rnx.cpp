@@ -60,6 +60,9 @@ std::vector<double> max_rank_histogram(const NumericMatrix &din,
   std::vector<double> histogram(n_ranks + 1, 0);
 
   for (std::size_t i = 0; i < n_obs; ++i) {
+    if (i % 16 == 0) {
+      Rcpp::checkUserInterrupt();
+    }
     const auto ranks_in = row_ranks_first_ties(din, i);
     const auto ranks_out = row_ranks_first_ties(dout, i);
 
@@ -100,6 +103,9 @@ double rank_penalty_score(const NumericMatrix &din, const NumericMatrix &dout,
   double penalty = 0;
 
   for (std::size_t i = 0; i < n_obs; ++i) {
+    if (i % 16 == 0) {
+      Rcpp::checkUserInterrupt();
+    }
     const auto ranks_in = row_ranks_first_ties(din, i);
     const auto ranks_out = row_ranks_first_ties(dout, i);
 
@@ -152,6 +158,9 @@ NumericVector rank_penalty_scores(const NumericMatrix &din,
   std::vector<double> penalties(rank_ks.size(), 0);
 
   for (std::size_t i = 0; i < n_obs; ++i) {
+    if (i % 16 == 0) {
+      Rcpp::checkUserInterrupt();
+    }
     const auto ranks_in = row_ranks_first_ties(din, i);
     const auto ranks_out = row_ranks_first_ties(dout, i);
 
