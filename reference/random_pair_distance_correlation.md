@@ -78,6 +78,12 @@ and `distance_out` when `ret_extra = TRUE`.
 `Xin` and `metric_in` define the reference geometry. Supply `pairs` to
 reuse exact comparisons, or reset the R seed and keep `n_threads` fixed.
 
+## Numerical failures
+
+A nonfinite computed distance causes an error, even with finite
+coordinates. Finite distances alone do not guarantee accuracy at extreme
+coordinate scales.
+
 ## References
 
 Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L.

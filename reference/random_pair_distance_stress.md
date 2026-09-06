@@ -78,6 +78,16 @@ The stress, or a list with `stress`, `pairs`, `distance_in`, and
 `Xin` and `metric_in` define the reference geometry. Supply `pairs` to
 reuse exact comparisons, or reset the R seed and keep `n_threads` fixed.
 
+With `range_scale = TRUE`, constant distance vectors scale to zero.
+Inspect raw distances with `ret_extra = TRUE` when collapse or absolute
+scale is a concern.
+
+## Numerical failures
+
+A nonfinite computed distance causes an error, even with finite
+coordinates. Finite distances alone do not guarantee accuracy at extreme
+coordinate scales.
+
 ## See also
 
 [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md),

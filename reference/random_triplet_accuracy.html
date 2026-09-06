@@ -126,6 +126,13 @@ reuse exact comparisons, or reset the R seed and keep <code>n_threads</code> fix
 matrix-valued <code>n_triplets</code> uses its documented zero-based column layout.</p>
     </div>
     <div class="section level2">
+    <h2 id="numerical-failures">Numerical failures<a class="anchor" aria-label="anchor" href="#numerical-failures"></a></h2>
+
+
+<p>A nonfinite computed distance causes an error, even with finite coordinates.
+Finite distances alone do not guarantee accuracy at extreme coordinate scales.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Wang, Y., Huang, H., Rudin, C., &amp; Shaposhnik, Y. (2021).
 Understanding how dimension reduction tools work: an empirical approach to

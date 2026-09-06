@@ -188,6 +188,58 @@ preservation</a> guide for its AUC, scale-specific curve, and
 interpretation.</p>
 </div>
 <div class="section level2">
+<h2 id="check-output-scale-alongside-scores">Check Output Scale Alongside Scores<a class="anchor" aria-label="anchor" href="#check-output-scale-alongside-scores"></a>
+</h2>
+<p>An embedding is collapsed when all observations map to the same
+point. Its output distances are all zero, but range-scaled stress and
+EMD can still report a perfect score of zero.</p>
+<p>Scaling each distance vector to <code>[0, 1]</code> removes absolute
+scale information and maps constant vectors to zero. If the sampled
+input distances are also constant, the scaled input and output distances
+match. This example compares three equidistant observations with a
+collapsed embedding:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">equidistant</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, nrow <span class="op">=</span> <span class="fl">3</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">collapse_pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">3L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">collapse_stress</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress</a></span><span class="op">(</span></span>
+<span>  <span class="va">equidistant</span>,</span>
+<span>  <span class="va">collapsed</span>,</span>
+<span>  pairs <span class="op">=</span> <span class="va">collapse_pairs</span>,</span>
+<span>  ret_extra <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  scaled_stress <span class="op">=</span> <span class="va">collapse_stress</span><span class="op">$</span><span class="va">stress</span>,</span>
+<span>  scaled_emd <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd</a></span><span class="op">(</span></span>
+<span>    <span class="va">equidistant</span>,</span>
+<span>    <span class="va">collapsed</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">collapse_pairs</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## scaled_stress    scaled_emd </span></span>
+<span><span class="co">##             0             0</span></span></code></pre>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  input_distance <span class="op">=</span> <span class="va">collapse_stress</span><span class="op">$</span><span class="va">distance_in</span>,</span>
+<span>  output_distance <span class="op">=</span> <span class="va">collapse_stress</span><span class="op">$</span><span class="va">distance_out</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   input_distance output_distance</span></span>
+<span><span class="co">## 1              2               0</span></span>
+<span><span class="co">## 2              2               0</span></span>
+<span><span class="co">## 3              2               0</span></span></code></pre>
+<p>The raw distances in the detailed result expose the collapse: every
+output distance is zero while the input distances are positive. Inspect
+these magnitudes or coordinate spread alongside preservation scores. For
+stress, use <code>range_scale = FALSE</code> when absolute distance
+differences are meaningful in the chosen input and output units.
+Neighborhood scores also depend on tie handling; see <a href="local-preservation.html#collapsed-embeddings-and-ties">local
+preservation</a>.</p>
+<p>Sampled metrics report a numerical-failure error when a computed
+distance is nonfinite, even if all coordinates are finite. This catches
+overflow to infinity or <code>NaN</code>; finite results alone do not
+guarantee numerical accuracy at extreme coordinate scales.</p>
+</div>
+<div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h2>
 <div class="section level3">

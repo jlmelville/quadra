@@ -123,6 +123,13 @@ in each row must differ. If supplied, <code>n_pairs</code> is ignored.</p></dd>
 exact comparisons, or reset the R seed and keep <code>n_threads</code> fixed.</p>
     </div>
     <div class="section level2">
+    <h2 id="numerical-failures">Numerical failures<a class="anchor" aria-label="anchor" href="#numerical-failures"></a></h2>
+
+
+<p>A nonfinite computed distance causes an error, even with finite coordinates.
+Finite distances alone do not guarantee accuracy at extreme coordinate scales.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 Ng, L. G., ... &amp; Newell, E. W. (2019).

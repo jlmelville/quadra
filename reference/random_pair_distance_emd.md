@@ -79,6 +79,15 @@ EMD compares marginal distributions, not corresponding pairs. `Xin` and
 `metric_in` define the reference geometry. Supply `pairs` to reuse exact
 comparisons, or reset the R seed and keep `n_threads` fixed.
 
+Constant distance vectors scale to zero. Inspect raw distances with
+`ret_extra = TRUE` when collapse or absolute scale is a concern.
+
+## Numerical failures
+
+A nonfinite computed distance causes an error, even with finite
+coordinates. Finite distances alone do not guarantee accuracy at extreme
+coordinate scales.
+
 ## References
 
 Heiser, C. N., & Lau, K. S. (2020). A quantitative framework for

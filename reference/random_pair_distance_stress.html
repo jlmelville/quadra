@@ -118,6 +118,16 @@ in each row must differ. If supplied, <code>n_pairs</code> is ignored.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>Xin</code> and <code>metric_in</code> define the reference geometry. Supply <code>pairs</code> to reuse
 exact comparisons, or reset the R seed and keep <code>n_threads</code> fixed.</p>
+<p>With <code>range_scale = TRUE</code>, constant distance vectors scale to zero.
+Inspect raw distances with <code>ret_extra = TRUE</code> when collapse or absolute scale
+is a concern.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="numerical-failures">Numerical failures<a class="anchor" aria-label="anchor" href="#numerical-failures"></a></h2>
+
+
+<p>A nonfinite computed distance causes an error, even with finite coordinates.
+Finite distances alone do not guarantee accuracy at extreme coordinate scales.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

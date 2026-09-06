@@ -34,6 +34,18 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.1.9000" id="quadra-0219000">quadra 0.2.1.9000<a class="anchor" aria-label="anchor" href="#quadra-0219000"></a></h2>
+<ul><li>Make random-triplet result construction safe during garbage collection, without changing sampled comparisons or random-number sequences.</li>
+<li>Neighbor-overlap calculations no longer create <code>.Random.seed</code> when it is absent.</li>
+<li>Sampled pair and triplet metrics now report nonfinite computed distances as numerical failures.</li>
+<li>
+<code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> avoids overflow and underflow when squaring large or small residuals.</li>
+<li>Exact-rank metrics can now be interrupted during calculation.</li>
+<li>
+<code><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation()</a></code> is faster.</li>
+<li>The global and local preservation guides now show how to detect collapsed embeddings whose scores appear perfect.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="quadra-021">quadra 0.2.1<a class="anchor" aria-label="anchor" href="#quadra-021"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-2-1">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-1"></a></h3>

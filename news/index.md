@@ -1,5 +1,22 @@
 # Changelog
 
+## quadra 0.2.1.9000
+
+- Make random-triplet result construction safe during garbage
+  collection, without changing sampled comparisons or random-number
+  sequences.
+- Neighbor-overlap calculations no longer create `.Random.seed` when it
+  is absent.
+- Sampled pair and triplet metrics now report nonfinite computed
+  distances as numerical failures.
+- [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
+  avoids overflow and underflow when squaring large or small residuals.
+- Exact-rank metrics can now be interrupted during calculation.
+- [`mutual_neighbor_correlation()`](https://jlmelville.github.io/quadra/reference/mutual_neighbor_correlation.md)
+  is faster.
+- The global and local preservation guides now show how to detect
+  collapsed embeddings whose scores appear perfect.
+
 ## quadra 0.2.1
 
 ### New features

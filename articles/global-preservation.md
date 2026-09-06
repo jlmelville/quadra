@@ -101,6 +101,68 @@ distances. See the [local
 preservation](https://jlmelville.github.io/quadra/articles/local-preservation.html#multi-scale-rnx-agreement)
 guide for its AUC, scale-specific curve, and interpretation.
 
+## Check Output Scale Alongside Scores
+
+An embedding is collapsed when all observations map to the same point.
+Its output distances are all zero, but range-scaled stress and EMD can
+still report a perfect score of zero.
+
+Scaling each distance vector to `[0, 1]` removes absolute scale
+information and maps constant vectors to zero. If the sampled input
+distances are also constant, the scaled input and output distances
+match. This example compares three equidistant observations with a
+collapsed embedding:
+
+``` r
+
+equidistant <- diag(3)
+collapsed <- matrix(0, nrow = 3, ncol = 2)
+collapse_pairs <- rbind(c(1L, 2L), c(1L, 3L), c(2L, 3L))
+collapse_stress <- random_pair_distance_stress(
+  equidistant,
+  collapsed,
+  pairs = collapse_pairs,
+  ret_extra = TRUE
+)
+c(
+  scaled_stress = collapse_stress$stress,
+  scaled_emd = random_pair_distance_emd(
+    equidistant,
+    collapsed,
+    pairs = collapse_pairs
+  )
+)
+```
+
+    ## scaled_stress    scaled_emd 
+    ##             0             0
+
+``` r
+
+data.frame(
+  input_distance = collapse_stress$distance_in,
+  output_distance = collapse_stress$distance_out
+)
+```
+
+    ##   input_distance output_distance
+    ## 1              2               0
+    ## 2              2               0
+    ## 3              2               0
+
+The raw distances in the detailed result expose the collapse: every
+output distance is zero while the input distances are positive. Inspect
+these magnitudes or coordinate spread alongside preservation scores. For
+stress, use `range_scale = FALSE` when absolute distance differences are
+meaningful in the chosen input and output units. Neighborhood scores
+also depend on tie handling; see [local
+preservation](https://jlmelville.github.io/quadra/articles/local-preservation.html#collapsed-embeddings-and-ties).
+
+Sampled metrics report a numerical-failure error when a computed
+distance is nonfinite, even if all coordinates are finite. This catches
+overflow to infinity or `NaN`; finite results alone do not guarantee
+numerical accuracy at extreme coordinate scales.
+
 ## Further Reading
 
 ### Random Triplet Accuracy

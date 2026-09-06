@@ -58,6 +58,45 @@ values answer different neighborhood-scale questions, so the larger
 value at `k = 30` should not be read as evidence that 30 neighbors is
 universally preferable to 15.
 
+### Collapsed Embeddings and Ties
+
+In a collapsed embedding, all observations map to the same point and all
+output distances are zero. The distance-matrix function
+[`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md)
+includes every observation tied at the neighborhood boundary. Its output
+neighborhood then contains every input neighbor, giving a perfect score
+of one:
+
+``` r
+
+collapse_input <- matrix(c(0, 1, 3, 10), ncol = 1)
+collapse_output <- matrix(0, nrow = 4, ncol = 2)
+collapse_din <- as.matrix(stats::dist(collapse_input))
+collapse_dout <- as.matrix(stats::dist(collapse_output))
+collapse_preservation <- nbr_pres(collapse_din, collapse_dout, k = 1)
+collapse_preservation
+```
+
+    ## [1] 1 1 1 1
+
+``` r
+
+range(collapse_dout[row(collapse_dout) != col(collapse_dout)])
+```
+
+    ## [1] 0 0
+
+Graph-based functions such as
+[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+select exactly `k` neighbors, but tied selections can still reflect
+arbitrary ordering. Supplied neighbor graphs use their given order;
+exact-rank metrics break distance ties by column order. For collapsed or
+nearly collapsed embeddings, inspect raw output distances or coordinate
+spread alongside neighborhood scores. The [global preservation
+guide](https://jlmelville.github.io/quadra/articles/global-preservation.html#check-output-scale-alongside-scores)
+shows how detailed pair results expose raw distances even when the
+metric independently rescales input and output distances.
+
 ## Trustworthiness and Continuity
 
 [`trustworthiness()`](https://jlmelville.github.io/quadra/reference/trustworthiness.md)

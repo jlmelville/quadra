@@ -109,6 +109,35 @@ substantially above their scale-specific chance baselines. The raw
 values answer different neighborhood-scale questions, so the larger
 value at <code>k = 30</code> should not be read as evidence that 30
 neighbors is universally preferable to 15.</p>
+<div class="section level3">
+<h3 id="collapsed-embeddings-and-ties">Collapsed Embeddings and Ties<a class="anchor" aria-label="anchor" href="#collapsed-embeddings-and-ties"></a>
+</h3>
+<p>In a collapsed embedding, all observations map to the same point and
+all output distances are zero. The distance-matrix function
+<code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> includes every observation tied at the
+neighborhood boundary. Its output neighborhood then contains every input
+neighbor, giving a perfect score of one:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">collapse_input</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">10</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">collapse_output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, nrow <span class="op">=</span> <span class="fl">4</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">collapse_din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">collapse_input</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">collapse_dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">collapse_output</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">collapse_preservation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nbr_pres.html">nbr_pres</a></span><span class="op">(</span><span class="va">collapse_din</span>, <span class="va">collapse_dout</span>, k <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">collapse_preservation</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 1 1 1 1</span></span></code></pre>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">collapse_dout</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/row.html" class="external-link">row</a></span><span class="op">(</span><span class="va">collapse_dout</span><span class="op">)</span> <span class="op">!=</span> <span class="fu"><a href="https://rdrr.io/r/base/col.html" class="external-link">col</a></span><span class="op">(</span><span class="va">collapse_dout</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 0 0</span></span></code></pre>
+<p>Graph-based functions such as <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> select
+exactly <code>k</code> neighbors, but tied selections can still reflect
+arbitrary ordering. Supplied neighbor graphs use their given order;
+exact-rank metrics break distance ties by column order. For collapsed or
+nearly collapsed embeddings, inspect raw output distances or coordinate
+spread alongside neighborhood scores. The <a href="global-preservation.html#check-output-scale-alongside-scores">global
+preservation guide</a> shows how detailed pair results expose raw
+distances even when the metric independently rescales input and output
+distances.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="trustworthiness-and-continuity">Trustworthiness and Continuity<a class="anchor" aria-label="anchor" href="#trustworthiness-and-continuity"></a>
@@ -119,7 +148,7 @@ Trustworthiness penalizes observations that appear as low-dimensional
 neighbors even though they are not close in the input space. Continuity
 applies the dual penalty to input-space neighbors that are no longer
 nearby in the embedding.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">dout</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">pca_iris</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">rank_k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span></span>
@@ -155,7 +184,7 @@ remain nearby. <code><a href="../reference/local_radius_correlation.html">local_
 local-scale question: do points in dense or sparse regions of the input
 data still have relatively small or large nearest-neighbor radii in the
 embedding?</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">radius_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
@@ -183,7 +212,7 @@ change Pearson correlations, mean-neighbor summaries, or
 approximate-search results.</p>
 <p>If you already have nearest-neighbor graphs with distance matrices,
 you can reuse them:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cached</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/local_radius_correlation.html">local_radius_correlation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
@@ -216,7 +245,7 @@ neighbor-identity metrics such as <code><a href="../reference/nn_preservation.ht
 count patterns. For each observation, the mutual-neighbor count is the
 number of its first <code>k</code> nearest neighbors that also include
 the observation among their first <code>k</code> nearest neighbors.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mutual_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris_x</span>,</span>
 <span>  <span class="va">pca_iris</span>,</span>
@@ -245,7 +274,7 @@ interpreted alongside neighbor-identity metrics such as
 agreement across all available neighborhood sizes, weighting smaller
 neighborhoods more heavily. Use <code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> when the
 scale-specific pattern matters.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rnx_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  auc <span class="op">=</span> <span class="fu"><a href="../reference/rnx_auc.html">rnx_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="../reference/rnx_curve.html">rnx_curve</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">dout</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
@@ -268,7 +297,7 @@ approximate neighbors through <a href="https://github.com/jlmelville/rnndescent"
 another tool already provides one-based nearest-neighbor index matrices,
 pass them directly to <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code>. Rows are observations
 and columns are neighbors in nearest-first order.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">input_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  ncol <span class="op">=</span> <span class="fl">2</span>,</span>

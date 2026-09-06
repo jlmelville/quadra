@@ -82,6 +82,12 @@ to reuse exact comparisons, or reset the R seed and keep `n_threads`
 fixed. A matrix-valued `n_triplets` uses its documented zero-based
 column layout.
 
+## Numerical failures
+
+A nonfinite computed distance causes an error, even with finite
+coordinates. Finite distances alone do not guarantee accuracy at extreme
+coordinate scales.
+
 ## References
 
 Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021). Understanding
