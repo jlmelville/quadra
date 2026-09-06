@@ -27,6 +27,7 @@
 #ifndef QUADRA_DISTANCE_H
 #define QUADRA_DISTANCE_H
 
+#include <cmath>
 #include <functional>
 #include <stdexcept>
 #include <string>
@@ -35,6 +36,14 @@
 #include "tdoann/distance.h"
 
 using It = typename std::vector<double>::const_iterator;
+
+inline void check_distance_finite(double distance) {
+  if (!std::isfinite(distance)) {
+    // Called by workers too: propagate through pforr without calling the R API.
+    throw std::runtime_error(
+        "numerical failure: computed a nonfinite distance");
+  }
+}
 
 inline std::function<double(It, It, It)>
 create_dfun(const std::string &metric) {

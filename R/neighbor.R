@@ -7,6 +7,8 @@
 #'
 #' Diagonal entries are excluded; off-diagonal entries must be finite. Ties at
 #' the `k`th distance are included, with each score capped at 1.
+#' A collapsed output can therefore score 1. Inspect output-distance magnitudes
+#' or coordinate spread alongside neighborhood scores when distances are tied.
 #'
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.

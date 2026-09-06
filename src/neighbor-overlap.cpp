@@ -27,8 +27,8 @@ std::vector<KQuery> prepare_k_queries(const IntegerVector &k,
   std::vector<KQuery> queries;
   queries.reserve(k.size());
   for (R_xlen_t i = 0; i < k.size(); ++i) {
-    if (k[i] == NA_INTEGER || k[i] < 0) {
-      stop("k must contain nonnegative integers");
+    if (k[i] == NA_INTEGER || k[i] < 1) {
+      stop("k must contain positive integers");
     }
     const auto value = static_cast<std::size_t>(k[i]);
     if (value > max_cols) {

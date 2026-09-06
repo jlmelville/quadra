@@ -52,6 +52,7 @@ sample_triplets <- function(n_obs, n_triplets = 5) {
 #' reuse exact comparisons, or reset the R seed and keep `n_threads` fixed. A
 #' matrix-valued `n_triplets` uses its documented zero-based column layout.
 #'
+#' @inheritSection random_pair_distance_correlation Numerical failures
 #' @param Xin Input data, with observations in rows by default. Data must be
 #'   dense and finite; nonnumeric data-frame columns are ignored.
 #' @param Xout Output data, with the same input conventions and number of

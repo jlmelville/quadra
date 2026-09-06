@@ -16,8 +16,12 @@ test_that("neighbor-overlap native boundary protects unchecked access", {
   )
   expect_error(
     neighbor_overlap_counts(idx, idx, -1L),
-    "k must contain nonnegative integers"
+    "k must contain positive integers"
   )
+  # Public validation already rejects zero; this protects the native query loop.
+  for (k in list(0L, c(0L, 1L), c(1L, 0L))) {
+    expect_error(neighbor_overlap_counts(idx, idx, k), "positive integers")
+  }
   expect_error(
     neighbor_overlap_counts(idx, idx, 2L),
     "larger than the number of columns"

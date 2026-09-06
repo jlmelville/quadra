@@ -3,6 +3,11 @@
 * Make random-triplet result construction safe during garbage collection, without changing sampled
   comparisons or random-number sequences.
 * Neighbor-overlap calculations no longer create `.Random.seed` when it is absent.
+* Sampled pair and triplet metrics now report nonfinite computed distances as numerical failures.
+* `random_pair_distance_stress()` avoids overflow and underflow when squaring large or small
+  residuals.
+* The global and local preservation guides now show how to detect collapsed embeddings whose scores
+  appear perfect.
 
 # quadra 0.2.1
 

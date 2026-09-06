@@ -40,6 +40,8 @@ void distance_sample_inner(
     const It xout_i_begin = xout_begin + idxs[0] * xout_ncol;
     output_distances[i] = dfunout(xout_i_begin, xout_i_begin + xout_ncol,
                                   xout_begin + idxs[1] * xout_ncol);
+    check_distance_finite(input_distances[i]);
+    check_distance_finite(output_distances[i]);
   }
 }
 
@@ -87,6 +89,8 @@ void pair_distances_inner(std::size_t begin, std::size_t end,
     const It xout_i_begin = xout_begin + endpoint1[i] * xout_ncol;
     output_distances[i] = dfunout(xout_i_begin, xout_i_begin + xout_ncol,
                                   xout_begin + endpoint2[i] * xout_ncol);
+    check_distance_finite(input_distances[i]);
+    check_distance_finite(output_distances[i]);
   }
 }
 

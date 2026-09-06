@@ -59,7 +59,16 @@ default.
 EMD compares marginal distributions, not corresponding pairs. \code{Xin} and
 \code{metric_in} define the reference geometry. Supply \code{pairs} to reuse exact
 comparisons, or reset the R seed and keep \code{n_threads} fixed.
+
+Constant distance vectors scale to zero. Inspect raw distances with
+\code{ret_extra = TRUE} when collapse or absolute scale is a concern.
 }
+\section{Numerical failures}{
+
+A nonfinite computed distance causes an error, even with finite coordinates.
+Finite distances alone do not guarantee accuracy at extreme coordinate scales.
+}
+
 \examples{
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x

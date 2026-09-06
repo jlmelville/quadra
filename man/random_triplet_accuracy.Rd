@@ -64,6 +64,12 @@ result is \code{NA_real_} if no triplet defines an ordering.
 reuse exact comparisons, or reset the R seed and keep \code{n_threads} fixed. A
 matrix-valued \code{n_triplets} uses its documented zero-based column layout.
 }
+\section{Numerical failures}{
+
+A nonfinite computed distance causes an error, even with finite coordinates.
+Finite distances alone do not guarantee accuracy at extreme coordinate scales.
+}
+
 \examples{
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x

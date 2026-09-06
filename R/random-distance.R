@@ -37,6 +37,10 @@ sample_pairs <- function(n_obs, n_pairs = 1000) {
 #' `Xin` and `metric_in` define the reference geometry. Supply `pairs` to reuse
 #' exact comparisons, or reset the R seed and keep `n_threads` fixed.
 #'
+#' @section Numerical failures:
+#' A nonfinite computed distance causes an error, even with finite coordinates.
+#' Finite distances alone do not guarantee accuracy at extreme coordinate scales.
+#'
 #' @param Xin Input data, with observations in rows by default. Data must be
 #'   dense and finite; nonnumeric data-frame columns are ignored.
 #' @param Xout Output data, with the same input conventions and number of
@@ -114,6 +118,10 @@ random_pair_distance_correlation <- function(
 #' `metric_in` define the reference geometry. Supply `pairs` to reuse exact
 #' comparisons, or reset the R seed and keep `n_threads` fixed.
 #'
+#' Constant distance vectors scale to zero. Inspect raw distances with
+#' `ret_extra = TRUE` when collapse or absolute scale is a concern.
+#'
+#' @inheritSection random_pair_distance_correlation Numerical failures
 #' @param Xin Input data, with observations in rows by default. Data must be
 #'   dense and finite; nonnumeric data-frame columns are ignored.
 #' @param Xout Output data, with the same input conventions and number of
@@ -202,6 +210,10 @@ emd <- function(x, y) {
 #' exact comparisons, or reset the R seed and keep `n_threads` fixed.
 #'
 #' @inheritParams random_pair_distance_emd
+#' @inheritSection random_pair_distance_correlation Numerical failures
+#' @details With `range_scale = TRUE`, constant distance vectors scale to zero.
+#'   Inspect raw distances with `ret_extra = TRUE` when collapse or absolute scale
+#'   is a concern.
 #' @param range_scale Whether to scale each sampled distance vector to `[0, 1]`.
 #' @return The stress, or a list with `stress`, `pairs`, `distance_in`, and
 #'   `distance_out` when `ret_extra = TRUE`.
@@ -248,7 +260,9 @@ random_pair_distance_stress <- function(
     y <- rescale_unit_interval(y)
   }
 
-  value <- sqrt(mean((x - y)^2))
+  residuals <- x - y
+  scale <- max(abs(residuals))
+  value <- if (scale == 0) 0 else scale * sqrt(mean((residuals / scale)^2))
   random_pair_result(value, "stress", randlist, ret_extra)
 }
 

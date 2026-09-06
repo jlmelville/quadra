@@ -47,6 +47,8 @@ struct TripletCounts {
 };
 
 int compare_distances(double lhs, double rhs) {
+  check_distance_finite(lhs);
+  check_distance_finite(rhs);
   return (lhs > rhs) - (lhs < rhs);
 }
 
