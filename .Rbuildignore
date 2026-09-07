@@ -16,6 +16,7 @@
 ^pkgdown$
 ^vignettes/articles$
 ^plans$
+^tools$
 ^bench$
 ^revdep$
 ^.*\/*DONTCHECKMEIN.*$
