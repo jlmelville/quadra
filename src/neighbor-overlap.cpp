@@ -5,26 +5,17 @@
 #include <Rcpp.h>
 
 #include "native-validation.h"
-#include "pforr.h"
+#include "neighbor-overlap-core.h"
 
 using namespace Rcpp;
 
-struct KQuery {
-  std::size_t value;
-  std::size_t output_col;
-};
-
-std::size_t matrix_offset(std::size_t row, std::size_t col, std::size_t nrow) {
-  return row + (col * nrow);
-}
-
-std::vector<KQuery> prepare_k_queries(const IntegerVector &k,
-                                      std::size_t max_cols) {
+std::vector<quadra::detail::KQuery> prepare_k_queries(const IntegerVector &k,
+                                                      std::size_t max_cols) {
   if (k.size() < 1) {
     stop("k must be nonempty");
   }
 
-  std::vector<KQuery> queries;
+  std::vector<quadra::detail::KQuery> queries;
   queries.reserve(k.size());
   for (R_xlen_t i = 0; i < k.size(); ++i) {
     if (k[i] == NA_INTEGER || k[i] < 1) {
@@ -37,10 +28,11 @@ std::vector<KQuery> prepare_k_queries(const IntegerVector &k,
     queries.push_back({value, static_cast<std::size_t>(i)});
   }
 
-  std::stable_sort(queries.begin(), queries.end(),
-                   [](const KQuery &lhs, const KQuery &rhs) {
-                     return lhs.value < rhs.value;
-                   });
+  std::stable_sort(
+      queries.begin(), queries.end(),
+      [](const quadra::detail::KQuery &lhs, const quadra::detail::KQuery &rhs) {
+        return lhs.value < rhs.value;
+      });
   return queries;
 }
 
@@ -51,50 +43,11 @@ std::vector<std::size_t> copy_neighbor_indices(const NumericMatrix &idx,
 
   for (std::size_t col = 0; col < n_cols; ++col) {
     for (std::size_t row = 0; row < n_obs; ++row) {
-      copied[matrix_offset(row, col, n_obs)] =
+      copied[quadra::detail::matrix_offset(row, col, n_obs)] =
           static_cast<std::size_t>(idx(row, col));
     }
   }
   return copied;
-}
-
-void overlap_counts_inner(std::size_t begin, std::size_t end,
-                          const std::vector<std::size_t> &idx,
-                          const std::vector<std::size_t> &ref_idx,
-                          std::size_t n_obs, const std::vector<KQuery> &queries,
-                          std::vector<int> &counts) {
-  std::vector<std::size_t> idx_seen(n_obs, 0);
-  std::vector<std::size_t> ref_seen(n_obs, 0);
-  std::size_t row_token = 1;
-
-  for (std::size_t row = begin; row < end; ++row, ++row_token) {
-    int overlap = 0;
-    std::size_t query_pos = 0;
-
-    for (std::size_t pos = 1; pos <= queries.back().value; ++pos) {
-      const auto idx_value = idx[matrix_offset(row, pos - 1, n_obs)] - 1;
-      if (idx_seen[idx_value] != row_token) {
-        idx_seen[idx_value] = row_token;
-        if (ref_seen[idx_value] == row_token) {
-          ++overlap;
-        }
-      }
-
-      const auto ref_value = ref_idx[matrix_offset(row, pos - 1, n_obs)] - 1;
-      if (ref_seen[ref_value] != row_token) {
-        ref_seen[ref_value] = row_token;
-        if (idx_seen[ref_value] == row_token) {
-          ++overlap;
-        }
-      }
-
-      while (query_pos < queries.size() && queries[query_pos].value == pos) {
-        counts[matrix_offset(row, queries[query_pos].output_col, n_obs)] =
-            overlap;
-        ++query_pos;
-      }
-    }
-  }
 }
 
 // [[Rcpp::export(rng = false)]]
@@ -116,12 +69,8 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
   const auto ref_idx_cpp = copy_neighbor_indices(ref_idx, max_k);
 
   std::vector<int> counts(n_obs * static_cast<std::size_t>(k.size()), 0);
-  auto worker = [&](std::size_t begin, std::size_t end) {
-    overlap_counts_inner(begin, end, idx_cpp, ref_idx_cpp, n_obs, queries,
-                         counts);
-  };
-
-  pforr::parallel_for(0, n_obs, worker, thread_count);
+  quadra::detail::compute_overlap_counts(idx_cpp, ref_idx_cpp, n_obs, queries,
+                                         counts, thread_count);
 
   IntegerMatrix result(n_obs, k.size());
   std::copy(counts.begin(), counts.end(), result.begin());

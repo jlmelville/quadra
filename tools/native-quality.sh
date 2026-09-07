@@ -95,7 +95,9 @@ maintained_sources=(
 format_sources=(
   "${maintained_sources[@]}"
   src/distance.h
+  src/neighbor-overlap-core.h
   src/native-validation.h
+  tools/tsan-neighbor-overlap.cpp
 )
 
 compiler_flags=(

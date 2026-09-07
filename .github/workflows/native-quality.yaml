@@ -8,6 +8,8 @@ on:
       - src/**
       - tools/native-quality.sh
       - tools/requirements-clang-format.txt
+      - tools/tsan-neighbor-overlap.cpp
+      - tools/tsan-neighbor-overlap.sh
   pull_request:
     branches: [main, master]
     paths:
@@ -17,6 +19,8 @@ on:
       - src/**
       - tools/native-quality.sh
       - tools/requirements-clang-format.txt
+      - tools/tsan-neighbor-overlap.cpp
+      - tools/tsan-neighbor-overlap.sh
   workflow_dispatch:
 
 name: Native quality
@@ -65,10 +69,22 @@ jobs:
             --requirement tools/requirements-clang-format.txt
           printf '%s\n' "$formatter_venv/bin" >> "$GITHUB_PATH"
 
-      - name: Check native quality script
+      - name: Check native scripts
         run: |
-          bash -n tools/native-quality.sh
-          shellcheck tools/native-quality.sh
+          bash -n tools/native-quality.sh tools/tsan-neighbor-overlap.sh
+          shellcheck tools/native-quality.sh tools/tsan-neighbor-overlap.sh
 
       - name: Run native quality checks
         run: tools/native-quality.sh
+
+  thread-sanitizer:
+    name: ThreadSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to a full-length commit SHA for immutability; Dependabot updates this reference.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Exercise production parallel overlap counts
+        run: tools/tsan-neighbor-overlap.sh
