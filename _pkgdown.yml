@@ -2,6 +2,16 @@ url: https://jlmelville.github.io/quadra/
 template:
   bootstrap: 5
   math-rendering: katex
+  light-switch: true
+  theme: github-light
+  theme-dark: github-dark
+  bslib:
+    danger: "#A6081A"
+
+development:
+  mode: unreleased
+
+llm-docs: true
 
 articles:
 - title: Guides
@@ -10,3 +20,36 @@ articles:
   - articles/local-preservation
   - articles/global-preservation
   - articles/label-retrieval
+
+reference:
+  - title: Local neighborhood preservation
+    desc: Compare neighbors or rank agreement between the input and embedding.
+    contents:
+      - nbr_pres
+      - nbr_pres_knn
+      - nn_preservation
+      - trustworthiness
+      - rnx_curve
+      - rnx_auc
+  - title: Local scale and graph diagnostics
+    desc: Compare neighborhood radii and mutual-neighbor patterns.
+    contents:
+      - local_radius_correlation
+      - mutual_neighbor_correlation
+  - title: Global distance preservation
+    desc: Compare sampled distances and distance orderings.
+    contents:
+      - random_triplet_accuracy
+      - random_pair_distance_correlation
+      - random_pair_distance_emd
+      - random_pair_distance_stress
+  - title: Label retrieval
+    desc: Measure how well distances retrieve observations with matching labels.
+    contents:
+      - roc_auc
+      - pr_auc
+  - title: Sampling helpers
+    desc: Sample observation pairs or anchored triplets.
+    contents:
+      - sample_pairs
+      - sample_triplets
