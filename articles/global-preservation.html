@@ -134,10 +134,16 @@ exactly the same input-space relationships:</p>
 <span><span class="va">pair_plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_pairs.html">sample_pairs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">iris_x</span><span class="op">)</span>, n_pairs <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="va">distance_correlation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  pca_unscaled <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span></span>
-<span>    <span class="va">iris_x</span>, <span class="va">pca_unscaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span>, n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span>    <span class="va">iris_x</span>,</span>
+<span>    <span class="va">pca_unscaled</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">pair_plan</span>,</span>
+<span>    n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  pca_scaled <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation</a></span><span class="op">(</span></span>
-<span>    <span class="va">iris_x</span>, <span class="va">pca_scaled</span>, pairs <span class="op">=</span> <span class="va">pair_plan</span>, n_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span>    <span class="va">iris_x</span>,</span>
+<span>    <span class="va">pca_scaled</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">pair_plan</span>,</span>
+<span>    n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">distance_correlation</span>, <span class="fl">5</span><span class="op">)</span></span></code></pre></div>

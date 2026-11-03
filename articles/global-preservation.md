@@ -36,10 +36,16 @@ set.seed(42)
 pair_plan <- sample_pairs(nrow(iris_x), n_pairs = 1000)
 distance_correlation <- c(
   pca_unscaled = random_pair_distance_correlation(
-    iris_x, pca_unscaled, pairs = pair_plan, n_threads = 1
+    iris_x,
+    pca_unscaled,
+    pairs = pair_plan,
+    n_threads = 1
   ),
   pca_scaled = random_pair_distance_correlation(
-    iris_x, pca_scaled, pairs = pair_plan, n_threads = 1
+    iris_x,
+    pca_scaled,
+    pairs = pair_plan,
+    n_threads = 1
   )
 )
 signif(distance_correlation, 5)
