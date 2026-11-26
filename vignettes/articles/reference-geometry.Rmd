@@ -175,7 +175,7 @@ knitr::include_graphics("figures/roll-overlap.png")
 
 Both panels in each row use the same 0–1 scale from purple to yellow.
 
-## Explore local shape after alignment
+## Compare local shape after alignment
 
 Neighbor overlap counts retained neighbors. To look at their shape, select the 15 nearest
 neighbors of each point in the flat reference and carry the same row IDs into each embedding.
@@ -186,25 +186,15 @@ translation within each patch. This leaves patch-by-patch stretch visible.
 original_distances <- dist(flat)
 reference_dist <- as.matrix(original_distances)
 diag(reference_dist) <- Inf
-neighbors <- apply(reference_dist, 1, order)[seq_len(k), , drop = FALSE]
+reference_graph <- list(idx = t(apply(reference_dist, 1, order)[seq_len(k), , drop = FALSE]))
 radius <- function(d) apply(d, 1, sort)[k, ]
-
-patch_residual <- function(reference, output) {
-  a <- scale(reference, scale = FALSE)
-  b <- scale(output, scale = FALSE)
-  rotation <- svd(crossprod(b, a))
-  aligned <- b %*% rotation$u %*% t(rotation$v)
-  sum((a - aligned)^2) / sum(a^2)
-}
 
 inspect_shape <- function(y) {
   distances <- dist(y)
   multiplier <- sum(original_distances * distances) / sum(distances^2)
   calibrated <- multiplier * y
-  error <- vapply(seq_len(nrow(flat)), function(i) {
-    ids <- c(i, neighbors[, i])
-    patch_residual(flat[ids, ], calibrated[ids, ])
-  }, numeric(1))
+  shape <- local_procrustes(flat, calibrated, k = k, nn_in = reference_graph, ret_extra = TRUE)
+  error <- shape$pointwise_error
   i <- which.max(error)
   output_dist <- as.matrix(dist(calibrated))
   overlap <- nbr_pres(as.matrix(original_distances), output_dist, k)

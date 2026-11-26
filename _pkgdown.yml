@@ -37,9 +37,10 @@ reference:
       - pointwise_rank_preservation
       - rnx_curve
       - rnx_auc
-  - title: Local scale and graph diagnostics
-    desc: Compare neighborhood radii and mutual-neighbor patterns.
+  - title: Local shape, scale, and graph diagnostics
+    desc: Compare neighborhood shape, radii, and mutual-neighbor patterns.
     contents:
+      - local_procrustes
       - local_radius_correlation
       - mutual_neighbor_correlation
   - title: Global distance preservation

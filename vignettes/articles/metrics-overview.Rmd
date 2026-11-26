@@ -40,6 +40,11 @@ relative scale. `local_radius_correlation()` compares the local radius around
 each observation in the input data and output embedding, using either the
 distance to the `k`th neighbor or the mean distance to the first `k` neighbors.
 
+## Local Shape Preservation
+
+`local_procrustes()` checks how much the same reference neighborhood changes shape after
+rigid alignment. It can find distortions even when all members stay together.
+
 ## Local Graph Diagnostics
 
 `mutual_neighbor_correlation()` compares the mutual-neighbor count pattern in

@@ -3,6 +3,7 @@
 * Add `random_pair_distance_band_profile()` for Spearman correlation and fitted-scale stress
   across input-distance bands, with reusable pair samples.
 * Add `pointwise_rank_preservation()` for observation-level trustworthiness and continuity.
+* Add `local_procrustes()` for fixed-scale shape error on matched reference neighborhoods.
 * Make random-triplet result construction safe during garbage collection, without changing sampled
   comparisons or random-number sequences.
 * Neighbor-overlap calculations no longer create `.Random.seed` when it is absent.
