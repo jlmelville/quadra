@@ -71,6 +71,21 @@ Detailed results contain the evaluated triplets and a row-aligned agreement
 vector; input-distance ties are `NA`. Reset the R seed and keep `n_threads`
 fixed to repeat implicit sampling.
 
+Use `by_anchor = TRUE` to see which observations retain their distance ordering. The summary
+includes sampled, defined, and agreeing comparison counts for every input row. Recover the
+overall accuracy by dividing total agreements by total defined comparisons.
+
+```{r triplet-anchor-summary}
+set.seed(43)
+triplet_summary <- random_triplet_accuracy(iris_x, pca_unscaled, n_triplets = 64, by_anchor = TRUE)
+head(triplet_summary$by_anchor)
+with(triplet_summary$by_anchor, sum(n_agree) / sum(n_defined))
+```
+
+For an anchor map, increase the number of comparisons and check whether the pattern holds with
+another sample. Reuse the same triplets across embeddings so each comparison uses the same
+endpoints. [MNIST example](mnist-pca-umap.html#check-distance-ordering-from-each-anchor)
+
 ## Random Pair Distance Correlation
 
 `random_pair_distance_correlation()` measures Pearson correlation between

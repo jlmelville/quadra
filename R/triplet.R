@@ -75,10 +75,20 @@ sample_triplets <- function(n_obs, n_triplets = 5) {
 #'   numeric `n_triplets` is ignored.
 #' @param ret_extra Whether to return the triplets and their row-aligned
 #'   agreement outcomes.
+#' @param by_anchor Whether to return sampled, defined, and agreeing
+#'   comparison counts and accuracy for each anchor.
 #' @return Triplet accuracy in `[0, 1]`, or `NA_real_` if every input comparison
 #'   is tied. With `ret_extra = TRUE`, returns a list with `accuracy`,
 #'   `triplets`, and `agreement`. Agreement is `NA` for input-distance ties,
 #'   `TRUE` for matching strict orderings, and `FALSE` otherwise.
+#'   With `by_anchor = TRUE`, returns a list with `accuracy` and a
+#'   `by_anchor` data frame, plus the triplet details if requested. The data
+#'   frame has one row per observation, in input order, with columns
+#'   `anchor` (one-based), `n_sampled`, `n_defined`, `n_agree`, and
+#'   `accuracy`. Anchors without defined comparisons have `NA_real_`
+#'   accuracy. To recover the overall score, weight the defined anchor
+#'   accuracies by `n_defined`. Increase the sample per anchor when a map
+#'   needs more stable scores than the default five comparisons provide.
 #' @references Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
 #' Understanding how dimension reduction tools work: an empirical approach to
 #' deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
@@ -101,10 +111,12 @@ random_triplet_accuracy <-
     is_transposed = FALSE,
     n_threads = 0,
     triplets = NULL,
-    ret_extra = FALSE
+    ret_extra = FALSE,
+    by_anchor = FALSE
   ) {
     is_transposed <- validate_scalar_logical(is_transposed, "is_transposed")
     ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
+    by_anchor <- validate_scalar_logical(by_anchor, "by_anchor")
     n_threads <- validate_n_threads(n_threads)
     metric_in <- validate_distance(metric_in)
     metric_out <- validate_distance(metric_out)
@@ -145,14 +157,15 @@ random_triplet_accuracy <-
           metric_in = metric_in,
           metric_out = metric_out,
           n_threads = n_threads,
-          ret_triplets = ret_extra
+          ret_triplets = ret_extra,
+          ret_anchors = by_anchor
         )
       )
     }
 
     if (is.matrix(n_triplets)) {
       triplet_matrix <- validate_triplet_matrix(n_obs, n_triplets)
-      if (!ret_extra) {
+      if (!ret_extra && !by_anchor) {
         return(
           triplet_sample(
             triplet_matrix,
@@ -173,7 +186,8 @@ random_triplet_accuracy <-
           metric_in = metric_in,
           metric_out = metric_out,
           n_threads = n_threads,
-          ret_triplets = ret_extra
+          ret_triplets = ret_extra,
+          ret_anchors = by_anchor
         )
       )
     }
@@ -186,7 +200,8 @@ random_triplet_accuracy <-
       metric_in = metric_in,
       metric_out = metric_out,
       n_threads = n_threads,
-      ret_triplets = ret_extra
+      ret_triplets = ret_extra,
+      ret_anchors = by_anchor
     )
   }
 

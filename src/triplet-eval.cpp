@@ -46,6 +46,11 @@ struct TripletCounts {
   std::size_t comparisons{0};
 };
 
+struct AnchorTripletCounts {
+  TripletCounts defined;
+  std::size_t sampled{0};
+};
+
 int compare_distances(double lhs, double rhs) {
   check_distance_finite(lhs);
   check_distance_finite(rhs);
@@ -220,7 +225,8 @@ TripletCounts random_triplet_sample_inner(
     const It xout_begin, std::size_t xout_ncol,
     const std::function<Dfun> &dfunout, std::vector<int> *returned_anchor,
     std::vector<int> *returned_endpoint1, std::vector<int> *returned_endpoint2,
-    std::vector<int> *agreement) {
+    std::vector<int> *agreement,
+    std::vector<AnchorTripletCounts> &anchor_counts) {
 
   TripletCounts counts;
   for (std::size_t i = begin; i < end; i++) {
@@ -229,14 +235,16 @@ TripletCounts random_triplet_sample_inner(
     const It xout_i_begin = xout_begin + i * xout_ncol;
     const It xout_i_end = xout_i_begin + xout_ncol;
 
+    TripletCounts &row_counts =
+        anchor_counts.empty() ? counts : anchor_counts[i].defined;
     for (std::size_t j = 0; j < n_triplets_per_observation; j++) {
       const auto idxs = int_sampler.sample(n_obs - 1, 2);
       const std::size_t p1 = avoid_anchor_index(idxs[0], i);
       const std::size_t p2 = avoid_anchor_index(idxs[1], i);
 
       const int outcome = update_triplet_counts(
-          counts, p1, p2, xin_i_begin, xin_i_end, xin_begin, xin_ncol, dfunin,
-          xout_i_begin, xout_i_end, xout_begin, xout_ncol, dfunout);
+          row_counts, p1, p2, xin_i_begin, xin_i_end, xin_begin, xin_ncol,
+          dfunin, xout_i_begin, xout_i_end, xout_begin, xout_ncol, dfunout);
       if (agreement != nullptr) {
         const std::size_t row = i * n_triplets_per_observation + j;
         (*returned_anchor)[row] = static_cast<int>(i + 1);
@@ -244,6 +252,11 @@ TripletCounts random_triplet_sample_inner(
         (*returned_endpoint2)[row] = static_cast<int>(p2 + 1);
         (*agreement)[row] = outcome;
       }
+    }
+    if (!anchor_counts.empty()) {
+      anchor_counts[i].sampled = n_triplets_per_observation;
+      counts.agreements += row_counts.agreements;
+      counts.comparisons += row_counts.comparisons;
     }
   }
   return counts;
@@ -254,7 +267,8 @@ double random_triplet_sample(
     It xin_end, It xout_begin, It xout_end, const std::function<Dfun> &dfunin,
     const std::function<Dfun> &dfunout, std::size_t n_threads,
     std::vector<int> *returned_anchor, std::vector<int> *returned_endpoint1,
-    std::vector<int> *returned_endpoint2, std::vector<int> *agreement) {
+    std::vector<int> *returned_endpoint2, std::vector<int> *agreement,
+    std::vector<AnchorTripletCounts> &anchor_counts) {
   const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
   const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
 
@@ -269,7 +283,8 @@ double random_triplet_sample(
     const auto chunk_counts = random_triplet_sample_inner(
         begin, end, n_triplets_per_observation, n_obs, *thread_sampler,
         xin_begin, xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout,
-        returned_anchor, returned_endpoint1, returned_endpoint2, agreement);
+        returned_anchor, returned_endpoint1, returned_endpoint2, agreement,
+        anchor_counts);
     counts[chunk_id].agreements += chunk_counts.agreements;
     counts[chunk_id].comparisons += chunk_counts.comparisons;
   };
@@ -278,29 +293,57 @@ double random_triplet_sample(
   return summarize_triplet_counts(counts);
 }
 
+DataFrame
+anchor_triplet_result(const std::vector<AnchorTripletCounts> &anchor_counts) {
+  const auto n = anchor_counts.size();
+  IntegerVector anchor(n), sampled(n), defined(n), agreed(n);
+  NumericVector accuracy(n);
+  for (std::size_t i = 0; i < n; ++i) {
+    const auto &row = anchor_counts[i];
+    anchor[i] = static_cast<int>(i + 1);
+    sampled[i] = static_cast<int>(row.sampled);
+    defined[i] = static_cast<int>(row.defined.comparisons);
+    agreed[i] = static_cast<int>(row.defined.agreements);
+    accuracy[i] = row.defined.comparisons == 0
+                      ? NA_REAL
+                      : row.defined.agreements /
+                            static_cast<double>(row.defined.comparisons);
+  }
+  return DataFrame::create(_["anchor"] = anchor, _["n_sampled"] = sampled,
+                           _["n_defined"] = defined, _["n_agree"] = agreed,
+                           _["accuracy"] = accuracy);
+}
+
 SEXP triplet_result(double accuracy, bool ret_triplets,
                     const std::vector<int> &anchor,
                     const std::vector<int> &endpoint1,
                     const std::vector<int> &endpoint2,
-                    const std::vector<int> &agreement) {
-  if (!ret_triplets) {
+                    const std::vector<int> &agreement,
+                    const std::vector<AnchorTripletCounts> &anchor_counts) {
+  if (!ret_triplets && anchor_counts.empty()) {
     return Rcpp::wrap(accuracy);
   }
 
-  const int n_triplets = static_cast<int>(anchor.size());
-  IntegerMatrix triplets(n_triplets, 3);
-  LogicalVector agreement_result(n_triplets);
-  for (int i = 0; i < n_triplets; i++) {
-    triplets(i, 0) = anchor[i];
-    triplets(i, 1) = endpoint1[i];
-    triplets(i, 2) = endpoint2[i];
-    agreement_result[i] = agreement[i];
+  List result = List::create(_["accuracy"] = accuracy);
+  if (ret_triplets) {
+    const int n_triplets = static_cast<int>(anchor.size());
+    IntegerMatrix triplets(n_triplets, 3);
+    LogicalVector agreement_result(n_triplets);
+    for (int i = 0; i < n_triplets; i++) {
+      triplets(i, 0) = anchor[i];
+      triplets(i, 1) = endpoint1[i];
+      triplets(i, 2) = endpoint2[i];
+      agreement_result[i] = agreement[i];
+    }
+    colnames(triplets) =
+        CharacterVector::create("anchor", "endpoint1", "endpoint2");
+    result["triplets"] = triplets;
+    result["agreement"] = agreement_result;
   }
-  colnames(triplets) =
-      CharacterVector::create("anchor", "endpoint1", "endpoint2");
-
-  return List::create(_["accuracy"] = accuracy, _["triplets"] = triplets,
-                      _["agreement"] = agreement_result);
+  if (!anchor_counts.empty()) {
+    result["by_anchor"] = anchor_triplet_result(anchor_counts);
+  }
+  return result;
 }
 
 // [[Rcpp::export(rng = false)]]
@@ -329,7 +372,8 @@ SEXP triplet_plan_sample(const IntegerMatrix &triplets,
                          const NumericMatrix &xin, const NumericMatrix &xout,
                          const std::string &metric_in = "sqeuclidean",
                          const std::string &metric_out = "sqeuclidean",
-                         double n_threads = 0, bool ret_triplets = false) {
+                         double n_threads = 0, bool ret_triplets = false,
+                         bool ret_anchors = false) {
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);
   if (triplets.nrow() < 1 || triplets.ncol() != 3) {
@@ -349,6 +393,8 @@ SEXP triplet_plan_sample(const IntegerMatrix &triplets,
     returned_anchor.resize(triplet_count);
     returned_endpoint1.resize(triplet_count);
     returned_endpoint2.resize(triplet_count);
+  }
+  if (ret_triplets || ret_anchors) {
     agreement.resize(triplet_count);
   }
 
@@ -385,10 +431,21 @@ SEXP triplet_plan_sample(const IntegerMatrix &triplets,
   const double accuracy = triplet_plan_sample(
       anchor, endpoint1, endpoint2, n_obs, xin_cpp.begin(), xin_cpp.end(),
       xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout, thread_count,
-      ret_triplets ? &agreement : nullptr);
+      agreement.empty() ? nullptr : &agreement);
+
+  std::vector<AnchorTripletCounts> anchor_counts(ret_anchors ? n_obs : 0);
+  if (ret_anchors) {
+    for (std::size_t i = 0; i < triplet_count; ++i) {
+      auto &row = anchor_counts[anchor[i]];
+      ++row.sampled;
+      row.defined.comparisons += agreement[i] != NA_LOGICAL;
+      row.defined.agreements += agreement[i] == TRUE;
+    }
+  }
 
   return triplet_result(accuracy, ret_triplets, returned_anchor,
-                        returned_endpoint1, returned_endpoint2, agreement);
+                        returned_endpoint1, returned_endpoint2, agreement,
+                        anchor_counts);
 }
 
 // [[Rcpp::export(rng = false)]]
@@ -396,7 +453,8 @@ SEXP random_triplet_sample(const NumericMatrix &xin, const NumericMatrix &xout,
                            double n_triplets = 5,
                            const std::string &metric_in = "sqeuclidean",
                            const std::string &metric_out = "sqeuclidean",
-                           double n_threads = 0, bool ret_triplets = false) {
+                           double n_threads = 0, bool ret_triplets = false,
+                           bool ret_anchors = false) {
 
   const std::size_t n_obs = validate_observation_matrices(xin, xout);
   const std::size_t triplet_count =
@@ -425,6 +483,7 @@ SEXP random_triplet_sample(const NumericMatrix &xin, const NumericMatrix &xout,
   const auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
   const auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
 
+  std::vector<AnchorTripletCounts> anchor_counts(ret_anchors ? n_obs : 0);
   double accuracy;
   {
     Rcpp::RNGScope rng_scope;
@@ -434,9 +493,10 @@ SEXP random_triplet_sample(const NumericMatrix &xin, const NumericMatrix &xout,
         ret_triplets ? &returned_anchor : nullptr,
         ret_triplets ? &returned_endpoint1 : nullptr,
         ret_triplets ? &returned_endpoint2 : nullptr,
-        ret_triplets ? &agreement : nullptr);
+        ret_triplets ? &agreement : nullptr, anchor_counts);
   }
 
   return triplet_result(accuracy, ret_triplets, returned_anchor,
-                        returned_endpoint1, returned_endpoint2, agreement);
+                        returned_endpoint1, returned_endpoint2, agreement,
+                        anchor_counts);
 }

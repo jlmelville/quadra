@@ -219,6 +219,63 @@ sizes, LTSA has higher AUC for about 39% of points under the ambient reference a
 the intrinsic reference. The maps put both comparisons on the flat roll. Red favors LTSA,
 blue favors PCA, and both panels use the same scale centered at zero.
 
+## Check distance ordering from each anchor
+
+Use one triplet sample for both embeddings and reference geometries. For each anchor, compare
+the order of distances to the same sampled endpoints. Keep 512 comparisons per anchor to
+limit sampling noise in the map.
+
+```{r roll-anchor-triplets, eval=FALSE}
+set.seed(421)
+anchor_triplets <- sample_triplets(nrow(flat), n_triplets = 512)
+triplet_differences <- lapply(references, function(reference) {
+  scores <- lapply(maps, function(y) {
+    random_triplet_accuracy(
+      reference, y, triplets = anchor_triplets, by_anchor = TRUE, n_threads = 1
+    )$by_anchor$accuracy
+  })
+  scores$LTSA - scores$PCA
+})
+outer <- s > min(s) + 0.8 * diff(range(s))
+round(t(vapply(names(references), function(ref) {
+  c(
+    triplet_accuracy = mean(triplet_differences[[ref]][outer]),
+    rnx_auc = mean(rnx_differences[[ref]][outer, "auc"])
+  )
+}, numeric(2))), 3)
+```
+
+```text
+          triplet_accuracy rnx_auc
+Ambient             -0.261  -0.237
+Intrinsic            0.118  -0.044
+```
+
+```{r roll-anchor-triplets-plot, eval=FALSE, fig.width=9, fig.height=3.2}
+scores <- list(
+  "RNX AUC" = rnx_differences$Intrinsic[, "auc"],
+  "Triplet accuracy" = triplet_differences$Intrinsic
+)
+limit <- max(abs(unlist(scores)))
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2.5, 0.5))
+for (metric in names(scores)) {
+  vizier::embed_plot(
+    flat, x = scores[[metric]], color_scheme = "grDevices::Blue-Red 3",
+    limits = c(-limit, limit), title = metric,
+    fixed_aspect = TRUE, show_axes = FALSE, cex = 1.2
+  )
+}
+```
+
+```{r show-roll-anchor-triplets, echo=FALSE, out.width="100%", fig.alt="On the outer end of the flat roll, the triplet accuracy panel favors LTSA where much of the RNX panel favors PCA."}
+knitr::include_graphics("figures/roll-anchor-triplets.png")
+```
+
+On the outer fifth of the roll by arc length, LTSA has lower mean intrinsic RNX AUC
+and retains fewer of its 15 nearest neighbors. Its mean triplet accuracy there is about
+0.12 higher. The maps use the intrinsic reference and put the outer end at the right.
+Red favors LTSA, blue favors PCA, and both use the same scale centered at zero.
+
 ## Compare local shape after alignment
 
 Neighbor overlap counts retained neighbors. To look at their shape, select the 15 nearest

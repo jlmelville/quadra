@@ -13,7 +13,8 @@ random_triplet_accuracy(
   is_transposed = FALSE,
   n_threads = 0,
   triplets = NULL,
-  ret_extra = FALSE
+  ret_extra = FALSE,
+  by_anchor = FALSE
 )
 }
 \arguments{
@@ -47,12 +48,23 @@ numeric \code{n_triplets} is ignored.}
 
 \item{ret_extra}{Whether to return the triplets and their row-aligned
 agreement outcomes.}
+
+\item{by_anchor}{Whether to return sampled, defined, and agreeing
+comparison counts and accuracy for each anchor.}
 }
 \value{
 Triplet accuracy in \verb{[0, 1]}, or \code{NA_real_} if every input comparison
 is tied. With \code{ret_extra = TRUE}, returns a list with \code{accuracy},
 \code{triplets}, and \code{agreement}. Agreement is \code{NA} for input-distance ties,
 \code{TRUE} for matching strict orderings, and \code{FALSE} otherwise.
+With \code{by_anchor = TRUE}, returns a list with \code{accuracy} and a
+\code{by_anchor} data frame, plus the triplet details if requested. The data
+frame has one row per observation, in input order, with columns
+\code{anchor} (one-based), \code{n_sampled}, \code{n_defined}, \code{n_agree}, and
+\code{accuracy}. Anchors without defined comparisons have \code{NA_real_}
+accuracy. To recover the overall score, weight the defined anchor
+accuracies by \code{n_defined}. Increase the sample per anchor when a map
+needs more stable scores than the default five comparisons provide.
 }
 \description{
 Returns the proportion of sampled anchored triplets whose relative distance

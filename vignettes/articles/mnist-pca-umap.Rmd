@@ -274,6 +274,58 @@ those sizes also appeared on audit subsets drawn with seeds 418 and 419. Their A
 enough for the ordering to vary across the three subsets, so the curves show the difference
 more clearly.
 
+## Check distance ordering from each anchor
+
+Use the same 1,000 audit rows and the same 512 sampled comparisons per anchor for both
+embeddings. For each anchor, ask whether the closer of two sampled observations stays closer.
+The summary counts input-distance ties as sampled comparisons and excludes them from accuracy.
+
+```{r mnist-anchor-triplets, eval=FALSE}
+set.seed(421)
+anchor_triplets <- sample_triplets(length(audit), n_triplets = 512)
+pca_rnx <- pointwise_rnx(din, dout$PCA)$auc
+anchor_results <- lapply(maps, function(y) {
+  random_triplet_accuracy(
+    x[audit, , drop = FALSE], y[audit, , drop = FALSE],
+    triplets = anchor_triplets, by_anchor = TRUE, n_threads = 1
+  )
+})
+change_rnx <- umap_rnx$auc - pca_rnx
+change_triplets <- anchor_results$UMAP$by_anchor$accuracy - anchor_results$PCA$by_anchor$accuracy
+round(c(rnx_auc = mean(change_rnx > 0), triplet_accuracy = mean(change_triplets > 0)), 3)
+```
+
+```text
+         rnx_auc triplet_accuracy
+           0.894            0.291
+```
+
+```{r mnist-anchor-triplets-plot, eval=FALSE, fig.width=6.8, fig.height=4.4}
+par(mar = c(4.4, 4.5, 1.1, 1.1), las = 1)
+plot(
+  change_rnx, change_triplets, type = "n",
+  xlab = "RNX AUC difference (UMAP minus PCA)",
+  ylab = "Triplet accuracy difference (UMAP minus PCA)"
+)
+abline(v = 0, h = 0, col = "grey65", lty = 2)
+is_one <- audit_label == "1"
+points(change_rnx[!is_one], change_triplets[!is_one], pch = 16, cex = 0.64, col = "#61768C70")
+points(change_rnx[is_one], change_triplets[is_one], pch = 17, cex = 0.78, col = "#A33B20")
+legend(
+  "topright", c("Other digits", "Digit 1"), pch = c(16, 17),
+  col = c("#61768C", "#A33B20"), bty = "n"
+)
+```
+
+```{r show-mnist-anchor-triplets, echo=FALSE, out.width="100%", fig.alt="A scatterplot of the two metrics shows many anchors, including digit 1, with higher RNX AUC in UMAP and higher triplet accuracy in PCA."}
+knitr::include_graphics("figures/mnist-anchor-triplets.png")
+```
+
+UMAP leads for about 89% of the anchors by RNX AUC and 29% by triplet accuracy. The lower
+right shows anchors whose neighborhoods agree better under UMAP while their distance ordering
+favors PCA. Many 1s show this tradeoff. On this audit subset it persists when the triplets
+are redrawn with seeds 422 and 423.
+
 ## Compare pairs of digits
 
 Recompute ROC and PR AUC with candidates restricted to each pair of digits. Use the same audit

@@ -457,3 +457,120 @@ test_that("all undefined triplets retain row-level outcomes", {
   expect_true(is.na(detailed$accuracy))
   expect_identical(detailed$agreement, c(NA, NA))
 })
+
+test_that("anchor counts handle arbitrary plan order, ties, and missing anchors", {
+  xin <- cbind(c(0, 1, -1, 4, 9))
+  xout <- cbind(c(0, 2, 2, 6, 7))
+  plan <- rbind(
+    c(4L, 1L, 5L),
+    c(1L, 2L, 3L),
+    c(1L, 2L, 4L),
+    c(4L, 2L, 5L),
+    c(1L, 4L, 5L),
+    c(5L, 4L, 1L),
+    c(5L, 2L, 3L),
+    c(4L, 1L, 2L)
+  )
+  seed_before <- .Random.seed
+  detail <- random_triplet_accuracy(
+    xin,
+    xout,
+    triplets = plan,
+    ret_extra = TRUE,
+    by_anchor = TRUE
+  )
+  expected <- data.frame(
+    anchor = 1:5,
+    n_sampled = c(3L, 0L, 0L, 3L, 2L),
+    n_defined = c(2L, 0L, 0L, 3L, 2L),
+    n_agree = c(2L, 0L, 0L, 1L, 1L),
+    accuracy = c(1, NA_real_, NA_real_, 1 / 3, 1 / 2)
+  )
+  expect_identical(detail$by_anchor, expected)
+  expect_identical(detail$accuracy, 4 / 7)
+  expect_identical(
+    detail$agreement,
+    c(FALSE, NA, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE)
+  )
+  expect_identical(
+    random_triplet_accuracy(
+      xin,
+      xout,
+      triplets = plan[8:1, , drop = FALSE],
+      by_anchor = TRUE,
+      n_threads = 2
+    ),
+    detail[c("accuracy", "by_anchor")]
+  )
+  expect_identical(.Random.seed, seed_before)
+})
+
+test_that("implicit anchor summaries preserve the sample and RNG state", {
+  xin <- as.matrix(iris[1:25, -5])
+  xout <- xin[, 1:2]
+  for (threads in c(1, 2)) {
+    set.seed(815)
+    detail <- random_triplet_accuracy(
+      xin,
+      xout,
+      n_triplets = 9,
+      n_threads = threads,
+      ret_extra = TRUE
+    )
+    seed_after <- .Random.seed
+    set.seed(815)
+    summary <- random_triplet_accuracy(
+      xin,
+      xout,
+      n_triplets = 9,
+      n_threads = threads,
+      by_anchor = TRUE
+    )
+    expect_identical(.Random.seed, seed_after)
+    expect_identical(summary$accuracy, detail$accuracy)
+    idx <- detail$triplets[, "anchor"]
+    defined <- !is.na(detail$agreement)
+    expect_identical(summary$by_anchor$n_sampled, rep(9L, nrow(xin)))
+    expect_identical(
+      summary$by_anchor$n_defined,
+      tabulate(idx[defined], nrow(xin))
+    )
+    expect_identical(
+      summary$by_anchor$n_agree,
+      tabulate(idx[detail$agreement %in% TRUE], nrow(xin))
+    )
+    set.seed(815)
+    both <- random_triplet_accuracy(
+      xin,
+      xout,
+      n_triplets = 9,
+      n_threads = threads,
+      by_anchor = TRUE,
+      ret_extra = TRUE
+    )
+    expect_identical(both[names(detail)], detail)
+    expect_identical(both$by_anchor, summary$by_anchor)
+    expect_identical(.Random.seed, seed_after)
+  }
+})
+
+test_that("legacy triplet matrices give the same anchor summaries as explicit plans", {
+  xin <- cbind(c(0, 1, 2, 4, 10))
+  xout <- xin[5:1, , drop = FALSE]
+  set.seed(14)
+  plan <- sample_triplets(nrow(xin), 1)
+  legacy <- t(plan[, 2:3]) - 1L
+  expect_identical(
+    random_triplet_accuracy(xin, xout, n_triplets = legacy, by_anchor = TRUE),
+    random_triplet_accuracy(xin, xout, triplets = plan, by_anchor = TRUE)
+  )
+  tied <- random_triplet_accuracy(
+    xin * 0,
+    xout,
+    triplets = plan,
+    by_anchor = TRUE
+  )
+  expect_identical(tied$accuracy, NA_real_)
+  expect_identical(tied$by_anchor$accuracy, rep(NA_real_, nrow(xin)))
+  expect_identical(tied$by_anchor$n_sampled, rep(1L, nrow(xin)))
+})
