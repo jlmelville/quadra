@@ -1,5 +1,7 @@
 # quadra 0.2.1.9000
 
+* Add `exact_rank_profiles()` for exact Euclidean rank comparisons across embeddings using
+  one query's distance and rank workspace at a time.
 * Add `steadiness_cohesiveness()` to assess label-free groups and map group distortion.
 * Return per-band fitted scale multipliers with detailed distance-band profiles.
 * Add `class_pair_auc()` for pair-restricted ROC and PR AUC and their defined-query counts.

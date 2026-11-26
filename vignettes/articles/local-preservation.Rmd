@@ -352,6 +352,12 @@ does not establish a universally preferred embedding or neighborhood size.
 curve columns to find where agreement changes as neighborhoods grow. The mean pointwise AUC
 recovers the overall AUC. [MNIST example](mnist-pca-umap.html#compare-neighborhood-sizes-for-each-point)
 
+With Euclidean coordinates, `exact_rank_profiles()` computes both rank penalties and RNX for
+each query across a list of embeddings. It ranks all other observations while keeping only the
+current query's distance and rank workspace. This lets the MNIST workflow expand the candidate
+pool while scoring the same audit queries.
+[Full-pool MNIST comparison](mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images)
+
 ## Do groups merge or split?
 
 Place three clouds apart, then move two of their centers together. Steadiness measures how well

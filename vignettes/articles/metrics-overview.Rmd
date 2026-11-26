@@ -34,6 +34,10 @@ exact distance-matrix functions for small datasets. `rnx_auc()` summarizes
 rank-based neighborhood agreement over many neighborhood sizes, while
 `rnx_curve()` retains the individual scales. `pointwise_rnx()` provides the same comparison for each observation.
 
+For Euclidean coordinates, `exact_rank_profiles()` computes pointwise trustworthiness, continuity,
+and RNX across embeddings with a shared reference. The full candidate pool stays available at
+each query. [MNIST comparison](mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images)
+
 See the [local preservation](local-preservation.html) article for examples and
 related local diagnostics.
 

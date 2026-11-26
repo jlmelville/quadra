@@ -3,6 +3,7 @@
 export(class_angular_distortion_index)
 export(class_pair_auc)
 export(continuity)
+export(exact_rank_profiles)
 export(gap_index)
 export(label_trustworthiness_continuity)
 export(local_procrustes)

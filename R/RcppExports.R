@@ -45,6 +45,10 @@ pointwise_rnx_exact <- function(din, dout, k) {
     .Call(`_quadra_pointwise_rnx_exact`, din, dout, k)
 }
 
+coordinate_rank_profiles <- function(input, embeddings, k) {
+    .Call(`_quadra_coordinate_rank_profiles`, input, embeddings, k)
+}
+
 triplet_sample <- function(triplets, xin, xout, metric_in = "sqeuclidean", metric_out = "sqeuclidean", n_threads = 0) {
     .Call(`_quadra_triplet_sample`, triplets, xin, xout, metric_in, metric_out, n_threads)
 }

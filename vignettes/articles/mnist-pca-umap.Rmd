@@ -154,7 +154,7 @@ Spearman correlation, while UMAP retains more of the actual nearest neighbors.
 
 One dense double distance matrix for 5,000 observations uses about 191 MiB before temporaries.
 Use 100 observations per digit here, so each matrix uses about 7.6 MiB. All dense diagnostics
-below describe this subset and its candidate neighbors.
+computed from these matrices describe this subset and its candidate neighbors.
 
 ```{r mnist-audit, eval=FALSE}
 set.seed(417)
@@ -274,6 +274,85 @@ those sizes also appeared on audit subsets drawn with seeds 418 and 419. Their A
 enough for the ordering to vary across the three subsets, so the curves show the difference
 more clearly.
 
+## Expand the candidate pool to all 5,000 images
+
+Keep both embeddings fixed and let each query rank all 4,999 other images. With Euclidean
+coordinates, `exact_rank_profiles()` computes one query's distances and shares its pixel-space
+ranks across both embeddings. Storing the pixel, PCA, and UMAP distance matrices together would
+take about 572 MiB before temporaries.
+
+```{r mnist-full-ranks, eval=FALSE}
+audit_k <- c(15L, 100L, 250L)
+scaled_k <- 5L * audit_k
+full_ranks <- exact_rank_profiles(x, maps, k = sort(unique(c(audit_k, scaled_k))))
+
+rank_summary <- function(rows) {
+  t(vapply(full_ranks, function(p) {
+    c(trustworthiness = mean(p$trustworthiness[rows, "k15"]),
+      continuity = mean(p$continuity[rows, "k15"]), rnx_auc = mean(p$auc[rows]))
+  }, numeric(3)))
+}
+scores <- rbind(rank_scores, rank_summary(audit), rank_summary(seq_len(nrow(x))))
+comparison <- data.frame(queries = rep(c(1000, 1000, 5000), each = 2),
+                         candidates_per_query = rep(c(999, 4999, 4999), each = 2),
+                         method = rep(names(maps), 3), round(scores, 3), row.names = NULL)
+print(comparison, row.names = FALSE)
+```
+
+```text
+ queries candidates_per_query method trustworthiness continuity rnx_auc
+    1000                  999    PCA           0.742      0.884   0.173
+    1000                  999   UMAP           0.942      0.916   0.340
+    1000                 4999    PCA           0.733      0.914   0.145
+    1000                 4999   UMAP           0.959      0.960   0.310
+    5000                 4999    PCA           0.730      0.914   0.144
+    5000                 4999   UMAP           0.958      0.960   0.311
+```
+
+Compare the first four rows to isolate the effect of expanding the pool on the same queries.
+UMAP leads PCA on both rank penalties at 15 neighbors and on RNX AUC in all three comparisons.
+The absolute scores move. For example, UMAP's continuity rises from 0.916 to 0.960 for the
+original audit queries.
+
+For the 0s and 7s, keep the audit queries fixed throughout. Compare their mean UMAP RNX first at
+the same neighbor count, then at approximately the same fraction of candidates. An audit
+neighborhood of 100 covers about 10% of 999 candidates. In the full pool it takes 500 neighbors
+to cover about 10%.
+
+```{r mnist-pool-scales, eval=FALSE, fig.width=7, fig.height=4.2}
+digit_difference <- function(curve, k) {
+  columns <- paste0("rnx", k)
+  colMeans(curve[audit_label == "0", columns, drop = FALSE]) -
+    colMeans(curve[audit_label == "7", columns, drop = FALSE])
+}
+full_curve <- full_ranks$UMAP$curve[audit, , drop = FALSE]
+delta <- cbind(
+  "Audit pool" = digit_difference(umap_rnx$curve, audit_k),
+  "Full pool, same count" = digit_difference(full_curve, audit_k),
+  "Full pool, same fraction (approx.)" = digit_difference(full_curve, scaled_k)
+)
+colors <- c("#263748", "#A33B20", "#17628A")
+symbols <- c(16, 17, 1)
+par(mar = c(4.2, 4.5, 0.6, 0.8), las = 1)
+matplot(audit_k, delta, type = "n", xaxt = "n",
+        xlab = "Neighborhood size in the audit", ylab = "Mean RNX for 0s minus mean RNX for 7s")
+axis(1, at = audit_k)
+abline(h = 0, col = "grey65")
+matlines(audit_k, delta, type = "o", col = colors, lty = 1:3, pch = symbols)
+legend("bottomleft", colnames(delta), col = colors, lty = 1:3, pch = symbols, bty = "n")
+```
+
+```{r show-mnist-pool-scales, echo=FALSE, out.width="100%", fig.alt="At 100 and 250 neighbors the audit favors 7s and the full pool favors 0s on the same queries. Increasing the full-pool neighborhood size fivefold restores the audit ordering."}
+knitr::include_graphics("figures/mnist-pool-scales.png")
+```
+
+At 100 neighbors, 7s lead 0s by 0.058 in the audit. With the full pool, 0s lead by 0.078
+at 100 neighbors and 7s lead by 0.054 at 500. All three audit draws (seeds 417–419) show the
+same switch at 100 and 250 neighbors. The audit's broader-scale advantage for 7s carries over
+when neighborhood size tracks the fraction of candidates. Across all 5,000 queries, the mean
+RNX difference (0s minus 7s) is +0.083 at 100 neighbors and −0.080 at 500. With the full pool,
+7s also lead in mean RNX AUC on each matched query set, by 0.009–0.020.
+
 ## Check distance ordering from each anchor
 
 Use the same 1,000 audit rows and the same 512 sampled comparisons per anchor for both
@@ -324,7 +403,8 @@ knitr::include_graphics("figures/mnist-anchor-triplets.png")
 UMAP leads for about 89% of the anchors by RNX AUC and 29% by triplet accuracy. The lower
 right shows anchors whose neighborhoods agree better under UMAP while their distance ordering
 favors PCA. Many 1s show this tradeoff. On this audit subset it persists when the triplets
-are redrawn with seeds 422 and 423.
+are redrawn with seeds 422 and 423. Keeping these anchors fixed and expanding only the RNX candidate
+pool raises the fraction favoring UMAP by RNX AUC from 89.4% to 95.3%.
 
 ## Compare pairs of digits
 
@@ -578,6 +658,10 @@ flags input-space groups involving those observations that disperse in UMAP. The
 use different sampled groups. The map values are relative to the other observations in the audit.
 Repeating the calculation with audit seeds 417–419 and walk seeds 451–453, the highest-RNX
 island had the lowest mean local Cohesiveness in all nine comparisons.
+
+Keeping these islands and their member rows fixed, the same island also ranks highest by mean
+RNX AUC when those rows can choose from the full candidate pool, in all three audits. On the
+main audit its mean changes from 0.513 to 0.455 (`mean(full_ranks$UMAP$auc[audit[island]])`).
 
 Now use the digit labels to ask which individual images are easy to retrieve. Compute PR AUC
 against all 999 audit candidates per query, then inspect the queries inside the selected island.

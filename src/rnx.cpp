@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <vector>
 
@@ -29,10 +30,9 @@ bool rank_value_less(double lhs, double rhs) {
   return lhs < rhs;
 }
 
-std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
-                                              std::size_t row) {
-  const std::size_t n_obs = distances.nrow();
-
+template <typename DistanceAt>
+std::vector<std::size_t> first_tie_ranks(std::size_t n_obs, std::size_t row,
+                                         DistanceAt distance_at) {
   std::vector<std::size_t> order;
   order.reserve(n_obs - 1);
   for (std::size_t col = 0; col < n_obs; ++col) {
@@ -41,10 +41,10 @@ std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
     }
   }
 
-  std::stable_sort(
-      order.begin(), order.end(), [&](std::size_t lhs, std::size_t rhs) {
-        return rank_value_less(distances(row, lhs), distances(row, rhs));
-      });
+  std::stable_sort(order.begin(), order.end(),
+                   [&](std::size_t lhs, std::size_t rhs) {
+                     return rank_value_less(distance_at(lhs), distance_at(rhs));
+                   });
 
   std::vector<std::size_t> ranks(n_obs, 0);
   for (std::size_t rank = 0; rank < order.size(); ++rank) {
@@ -53,15 +53,26 @@ std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
   return ranks;
 }
 
-void add_max_ranks(const NumericMatrix &din, const NumericMatrix &dout,
-                   std::size_t row, std::vector<double> &histogram) {
-  const auto ranks_in = row_ranks_first_ties(din, row);
-  const auto ranks_out = row_ranks_first_ties(dout, row);
+std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
+                                              std::size_t row) {
+  return first_tie_ranks(distances.nrow(), row,
+                         [&](std::size_t col) { return distances(row, col); });
+}
+
+void accumulate_max_ranks(const std::vector<std::size_t> &ranks_in,
+                          const std::vector<std::size_t> &ranks_out,
+                          std::size_t row, std::vector<double> &histogram) {
   for (std::size_t j = 0; j < ranks_in.size(); ++j) {
     if (j != row) {
       ++histogram[std::max(ranks_in[j], ranks_out[j])];
     }
   }
+}
+
+void add_max_ranks(const NumericMatrix &din, const NumericMatrix &dout,
+                   std::size_t row, std::vector<double> &histogram) {
+  accumulate_max_ranks(row_ranks_first_ties(din, row),
+                       row_ranks_first_ties(dout, row), row, histogram);
 }
 
 std::vector<double> max_rank_histogram(const NumericMatrix &din,
@@ -291,6 +302,46 @@ NumericVector continuity_exact_multi(const NumericMatrix &din,
   return rank_penalty_scores(din, dout, k, true);
 }
 
+std::vector<double>
+penalty_normalizers(std::size_t n_obs,
+                    const std::vector<std::size_t> &rank_ks) {
+  std::vector<double> normalizers;
+  normalizers.reserve(rank_ks.size());
+  for (const auto rank_k : rank_ks) {
+    normalizers.push_back(static_cast<double>(rank_k) *
+                          static_cast<double>((2 * n_obs) - (3 * rank_k) - 1));
+  }
+
+  return normalizers;
+}
+
+void set_row_penalties(const std::vector<std::size_t> &ranks_in,
+                       const std::vector<std::size_t> &ranks_out,
+                       const std::vector<std::size_t> &rank_ks,
+                       const std::vector<double> &normalizers, std::size_t i,
+                       NumericMatrix &trustworthiness,
+                       NumericMatrix &continuity) {
+  for (std::size_t col = 0; col < rank_ks.size(); ++col) {
+    const auto rank_k = rank_ks[col];
+    double false_penalty = 0;
+    double missing_penalty = 0;
+    for (std::size_t j = 0; j < ranks_in.size(); ++j) {
+      if (j == i) {
+        continue;
+      }
+      const auto ri = ranks_in[j];
+      const auto ro = ranks_out[j];
+      if (ro <= rank_k && ri > rank_k) {
+        false_penalty += static_cast<double>(ri - rank_k);
+      } else if (ri <= rank_k && ro > rank_k) {
+        missing_penalty += static_cast<double>(ro - rank_k);
+      }
+    }
+    trustworthiness(i, col) = 1.0 - 2.0 * false_penalty / normalizers[col];
+    continuity(i, col) = 1.0 - 2.0 * missing_penalty / normalizers[col];
+  }
+}
+
 // [[Rcpp::export(rng = false)]]
 List pointwise_rank_preservation_exact(const NumericMatrix &din,
                                        const NumericMatrix &dout,
@@ -299,12 +350,7 @@ List pointwise_rank_preservation_exact(const NumericMatrix &din,
   const auto rank_ks = validate_rank_penalty_ks(k, n_obs);
   NumericMatrix trustworthiness(n_obs, rank_ks.size());
   NumericMatrix continuity(n_obs, rank_ks.size());
-  std::vector<double> normalizers;
-  normalizers.reserve(rank_ks.size());
-  for (const auto rank_k : rank_ks) {
-    normalizers.push_back(static_cast<double>(rank_k) *
-                          static_cast<double>((2 * n_obs) - (3 * rank_k) - 1));
-  }
+  const auto normalizers = penalty_normalizers(n_obs, rank_ks);
 
   for (std::size_t i = 0; i < n_obs; ++i) {
     if (i % 16 == 0) {
@@ -312,25 +358,8 @@ List pointwise_rank_preservation_exact(const NumericMatrix &din,
     }
     const auto ranks_in = row_ranks_first_ties(din, i);
     const auto ranks_out = row_ranks_first_ties(dout, i);
-    for (std::size_t col = 0; col < rank_ks.size(); ++col) {
-      const auto rank_k = rank_ks[col];
-      double false_penalty = 0;
-      double missing_penalty = 0;
-      for (std::size_t j = 0; j < n_obs; ++j) {
-        if (j == i) {
-          continue;
-        }
-        const auto ri = ranks_in[j];
-        const auto ro = ranks_out[j];
-        if (ro <= rank_k && ri > rank_k) {
-          false_penalty += static_cast<double>(ri - rank_k);
-        } else if (ri <= rank_k && ro > rank_k) {
-          missing_penalty += static_cast<double>(ro - rank_k);
-        }
-      }
-      trustworthiness(i, col) = 1.0 - 2.0 * false_penalty / normalizers[col];
-      continuity(i, col) = 1.0 - 2.0 * missing_penalty / normalizers[col];
-    }
+    set_row_penalties(ranks_in, ranks_out, rank_ks, normalizers, i,
+                      trustworthiness, continuity);
   }
 
   return List::create(Named("trustworthiness") = trustworthiness,
@@ -361,4 +390,85 @@ List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
     }
   }
   return List::create(Named("auc") = auc, Named("curve") = curve);
+}
+
+// Form Euclidean distances in coordinate order, as in stats::dist(). Updating
+// all candidates together keeps the inner loop contiguous in R's columns.
+std::vector<std::size_t> euclidean_row_ranks(const NumericMatrix &x,
+                                             std::size_t row,
+                                             std::vector<double> &distances) {
+  std::fill(distances.begin(), distances.end(), 0.0);
+  for (int dim = 0; dim < x.ncol(); ++dim) {
+    const double *column =
+        x.begin() + static_cast<std::size_t>(dim) * distances.size();
+    const double anchor = column[row];
+    for (std::size_t j = 0; j < distances.size(); ++j) {
+      const double delta = anchor - column[j];
+      distances[j] += delta * delta;
+    }
+  }
+  for (auto &value : distances) {
+    if (!R_FINITE(value)) {
+      stop("Nonfinite computed Euclidean distance");
+    }
+    value = std::sqrt(value);
+  }
+  return first_tie_ranks(distances.size(), row,
+                         [&](std::size_t j) { return distances[j]; });
+}
+
+struct CoordinateRankProfile {
+  NumericMatrix trustworthiness;
+  NumericMatrix continuity;
+  NumericVector auc;
+  NumericMatrix curve;
+  CoordinateRankProfile(int n, int n_sizes)
+      : trustworthiness(n, n_sizes), continuity(n, n_sizes), auc(n),
+        curve(n, n_sizes) {}
+};
+
+// [[Rcpp::export(rng = false)]]
+List coordinate_rank_profiles(const NumericMatrix &input,
+                              const List &embeddings, const IntegerVector &k) {
+  const int n = input.nrow();
+  if (n < 3 || input.ncol() < 1 || embeddings.size() < 1) {
+    stop("Expected reference coordinates and at least one embedding");
+  }
+  const auto sizes = validate_rank_penalty_ks(k, n);
+  const auto normalizers = penalty_normalizers(n, sizes);
+  std::vector<NumericMatrix> maps;
+  std::vector<CoordinateRankProfile> profiles;
+  for (R_xlen_t m = 0; m < embeddings.size(); ++m) {
+    NumericMatrix map = as<NumericMatrix>(embeddings[m]);
+    if (map.nrow() != n || map.ncol() < 1) {
+      stop("Each embedding must have the same rows as the reference");
+    }
+    maps.push_back(map);
+    profiles.emplace_back(n, sizes.size());
+  }
+  std::vector<double> distances(n), histogram(n), row_curve(n);
+  for (int i = 0; i < n; ++i) {
+    checkUserInterrupt();
+    const auto reference = euclidean_row_ranks(input, i, distances);
+    for (std::size_t m = 0; m < maps.size(); ++m) {
+      const auto embedded = euclidean_row_ranks(maps[m], i, distances);
+      auto &p = profiles[m];
+      set_row_penalties(reference, embedded, sizes, normalizers, i,
+                        p.trustworthiness, p.continuity);
+      std::fill(histogram.begin(), histogram.end(), 0.0);
+      accumulate_max_ranks(reference, embedded, i, histogram);
+      p.auc[i] = rnx_auc_from_max_rank_histogram(histogram, 1, &row_curve);
+      for (std::size_t col = 0; col < sizes.size(); ++col) {
+        p.curve(i, col) = row_curve[sizes[col]];
+      }
+    }
+  }
+  List result(embeddings.size());
+  for (std::size_t m = 0; m < profiles.size(); ++m) {
+    const auto &p = profiles[m];
+    result[m] = List::create(Named("trustworthiness") = p.trustworthiness,
+                             Named("continuity") = p.continuity,
+                             Named("auc") = p.auc, Named("curve") = p.curve);
+  }
+  return result;
 }

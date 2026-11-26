@@ -35,6 +35,7 @@ reference:
       - nn_preservation
       - trustworthiness
       - pointwise_rank_preservation
+      - exact_rank_profiles
       - rnx_curve
       - rnx_auc
       - pointwise_rnx
