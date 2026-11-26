@@ -222,6 +222,58 @@ The dotted lines mark random retrieval. Each query has 99 same-label candidates 
 PR AUC in the embedding means same-label images become easier to retrieve. Compare that gain
 with fidelity to the original pixels before interpreting visually separated digits.
 
+## Compare neighborhood sizes for each point
+
+At a fixed size, pointwise RNX is overlap adjusted for chance. Use several sizes to see
+whether agreement holds as each point's neighborhood grows. The AUC averages the complete
+curve with weight `1 / k` for each size.
+
+```{r mnist-pointwise-rnx, eval=FALSE}
+sizes <- c(1, 3, 5, 10, 15, 25, 50, 100, 150, 250, 400)
+umap_rnx <- pointwise_rnx(din, dout$UMAP, k = sizes)
+umap_penalties <- pointwise_rank_preservation(din, dout$UMAP, k = 15)
+digits_of_interest <- c("0", "7")
+digit_curves <- vapply(digits_of_interest, function(digit) {
+  colMeans(umap_rnx$curve[audit_label == digit, , drop = FALSE])
+}, numeric(length(sizes)))
+digit_summary <- t(vapply(digits_of_interest, function(digit) {
+  keep <- audit_label == digit
+  c(digit_curves[c("rnx15", "rnx100", "rnx250"), digit],
+    auc = mean(umap_rnx$auc[keep]),
+    trustworthiness15 = mean(umap_penalties$trustworthiness[keep, 1]),
+    continuity15 = mean(umap_penalties$continuity[keep, 1]))
+}, numeric(6)))
+round(digit_summary, 3)
+```
+
+```text
+  rnx15 rnx100 rnx250   auc trustworthiness15 continuity15
+0 0.541  0.459  0.222 0.369             0.968        0.956
+7 0.463  0.517  0.479 0.395             0.959        0.948
+```
+
+```{r mnist-pointwise-rnx-plot, eval=FALSE, fig.width=7, fig.height=4.1}
+colors <- c("#17628A", "#BD542D")
+par(mar = c(4.3, 4.3, 1.2, 1.1), las = 1)
+matplot(
+  sizes, digit_curves, type = "b", log = "x", xaxt = "n", pch = c(16, 17), lty = 1,
+  col = colors, xlab = "Neighborhood size (log scale)", ylab = "Mean pointwise RNX"
+)
+axis(1, at = c(1, 3, 5, 15, 50, 100, 250, 400))
+legend("topleft", paste("Digit", digits_of_interest), col = colors, pch = c(16, 17),
+       lty = 1, bty = "n")
+```
+
+```{r show-mnist-pointwise-rnx, echo=FALSE, out.width="100%", fig.alt="The mean RNX for digit 0 is higher at small k. Digit 7 leads at k of 100 and 250."}
+knitr::include_graphics("figures/mnist-pointwise-rnx.png")
+```
+
+At `k = 15`, 0s have higher mean overlap, trustworthiness, and continuity than 7s in this
+UMAP audit. At `k = 100` and `250`, 7s have higher mean RNX. The change in ordering between
+those sizes also appeared on audit subsets drawn with seeds 418 and 419. Their AUCs were close
+enough for the ordering to vary across the three subsets, so the curves show the difference
+more clearly.
+
 ## Compare pairs of digits
 
 Recompute ROC and PR AUC with candidates restricted to each pair of digits. Use the same audit

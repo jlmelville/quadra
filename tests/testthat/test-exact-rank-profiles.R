@@ -253,3 +253,56 @@ test_that("the penalty for an intrusion is assigned to its query", {
     pointwise_rank_preservation(dout, din, k = 1)$continuity
   )
 })
+
+test_that("pointwise RNX reconstructs curves and AUC with tied distances", {
+  fixture <- exact_rank_profile_fixture()
+  din <- fixture$din
+  dout <- fixture$dout
+  ids <- letters[seq_len(nrow(din))]
+  rownames(din) <- ids
+  diag(din) <- NA_real_
+  diag(dout) <- Inf
+  k <- c(3L, 1L, 2L)
+  n <- nrow(din)
+  result <- pointwise_rnx(din, dout, k)
+  expected <- t(vapply(
+    seq_len(n),
+    function(i) {
+      others <- seq_len(n)[-i]
+      in_order <- order(din[i, others])
+      out_order <- order(dout[i, others])
+      vapply(
+        k,
+        function(size) {
+          shared <- length(intersect(
+            head(in_order, size),
+            head(out_order, size)
+          ))
+          ((n - 1) * shared / size - size) / (n - 1 - size)
+        },
+        numeric(1)
+      )
+    },
+    numeric(length(k))
+  ))
+  expect_identical(dimnames(result$curve), list(ids, paste0("rnx", k)))
+  expect_identical(names(result$auc), ids)
+  expect_equal(unname(result$curve), expected)
+  expect_equal(unname(result$auc), drop(expected %*% (1 / k)) / sum(1 / k))
+  expect_equal(colMeans(result$curve), rnx_curve(din, dout, k))
+  expect_equal(mean(result$auc), rnx_auc(din, dout))
+  expect_identical(
+    pointwise_rnx(din, dout),
+    list(auc = result$auc, curve = NULL)
+  )
+  expect_identical(pointwise_rnx(din, dout, k = 1)$auc, result$auc)
+  expect_equal(unname(pointwise_rnx(din, din)$auc), rep(1, n))
+  expect_error(pointwise_rnx(din, dout, k = n - 1L), "non-self")
+})
+
+test_that("pointwise RNX works at the smallest supported size", {
+  d <- as.matrix(dist(c(0, 1, 3)))
+  result <- pointwise_rnx(d, d[c(1, 3, 2), c(1, 3, 2)], k = 1)
+  expect_equal(unname(result$auc), c(-1, -1, -1))
+  expect_identical(dim(result$curve), c(3L, 1L))
+})

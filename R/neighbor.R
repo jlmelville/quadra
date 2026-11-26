@@ -507,3 +507,52 @@ pointwise_rank_preservation <- function(din, dout, k) {
   dimnames(scores$continuity) <- score_dimnames
   scores
 }
+
+#' Pointwise RNX Agreement Across Neighborhood Sizes
+#'
+#' For each observation, compare which neighbors are shared by the reference
+#' and the embedding across neighborhood sizes.
+#'
+#' @inheritParams rnx_curve
+#' @param k Optional unique neighborhood sizes from 1 through `n - 2`, where
+#'   `n` is the number of observations. Supply these sizes to return curve
+#'   columns alongside the per-observation AUC. The default returns AUC only.
+#' @details RNX adjusts nearest-neighbor overlap for chance. Its value at a
+#'   single `k` is an affine transformation of overlap for that observation.
+#'   The AUC averages RNX over every `k` from 1 through `n - 2`, weighting
+#'   each value by `1 / k`, regardless of the curve sizes requested.
+#'
+#'   Distances use the same exact ranking and column-order tie convention as
+#'   [rnx_curve()]. Diagonal entries are excluded. A value of 1 means perfect
+#'   agreement, 0 is the random-neighborhood baseline, and values can be
+#'   negative. The exact calculation uses two dense distance matrices.
+#' @return A list with `auc`, a numeric vector in observation order, and
+#'   `curve`, a matrix with one row per observation and columns `rnx<k>`
+#'   in requested order, or `NULL` when `k` is omitted. Both retain the
+#'   reference row names if present. The mean of `auc` equals [rnx_auc()].
+#'   The column means of `curve` equal [rnx_curve()] at the requested sizes,
+#'   up to numerical precision.
+#' @seealso [pointwise_rank_preservation()], [rnx_curve()], [rnx_auc()]
+#' @examples
+#' din <- as.matrix(dist(iris[, -5]))
+#' dout <- as.matrix(dist(prcomp(iris[, -5], rank. = 2)$x))
+#' scores <- pointwise_rnx(din, dout, k = c(5, 15, 40))
+#' head(scores$auc)
+#' colMeans(scores$curve)
+#' @export
+pointwise_rnx <- function(din, dout, k = NULL) {
+  validate_distance_matrix_pair(din, dout)
+  n_obs <- nrow(din)
+  if (n_obs < 3L) {
+    stop("Pointwise RNX requires at least three observations", call. = FALSE)
+  }
+  k <- if (is.null(k)) integer() else validate_rnx_k(k, n_obs)
+  result <- pointwise_rnx_exact(din, dout, k)
+  auc <- stats::setNames(result$auc, rownames(din))
+  curve <- NULL
+  if (length(k)) {
+    curve <- result$curve
+    dimnames(curve) <- list(rownames(din), paste0("rnx", k))
+  }
+  list(auc = auc, curve = curve)
+}

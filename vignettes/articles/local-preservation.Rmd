@@ -341,6 +341,10 @@ the displayed values of `k`, so this embedding preserves rank neighborhoods
 better at the broader shown scales. That pattern diagnoses this embedding; it
 does not establish a universally preferred embedding or neighborhood size.
 
+`pointwise_rnx()` reports agreement for each observation over the same scales. Request selected
+curve columns to find where agreement changes as neighborhoods grow. The mean pointwise AUC
+recovers the overall AUC. [MNIST example](mnist-pca-umap.html#compare-neighborhood-sizes-for-each-point)
+
 ## Using Existing Neighbor Graphs
 
 For larger datasets, `nn_preservation()` can use approximate neighbors through

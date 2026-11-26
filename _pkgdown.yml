@@ -37,6 +37,7 @@ reference:
       - pointwise_rank_preservation
       - rnx_curve
       - rnx_auc
+      - pointwise_rnx
   - title: Local shape, scale, and graph diagnostics
     desc: Compare neighborhood shape, radii, and mutual-neighbor patterns.
     contents:

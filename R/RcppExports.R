@@ -41,6 +41,10 @@ pointwise_rank_preservation_exact <- function(din, dout, k) {
     .Call(`_quadra_pointwise_rank_preservation_exact`, din, dout, k)
 }
 
+pointwise_rnx_exact <- function(din, dout, k) {
+    .Call(`_quadra_pointwise_rnx_exact`, din, dout, k)
+}
+
 triplet_sample <- function(triplets, xin, xout, metric_in = "sqeuclidean", metric_out = "sqeuclidean", n_threads = 0) {
     .Call(`_quadra_triplet_sample`, triplets, xin, xout, metric_in, metric_out, n_threads)
 }

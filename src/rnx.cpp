@@ -53,6 +53,17 @@ std::vector<std::size_t> row_ranks_first_ties(const NumericMatrix &distances,
   return ranks;
 }
 
+void add_max_ranks(const NumericMatrix &din, const NumericMatrix &dout,
+                   std::size_t row, std::vector<double> &histogram) {
+  const auto ranks_in = row_ranks_first_ties(din, row);
+  const auto ranks_out = row_ranks_first_ties(dout, row);
+  for (std::size_t j = 0; j < ranks_in.size(); ++j) {
+    if (j != row) {
+      ++histogram[std::max(ranks_in[j], ranks_out[j])];
+    }
+  }
+}
+
 std::vector<double> max_rank_histogram(const NumericMatrix &din,
                                        const NumericMatrix &dout,
                                        std::size_t n_obs) {
@@ -63,34 +74,30 @@ std::vector<double> max_rank_histogram(const NumericMatrix &din,
     if (i % 16 == 0) {
       Rcpp::checkUserInterrupt();
     }
-    const auto ranks_in = row_ranks_first_ties(din, i);
-    const auto ranks_out = row_ranks_first_ties(dout, i);
-
-    for (std::size_t j = 0; j < n_obs; ++j) {
-      if (j == i) {
-        continue;
-      }
-      const std::size_t max_rank = std::max(ranks_in[j], ranks_out[j]);
-      ++histogram[max_rank];
-    }
+    add_max_ranks(din, dout, i, histogram);
   }
   return histogram;
 }
 
-double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
-                                       std::size_t n_obs) {
-  const std::size_t n_ranks = n_obs - 1;
-  if (n_ranks < 2) {
-    return NA_REAL;
-  }
+double rnx_at_k(double overlap_count, std::size_t n_queries,
+                std::size_t n_ranks, std::size_t k) {
+  const double qnx = overlap_count / (static_cast<double>(k) * n_queries);
+  return ((qnx * n_ranks) - k) / static_cast<double>(n_ranks - k);
+}
 
+double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
+                                       std::size_t n_queries,
+                                       std::vector<double> *curve = nullptr) {
+  const std::size_t n_ranks = histogram.size() - 1;
   double top_left = 0;
   double num = 0;
   double den = 0;
   for (std::size_t k = 1; k < n_ranks; ++k) {
     top_left += histogram[k];
-    const double qnx = top_left / (static_cast<double>(k) * n_obs);
-    const double rnx = ((qnx * n_ranks) - k) / static_cast<double>(n_ranks - k);
+    const double rnx = rnx_at_k(top_left, n_queries, n_ranks, k);
+    if (curve != nullptr) {
+      (*curve)[k] = rnx;
+    }
     num += rnx / k;
     den += 1.0 / k;
   }
@@ -214,16 +221,8 @@ double rnx_auc_direct(const NumericMatrix &din, const NumericMatrix &dout) {
   return rnx_auc_from_max_rank_histogram(histogram, n_obs);
 }
 
-// [[Rcpp::export(rng = false)]]
-NumericVector rnx_curve_direct(const NumericMatrix &din,
-                               const NumericMatrix &dout,
-                               const IntegerVector &k) {
-  const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
-  const std::size_t n_ranks = n_obs - 1;
-  if (k.size() < 1) {
-    stop("k must be nonempty");
-  }
-
+std::vector<std::size_t> validate_rnx_curve_ks(const IntegerVector &k,
+                                               std::size_t n_ranks) {
   std::vector<std::size_t> rank_ks;
   rank_ks.reserve(k.size());
   for (R_xlen_t i = 0; i < k.size(); ++i) {
@@ -237,15 +236,26 @@ NumericVector rnx_curve_direct(const NumericMatrix &din,
     }
     rank_ks.push_back(rank_k_size);
   }
+  return rank_ks;
+}
+
+// [[Rcpp::export(rng = false)]]
+NumericVector rnx_curve_direct(const NumericMatrix &din,
+                               const NumericMatrix &dout,
+                               const IntegerVector &k) {
+  const std::size_t n_obs = validate_exact_distance_matrices(din, dout);
+  const std::size_t n_ranks = n_obs - 1;
+  if (k.size() < 1) {
+    stop("k must be nonempty");
+  }
+  const auto rank_ks = validate_rnx_curve_ks(k, n_ranks);
 
   const auto histogram = max_rank_histogram(din, dout, n_obs);
   std::vector<double> full_curve(n_ranks, 0);
   double top_left = 0;
   for (std::size_t rank_k = 1; rank_k < n_ranks; ++rank_k) {
     top_left += histogram[rank_k];
-    const double qnx = top_left / (static_cast<double>(rank_k) * n_obs);
-    full_curve[rank_k] =
-        ((qnx * n_ranks) - rank_k) / static_cast<double>(n_ranks - rank_k);
+    full_curve[rank_k] = rnx_at_k(top_left, n_obs, n_ranks, rank_k);
   }
 
   NumericVector curve(rank_ks.size());
@@ -325,4 +335,30 @@ List pointwise_rank_preservation_exact(const NumericMatrix &din,
 
   return List::create(Named("trustworthiness") = trustworthiness,
                       Named("continuity") = continuity);
+}
+
+// [[Rcpp::export(rng = false)]]
+List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
+                         const IntegerVector &k) {
+  const auto n_obs = validate_exact_distance_matrices(din, dout);
+  const std::size_t n_ranks = n_obs - 1;
+  const auto rank_ks = validate_rnx_curve_ks(k, n_ranks);
+  NumericVector auc(n_obs);
+  NumericMatrix curve(n_obs, rank_ks.size());
+  std::vector<double> histogram(n_ranks + 1, 0);
+  std::vector<double> row_curve(rank_ks.empty() ? 0 : n_ranks);
+
+  for (std::size_t i = 0; i < n_obs; ++i) {
+    if (i % 16 == 0) {
+      Rcpp::checkUserInterrupt();
+    }
+    std::fill(histogram.begin(), histogram.end(), 0);
+    add_max_ranks(din, dout, i, histogram);
+    auc[i] = rnx_auc_from_max_rank_histogram(
+        histogram, 1, rank_ks.empty() ? nullptr : &row_curve);
+    for (std::size_t col = 0; col < rank_ks.size(); ++col) {
+      curve(i, col) = row_curve[rank_ks[col]];
+    }
+  }
+  return List::create(Named("auc") = auc, Named("curve") = curve);
 }

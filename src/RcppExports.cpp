@@ -134,6 +134,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pointwise_rnx_exact
+List pointwise_rnx_exact(const NumericMatrix& din, const NumericMatrix& dout, const IntegerVector& k);
+RcppExport SEXP _quadra_pointwise_rnx_exact(SEXP dinSEXP, SEXP doutSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type din(dinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type dout(doutSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(pointwise_rnx_exact(din, dout, k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // triplet_sample
 double triplet_sample(const NumericMatrix& triplets, const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, double n_threads);
 RcppExport SEXP _quadra_triplet_sample(SEXP tripletsSEXP, SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_threadsSEXP) {
@@ -193,6 +205,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_quadra_trustworthiness_exact_multi", (DL_FUNC) &_quadra_trustworthiness_exact_multi, 3},
     {"_quadra_continuity_exact_multi", (DL_FUNC) &_quadra_continuity_exact_multi, 3},
     {"_quadra_pointwise_rank_preservation_exact", (DL_FUNC) &_quadra_pointwise_rank_preservation_exact, 3},
+    {"_quadra_pointwise_rnx_exact", (DL_FUNC) &_quadra_pointwise_rnx_exact, 3},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {"_quadra_triplet_plan_sample", (DL_FUNC) &_quadra_triplet_plan_sample, 7},
     {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 7},

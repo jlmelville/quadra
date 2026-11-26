@@ -175,6 +175,50 @@ knitr::include_graphics("figures/roll-overlap.png")
 
 Both panels in each row use the same 0–1 scale from purple to yellow.
 
+## Compare neighborhood agreement across sizes
+
+For each observation, compare LTSA to PCA at `k = 15` and by RNX AUC. Both comparisons
+use the same rows. Count a win only when LTSA has the higher score.
+
+```{r roll-pointwise-rnx, eval=FALSE}
+map_distances <- lapply(maps, function(y) as.matrix(dist(y)))
+rnx_differences <- lapply(references, function(reference) {
+  din <- as.matrix(dist(reference))
+  scores <- lapply(map_distances, function(dout) pointwise_rnx(din, dout, k = k))
+  cbind(rnx15 = scores$LTSA$curve[, 1] - scores$PCA$curve[, 1],
+        auc = scores$LTSA$auc - scores$PCA$auc)
+})
+wins <- t(vapply(rnx_differences, function(d) colMeans(d > 0), numeric(2)))
+round(wins, 3)
+```
+
+```text
+          rnx15   auc
+Ambient   0.547 0.394
+Intrinsic 0.547 0.657
+```
+
+```{r roll-pointwise-rnx-plot, eval=FALSE, fig.width=9, fig.height=3.2}
+limit <- max(abs(unlist(lapply(rnx_differences, function(d) d[, "auc"]))))
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2.5, 0.5))
+for (ref in names(rnx_differences)) {
+  vizier::embed_plot(
+    flat, x = rnx_differences[[ref]][, "auc"], color_scheme = "grDevices::Blue-Red 3",
+    limits = c(-limit, limit), title = paste(ref, "reference"),
+    fixed_aspect = TRUE, show_axes = FALSE, cex = 1.2
+  )
+}
+```
+
+```{r show-roll-pointwise-rnx, echo=FALSE, out.width="100%", fig.alt="On the flat roll, PCA has higher RNX AUC in much of the outer turn using the ambient reference. LTSA leads in several regions using the intrinsic reference."}
+knitr::include_graphics("figures/roll-pointwise-rnx.png")
+```
+
+At `k = 15`, LTSA has higher overlap for about 55% of points under either reference. Across
+sizes, LTSA has higher AUC for about 39% of points under the ambient reference and 66% under
+the intrinsic reference. The maps put both comparisons on the flat roll. Red favors LTSA,
+blue favors PCA, and both panels use the same scale centered at zero.
+
 ## Compare local shape after alignment
 
 Neighbor overlap counts retained neighbors. To look at their shape, select the 15 nearest
