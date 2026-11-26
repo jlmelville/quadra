@@ -6,7 +6,7 @@
 \alias{quadra-package}
 \title{quadra: QUality Assessment of Dimensionality Reduction Algorithms}
 \description{
-Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, and label-based retrieval AUC metrics.
+Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, label-based metrics, and group preservation metrics.
 }
 \seealso{
 Useful links:

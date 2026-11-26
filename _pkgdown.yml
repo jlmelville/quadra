@@ -58,8 +58,12 @@ reference:
     contents:
       - roc_auc
       - pr_auc
+      - class_pair_auc
       - label_trustworthiness_continuity
       - class_angular_distortion_index
+  - title: Group preservation
+    contents:
+      - steadiness_cohesiveness
   - title: Sampling helpers
     desc: Sample observation pairs or anchored triplets.
     contents:

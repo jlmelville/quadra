@@ -33,7 +33,11 @@
 #' @return A data frame with columns `band_type`, `band`, `radius`,
 #'   `n_pairs`, `pair_fraction`, `spearman`, and `normalized_stress`.
 #'   If `ret_extra = TRUE`, a list containing that data frame as `profile`
-#'   along with `pairs`, `distance_in`, and `distance_out`.
+#'   along with `pairs`, `distance_in`, `distance_out`, and `fitted_scale`.
+#'   Multiply output distances by the corresponding entry of `fitted_scale`
+#'   to put them in input-distance units. The multiplier is undefined (NA)
+#'   for an empty band or all-zero output distances. A multiplier larger
+#'   than the floating-point range is returned as `Inf`.
 #' @seealso [sample_pairs()], [random_pair_distance_correlation()],
 #'   [random_pair_distance_stress()]
 #' @examples
@@ -102,7 +106,7 @@ random_pair_distance_band_profile <- function(
       inside <- distances$din <= radius
       distance_band_summary(distances$din[inside], distances$dout[inside])
     },
-    numeric(3)
+    numeric(4)
   )
   profile <- data.frame(
     band_type = band_type,
@@ -119,14 +123,18 @@ random_pair_distance_band_profile <- function(
       call. = FALSE
     )
   }
-  random_pair_result(profile, "profile", distances, ret_extra)
+  result <- random_pair_result(profile, "profile", distances, ret_extra)
+  if (ret_extra) {
+    result$fitted_scale <- summaries[4L, ]
+  }
+  result
 }
 
 distance_band_summary <- function(din, dout) {
   count <- length(din)
-  spearman <- stress <- NA_real_
+  spearman <- stress <- fitted_scale <- NA_real_
   if (count == 0L) {
-    return(c(count, spearman, stress))
+    return(c(count, spearman, stress, fitted_scale))
   }
   if (count >= 3L && min(din) < max(din) && min(dout) < max(dout)) {
     spearman <- stats::cor(din, dout, method = "spearman")
@@ -134,12 +142,16 @@ distance_band_summary <- function(din, dout) {
 
   scale_in <- max(abs(din))
   scale_out <- max(abs(dout))
+  if (scale_in == 0 && scale_out > 0) {
+    fitted_scale <- 0
+  }
   if (scale_in > 0 && scale_out > 0) {
     # Normalizing before the fit keeps the sums of squares representable.
     din <- din / scale_in
     dout <- dout / scale_out
     multiplier <- sum(din * dout) / sum(dout^2)
+    fitted_scale <- exp(log(multiplier) + (log(scale_in) - log(scale_out)))
     stress <- sqrt(sum((din - multiplier * dout)^2) / sum(din^2))
   }
-  c(count, spearman, stress)
+  c(count, spearman, stress, fitted_scale)
 }

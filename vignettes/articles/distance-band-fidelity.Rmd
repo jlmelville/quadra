@@ -101,13 +101,47 @@ center <- colMeans(cloud)
 small <- sweep(sweep(cloud, 2, center, "-") / 4, 2, center, "+")
 compressed <- rbind(small, shift(small, 12, 0))
 detail <- random_pair_distance_band_profile(
-  x, compressed, bands = 2.5, band_type = "radius", pairs = pairs, ret_extra = TRUE
+  x, compressed, bands = c(2.5, 14), band_type = "radius", pairs = pairs, ret_extra = TRUE
 )
 within <- group[detail$pairs[, 1]] == group[detail$pairs[, 2]]
 relative_scale <- function(d) median(d[within]) / median(d)
 round(c(input = relative_scale(detail$distance_in),
         output = relative_scale(detail$distance_out)), 3)
-print(detail$profile, digits = 3)
+print(transform(detail$profile, fitted_scale = detail$fitted_scale), digits = 3)
 ```
+
+The near band needs a multiplier of four to undo the within-cloud compression. The full band
+needs a multiplier close to one because it includes the distances between the two centers.
+
+## Whose distances enter a short band?
+
+Give two groups the same number of observations. Spread the second copy of the cloud over a
+larger area, then stretch that group horizontally and squeeze it vertically. Keep the dense
+group fixed. A short input radius admits more pairs from the dense group.
+
+```{r bands-density}
+sparse <- 6 * cloud
+reference <- rbind(cloud, shift(sparse, 20, 0))
+changed <- rbind(cloud, shift(sweep(sparse, 2, c(2, 0.4), "*"), 20, 0))
+radius <- 0.8
+in_group <- group[pairs[, 1]] == group[pairs[, 2]]
+plans <- list(Dense = pairs[in_group & group[pairs[, 1]] == "A", ],
+              Sparse = pairs[in_group & group[pairs[, 1]] == "B", ],
+              Pooled = pairs)
+scores <- do.call(rbind, lapply(plans, function(plan) {
+  random_pair_distance_band_profile(reference, changed, bands = radius,
+                                    band_type = "radius", pairs = plan)
+}))
+# Every qualifying pair has both endpoints in the same group.
+stopifnot(scores["Pooled", "n_pairs"] == sum(scores[c("Dense", "Sparse"), "n_pairs"]))
+round(data.frame(points = c(nrow(cloud), nrow(cloud), nrow(reference)),
+                 pairs = scores$n_pairs,
+                 endpoint_share = scores$n_pairs / scores["Pooled", "n_pairs"],
+                 stress = scores$normalized_stress, row.names = names(plans)), 3)
+```
+
+Each group has 45 observations, but 471 of the 488 qualifying pairs come from the dense group.
+The sparse group's fitted-scale stress is 0.315. Pooling it with the unchanged dense group
+reduces the reported stress to 0.124.
 
 For the fixed-radius approach, see [Takaeda's distance-band benchmark](https://arxiv.org/abs/2608.21779).

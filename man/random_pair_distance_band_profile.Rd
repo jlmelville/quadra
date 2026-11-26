@@ -57,7 +57,11 @@ with their raw distances.}
 A data frame with columns \code{band_type}, \code{band}, \code{radius},
 \code{n_pairs}, \code{pair_fraction}, \code{spearman}, and \code{normalized_stress}.
 If \code{ret_extra = TRUE}, a list containing that data frame as \code{profile}
-along with \code{pairs}, \code{distance_in}, and \code{distance_out}.
+along with \code{pairs}, \code{distance_in}, \code{distance_out}, and \code{fitted_scale}.
+Multiply output distances by the corresponding entry of \code{fitted_scale}
+to put them in input-distance units. The multiplier is undefined (NA)
+for an empty band or all-zero output distances. A multiplier larger
+than the floating-point range is returned as \code{Inf}.
 }
 \description{
 Compare the order and magnitude of matched distances within cumulative

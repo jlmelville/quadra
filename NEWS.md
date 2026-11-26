@@ -1,5 +1,8 @@
 # quadra 0.2.1.9000
 
+* Add `steadiness_cohesiveness()` to assess label-free groups and map group distortion.
+* Return per-band fitted scale multipliers with detailed distance-band profiles.
+* Add `class_pair_auc()` for pair-restricted ROC and PR AUC and their defined-query counts.
 * Add `class_angular_distortion_index()` for directed class-pair angular distortion.
 * Add `gap_index()` for regional area distortion in two-dimensional embeddings.
 * Add per-anchor counts and accuracy with `random_triplet_accuracy(..., by_anchor = TRUE)`.

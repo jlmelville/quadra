@@ -105,3 +105,22 @@ test_that("undefined bands report their counts and consolidate warnings", {
     "nonnegative"
   )
 })
+
+test_that("detailed multipliers map output distances to input units band by band", {
+  x <- cbind(0:3)
+  y <- cbind(c(0, 2, 3, 4))
+  plan <- cbind(1L, 2:4)
+  fit <- function(x, y) {
+    suppressWarnings(random_pair_distance_band_profile(
+      x,
+      y,
+      bands = c(0, 1, 3),
+      band_type = "radius",
+      pairs = plan,
+      ret_extra = TRUE
+    ))
+  }
+  expect_equal(fit(x, y)$fitted_scale, c(NA, 1 / 2, 20 / 29))
+  expect_equal(fit(x * 0, y)$fitted_scale, rep(0, 3))
+  expect_true(all(is.na(fit(x, 0 * y)$fitted_scale)))
+})

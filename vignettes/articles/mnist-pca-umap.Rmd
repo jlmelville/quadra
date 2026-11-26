@@ -8,13 +8,13 @@ which relationships each picture preserves.
 
 ## Load the digits
 
-Install `quadra`, `uwot`, `PRROC`, `snedata`, and `vizier` before running the chunks. The latter
-two are available from GitHub. For the band profile, install `quadra` from this checkout.
+Use `quadra` from this checkout. The following packages supply the data, embedding, plotting,
+and optional audit methods.
 
 ```{r mnist-install, eval=FALSE}
 # Run once if the packages are missing:
 # install.packages("pak")
-# pak::pak(c("uwot", "PRROC",
+# pak::pak(c("uwot", "PRROC", "dbscan", "Matrix", "geometry",
 #            "jlmelville/snedata", "jlmelville/vizier"))
 ```
 
@@ -340,19 +340,15 @@ label_results <- lapply(maps, function(y) {
 })
 round(t(vapply(label_results, function(result) result$scores, numeric(2))), 3)
 
-class_pairs <- label_results[[1]]$pairs[, c("label_a", "label_b")]
-pair_name <- apply(class_pairs, 1, function(classes) paste(sort(classes), collapse = "/"))
-pair_auc <- function(dm) {
-  t(vapply(seq_len(nrow(class_pairs)), function(i) {
-    keep <- audit_label %in% unlist(class_pairs[i, ], use.names = FALSE)
-    pair_dm <- dm[keep, keep]
-    c(ROC = roc_auc(pair_dm, audit_label[keep])$av_auc,
-      PR = pr_auc(pair_dm, audit_label[keep])$av_auc)
-  }, numeric(2)))
-}
-input_auc <- pair_auc(din)
+input_auc <- class_pair_auc(din, audit_label)
 changes <- Map(function(dm, result) {
-  data.frame(pair = pair_name, pair_auc(dm) - input_auc, DSC = result$pairs$change)
+  output_auc <- class_pair_auc(dm, audit_label)
+  keys <- c("label_a", "label_b")
+  stopifnot(identical(input_auc[keys], output_auc[keys]),
+            identical(input_auc[keys], result$pairs[keys]))
+  pair <- apply(input_auc[keys], 1, function(classes) paste(sort(classes), collapse = "/"))
+  data.frame(pair = pair, ROC = output_auc$roc - input_auc$roc,
+             PR = output_auc$pr - input_auc$pr, DSC = result$pairs$change)
 }, dout, label_results)
 
 highlight <- c(PCA = "5/9", UMAP = "2/8")
@@ -537,3 +533,96 @@ much space opens between them. Red means expansion and blue means compression.
 
 The triangles fill the convex hull. Their areas describe this sampled scatterplot, including
 its boundary. [Gap Index paper](https://arxiv.org/abs/2607.28324)
+
+## Check groups without digit labels
+
+Steadiness grows groups in the embedding and checks them in pixel space. Cohesiveness grows
+groups in pixel space and checks them in the embedding. Both use shared-neighbor similarities.
+Use the same audit rows as before. Run the group calculation before looking at the digit labels.
+This section requires the `dbscan` and `Matrix` packages.
+
+```{r mnist-groups, eval=FALSE}
+set.seed(451)
+groups <- steadiness_cohesiveness(x[audit, , drop = FALSE], xy, ret_extra = TRUE)
+round(groups$scores, 3)
+
+# Delineate visible islands using only their two embedding coordinates.
+islands <- dbscan::hdbscan(xy, minPts = 15)$cluster
+members <- split(which(islands > 0), islands[islands > 0])
+by_island <- t(vapply(members, function(rows) {
+  incident <- rowSums(matrix(umap_gap$triangles %in% rows, ncol = 3)) > 0
+  c(n = length(rows), RNX = mean(umap_rnx$auc[rows]),
+    gap = mean(abs(umap_gap$deformation[incident])),
+    steadiness = mean(groups$pointwise$steadiness[rows]),
+    cohesiveness = mean(groups$pointwise$cohesiveness[rows]))
+}, numeric(5)))
+island <- members[[which.max(by_island[, "RNX"])]]
+round(by_island[order(by_island[, "RNX"], decreasing = TRUE), ], 3)
+```
+
+```text
+  steadiness cohesiveness
+       0.780        0.723
+    n   RNX   gap steadiness cohesiveness
+6 106 0.513 0.521      0.995        0.271
+1 101 0.373 0.673      0.962        0.799
+3 304 0.367 0.655      0.889        0.642
+2 102 0.303 0.691      0.993        0.791
+5 292 0.288 0.697      0.854        0.588
+4  91 0.228 0.737      0.831        0.699
+```
+
+The highest-RNX island also has the smallest mean absolute deformation among triangles that touch
+it. Its high Steadiness is consistent with a coherent visible island. Its low local Cohesiveness
+flags input-space groups involving those observations that disperse in UMAP. The two directions
+use different sampled groups. The map values are relative to the other observations in the audit.
+Repeating the calculation with audit seeds 417–419 and walk seeds 451–453, the highest-RNX
+island had the lowest mean local Cohesiveness in all nine comparisons.
+
+Now use the digit labels to ask which individual images are easy to retrieve. Compute PR AUC
+against all 999 audit candidates per query, then inspect the queries inside the selected island.
+
+```{r mnist-island-retrieval, eval=FALSE}
+query_pr <- pr_auc(dout$UMAP, audit_label, ret_extra = TRUE)$query_auc
+majority <- names(which.max(table(audit_label[island])))
+type <- ifelse(audit_label[island] == majority, paste("Digit", majority), "Other digits")
+cbind(queries = table(type), median_PR = round(tapply(query_pr[island], type, median), 3))
+```
+
+```text
+             queries median_PR
+Digit 1          100     0.862
+Other digits       6     0.090
+```
+
+```{r mnist-group-map, eval=FALSE, fig.width=10, fig.height=3.8}
+par(mfrow = c(1, 3), mar = c(0.6, 0.6, 2.4, 0.6))
+for (key in c("steadiness", "cohesiveness")) {
+  vizier::embed_plot(xy, x = groups$pointwise[[key]], color_scheme = "grDevices::Viridis",
+                     limits = c(0, 1), fixed_aspect = TRUE, show_axes = FALSE,
+                     title = paste("Local", key), cex = 0.65)
+  hull <- island[chull(xy[island, , drop = FALSE])]
+  polygon(xy[hull, , drop = FALSE], border = "#263748", lwd = 1.5)
+}
+vizier::embed_plot(xy[island, , drop = FALSE], x = query_pr[island],
+                   color_scheme = "grDevices::Viridis", limits = c(0, 1),
+                   fixed_aspect = TRUE, show_axes = FALSE, title = "Query PR AUC inside island")
+other <- island[audit_label[island] != majority]
+points(xy[other, , drop = FALSE], pch = 1, cex = 1.35, lwd = 1.5)
+```
+
+```{r show-mnist-group-map, echo=FALSE, out.width="100%", fig.alt="The outlined UMAP island has high local Steadiness and low local Cohesiveness. In the enlarged island, the six circled images of other digits have lower query PR AUC than most digit 1 images."}
+knitr::include_graphics("figures/mnist-group-map.png")
+```
+
+The first two panels outline the same island. The last enlarges it and circles the six queries
+with labels other than 1. Purple indicates low scores and yellow high scores in all three panels.
+[Steadiness and Cohesiveness](https://arxiv.org/abs/2107.07859)
+
+## Which embedding would you use?
+
+For finding similar handwritten digits, UMAP retains more pixel-space neighbors at all three
+tested sizes and gives higher per-digit PR AUC on the audit. For comparing distances between
+arbitrary images, PCA preserves more sampled distance orderings. A reader using the UMAP islands
+to reason about digit shapes should inspect the class pair of interest. For example, 3s and 5s
+become easier to retrieve even as their angular relationship changes.

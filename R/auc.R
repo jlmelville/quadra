@@ -67,7 +67,7 @@ pr_auc <- function(dm, labels, ret_extra = FALSE) {
   summarize_retrieval_auc(dm, labels, pr_auc_row, ret_extra)
 }
 
-validate_auc_inputs <- function(dm, labels) {
+validate_auc_inputs <- function(dm, labels, min_rows = 3L) {
   if (!is.matrix(dm)) {
     stop("`dm` must be a matrix", call. = FALSE)
   }
@@ -83,8 +83,13 @@ validate_auc_inputs <- function(dm, labels) {
   if (!all(is.finite(dm))) {
     stop("`dm` must contain only finite values", call. = FALSE)
   }
-  if (nrow(dm) < 3L) {
-    stop("`dm` must have at least 3 rows and columns", call. = FALSE)
+  if (nrow(dm) < min_rows) {
+    stop(
+      "`dm` must have at least ",
+      min_rows,
+      " rows and columns",
+      call. = FALSE
+    )
   }
 
   validate_label_vector(labels, nrow(dm), "dm")
@@ -258,4 +263,59 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn, ret_extra) {
     result,
     list(query_auc = query_auc, n_defined = as.integer(av_n))
   )
+}
+
+#' Retrieval AUC Within Each Pair of Classes
+#'
+#' Restrict both queries and candidates to two classes at a time. Each
+#' defined query receives equal weight within its class pair.
+#'
+#' @inheritParams roc_auc
+#' @param metrics Which AUCs to report. Defaults to both `"roc"` and `"pr"`.
+#' @return A data frame with one row per unordered class pair and columns
+#'   `label_a` and `label_b` in the same first-appearance order as
+#'   [label_trustworthiness_continuity()]. Each requested metric adds its
+#'   mean (`roc` or `pr`) and defined-query count (`n_defined_roc` or
+#'   `n_defined_pr`). Queries from singleton classes are undefined. A pair
+#'   of singletons has count zero and mean `NA_real_`.
+#' @note Requires the `PRROC` package.
+#' @examplesIf requireNamespace("PRROC", quietly = TRUE)
+#' class_pair_auc(as.matrix(dist(iris[, -5])), iris$Species)
+#' @export
+class_pair_auc <- function(dm, labels, metrics = c("roc", "pr")) {
+  metrics <- unique(match.arg(metrics, c("roc", "pr"), several.ok = TRUE))
+  if (!requireNamespace("PRROC", quietly = TRUE)) {
+    stop("class_pair_auc requires the 'PRROC' package", call. = FALSE)
+  }
+  validate_auc_inputs(dm, labels, min_rows = 2L)
+  classes <- unique(labels)
+  if (length(classes) < 2L) {
+    stop("labels must contain at least two distinct labels", call. = FALSE)
+  }
+  groups <- split(seq_along(labels), match(labels, classes))
+  pairs <- utils::combn(seq_along(classes), 2L)
+  result <- data.frame(
+    label_a = classes[pairs[1L, ]],
+    label_b = classes[pairs[2L, ]]
+  )
+  row_functions <- list(roc = roc_auc_row, pr = pr_auc_row)
+  for (metric in metrics) {
+    result[[metric]] <- NA_real_
+    result[[paste0("n_defined_", metric)]] <- 0L
+  }
+  for (i in seq_len(nrow(result))) {
+    rows <- sort(c(groups[[pairs[1L, i]]], groups[[pairs[2L, i]]]))
+    distances <- dm[rows, rows, drop = FALSE]
+    for (metric in metrics) {
+      summary <- summarize_retrieval_auc(
+        distances,
+        labels[rows],
+        row_functions[[metric]],
+        TRUE
+      )
+      result[[metric]][i] <- summary$av_auc
+      result[[paste0("n_defined_", metric)]][i] <- summary$n_defined
+    }
+  }
+  result
 }

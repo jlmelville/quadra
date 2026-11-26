@@ -4,7 +4,7 @@ description: "Choose a metric from the relationship your embedding should preser
 ---
 
 This package provides several ways to evaluate the performance of an
-embedding. They fall into four broad families.
+embedding. Start with the relationship you want to check.
 
 ## Choosing a Starting Metric
 
@@ -14,6 +14,10 @@ embedding. They fall into four broad families.
 | Do dense and sparse regions keep their relative local scale? | `local_radius_correlation()` | Whether scale distortion needs attention even when neighbor identities look acceptable. |
 | Are broad distance orderings retained? | `random_triplet_accuracy()` | Whether the embedding preserves enough global ordering for the intended use. |
 | Do known labels remain retrievable? | `roc_auc()` or `pr_auc()` | Whether same-label observations rank ahead of other labels in the embedding. |
+| Did a neighborhood keep its members but change shape? | `local_procrustes()` | Inspect the matched points in the [Swiss-roll patch](reference-geometry.html#compare-local-shape-after-alignment). |
+| Did a gap open between groups? | `gap_index()` | Locate the triangle spanning the [gap between three digits](mnist-pca-umap.html#inspect-the-gaps-between-digits). |
+| Does a visible island represent a coherent group in the reference? | `steadiness_cohesiveness()` | Check [label-free groups in the MNIST audit](mnist-pca-umap.html#check-groups-without-digit-labels) in both directions. |
+| Did a class pair become easier to retrieve while its geometry changed? | Pairwise AUC, label trustworthiness and continuity, and CADI | Compare retrieval, centroid separation, and [the spread of 5s seen from 3s](mnist-pca-umap.html#compare-angular-spread-from-each-digit). |
 
 Choose metrics to match the relationships an embedding should preserve. The
 table gives starting points.

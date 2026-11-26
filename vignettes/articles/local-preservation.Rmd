@@ -352,6 +352,32 @@ does not establish a universally preferred embedding or neighborhood size.
 curve columns to find where agreement changes as neighborhoods grow. The mean pointwise AUC
 recovers the overall AUC. [MNIST example](mnist-pca-umap.html#compare-neighborhood-sizes-for-each-point)
 
+## Do groups merge or split?
+
+Place three clouds apart, then move two of their centers together. Steadiness measures how well
+groups sampled in the output hold together in the input. Cohesiveness checks the other direction.
+Swap the input and output coordinates to turn the merge into a split.
+
+```{r local-groups, eval=requireNamespace("dbscan", quietly = TRUE) && requireNamespace("Matrix", quietly = TRUE)}
+set.seed(450)
+clouds <- replicate(3, matrix(rnorm(160, sd = 0.45), 80, 2), simplify = FALSE)
+place <- function(centers) {
+  do.call(rbind, Map(function(z, offset) sweep(z, 2, offset, "+"), clouds, centers))
+}
+separate <- place(list(c(-4, 0), c(4, 0), c(0, 7)))
+merged <- place(list(c(-0.1, 0), c(0.1, 0), c(0, 7)))
+set.seed(451)
+merge_scores <- steadiness_cohesiveness(separate, merged)
+set.seed(451)
+split_scores <- steadiness_cohesiveness(merged, separate)
+round(rbind(merge = merge_scores, split = split_scores), 3)
+```
+
+Steadiness falls further for the merge. Cohesiveness falls further for the split. Each score
+summarizes losses between subgroups across random walks. For a map, request `ret_extra = TRUE`
+and inspect the two directions for the same rows.
+[MNIST group comparison](mnist-pca-umap.html#check-groups-without-digit-labels)
+
 ## Using Existing Neighbor Graphs
 
 For larger datasets, `nn_preservation()` can use approximate neighbors through

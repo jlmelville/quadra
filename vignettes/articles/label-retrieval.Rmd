@@ -124,19 +124,11 @@ Both outputs give the same PR AUC for each label. Now compare two-class ROC AUC 
 in each output, using the same query and candidate IDs for each pair.
 
 ```{r label-pair-roc}
-class_pairs <- combn(unique(label), 2)
-pair_roc <- function(d) {
-  apply(class_pairs, 2, function(classes) {
-    keep <- label %in% classes
-    roc_auc(d[keep, keep], label[keep])$av_auc
-  })
-}
-reference <- pair_roc(din)
+reference <- class_pair_auc(din, label, metrics = "roc")
 data.frame(
-  pair = apply(class_pairs, 2, paste, collapse = " / "),
-  input_roc = reference,
-  column_merge_change = round(pair_roc(merge_columns) - reference, 3),
-  row_merge_change = round(pair_roc(merge_rows) - reference, 3)
+  reference,
+  column_merge_change = round(class_pair_auc(merge_columns, label, "roc")$roc - reference$roc, 3),
+  row_merge_change = round(class_pair_auc(merge_rows, label, "roc")$roc - reference$roc, 3)
 )
 ```
 

@@ -6,7 +6,7 @@ Authors@R:
     person("James", "Melville", , "jlmelville@gmail.com", role = c("aut", "cre"))
 Description: Quantifies dimensionality-reduction embeddings with global
     distance-preservation metrics, local nearest-neighbor preservation metrics,
-    co-ranking metrics, and label-based retrieval AUC metrics.
+    co-ranking metrics, label-based metrics, and group preservation metrics.
 License: GPL (>= 3)
 URL: https://jlmelville.github.io/quadra/,
     https://github.com/jlmelville/quadra
@@ -15,6 +15,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests:
     covr,
+    dbscan,
     geometry,
     lintr,
     Matrix,

@@ -126,11 +126,16 @@ at each fraction, where they use the same pairs and radius.
 
 ```{r roll-bands, eval=FALSE, fig.width=8, fig.height=4}
 bands <- c(0.05, 0.1, 0.2, 0.5, 1)
+band_results <- lapply(references, function(reference) {
+  lapply(maps, function(y) {
+    fit <- random_pair_distance_band_profile(reference, y, bands = bands, pairs = pairs,
+                                             ret_extra = TRUE)
+    transform(fit$profile, fitted_scale = fit$fitted_scale)
+  })
+})
 par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
 for (ref in names(references)) {
-  profiles <- lapply(maps, function(y) {
-    random_pair_distance_band_profile(references[[ref]], y, bands = bands, pairs = pairs)
-  })
+  profiles <- band_results[[ref]]
   values <- vapply(profiles, function(z) z$normalized_stress, numeric(length(bands)))
   matplot(
     bands, values, type = "b", pch = c(16, 17), lty = 1,
@@ -290,9 +295,8 @@ diag(reference_dist) <- Inf
 reference_graph <- list(idx = t(apply(reference_dist, 1, order)[seq_len(k), , drop = FALSE]))
 radius <- function(d) apply(d, 1, sort)[k, ]
 
-inspect_shape <- function(y) {
-  distances <- dist(y)
-  multiplier <- sum(original_distances * distances) / sum(distances^2)
+multipliers <- vapply(band_results$Intrinsic, function(z) z$fitted_scale[z$band == 1], numeric(1))
+inspect_shape <- function(y, multiplier) {
   calibrated <- multiplier * y
   shape <- local_procrustes(flat, calibrated, k = k, nn_in = reference_graph, ret_extra = TRUE)
   error <- shape$pointwise_error
@@ -305,7 +309,7 @@ inspect_shape <- function(y) {
     radius_ratio = unname(radius(output_dist)[i] / radius(reference_dist)[i])
   )
 }
-round(t(vapply(maps, inspect_shape, numeric(4))), 3)
+round(do.call(rbind, Map(inspect_shape, maps, multipliers)), 3)
 ```
 
 ```text
@@ -377,3 +381,10 @@ The outlined triangle opens into the central gap. Its intrinsic deformation is 0
 its vertices have higher mean RNX AUC than the embedding as a whole. Switching from ambient
 to intrinsic geometry also changes the direction of deformation on 16% of plotted area
 from compression to expansion. Both panels use the same scale, with red for expansion and blue for compression.
+
+## Which distances answer the question?
+
+For straight-line distances through the rolled cloud, PCA better preserves the order of pairs.
+For distances along the surface, the same comparison favors LTSA. Choose the flat arc-length and
+height reference when the purpose is to unroll the surface. Even then, LTSA retains only 46% of
+the 15 nearest neighbors on average, so local comparisons still warrant a look at the patches.
