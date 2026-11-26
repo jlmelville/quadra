@@ -217,3 +217,39 @@ test_that("exact rank metrics do not touch the R RNG", {
 
   call_without_seed()
 })
+
+test_that("pointwise ranks follow query IDs, ties and requested k order", {
+  fixture <- exact_rank_profile_fixture()
+  ids <- letters[seq_len(nrow(fixture$din))]
+  dimnames(fixture$din) <- list(ids, ids)
+  din <- fixture$din
+  dout <- fixture$dout
+  k <- c(2, 1)
+  result <- pointwise_rank_preservation(din, dout, k)
+  reversed <- pointwise_rank_preservation(dout, din, k)
+
+  expect_identical(dimnames(result$trustworthiness), list(ids, paste0("k", k)))
+  expect_equal(
+    unname(colMeans(result$trustworthiness)),
+    unname(trustworthiness(din, dout, k))
+  )
+  expect_equal(
+    unname(colMeans(result$continuity)),
+    unname(continuity(din, dout, k))
+  )
+  expect_equal(unname(result$trustworthiness), unname(reversed$continuity))
+  expect_equal(unname(result$continuity), unname(reversed$trustworthiness))
+  expect_error(pointwise_rank_preservation(din, dout, k = 3), "less than half")
+})
+
+test_that("the penalty for an intrusion is assigned to its query", {
+  din <- as.matrix(dist(c(0, 1, 3, 9)))
+  dout <- as.matrix(dist(c(0, 1, 3, 0.25)))
+  result <- pointwise_rank_preservation(din, dout, k = 1)
+  expect_equal(unname(result$trustworthiness[1L, "k1"]), 0)
+  expect_equal(unname(result$continuity[1L, "k1"]), 0.5)
+  expect_equal(
+    result$trustworthiness,
+    pointwise_rank_preservation(dout, din, k = 1)$continuity
+  )
+})

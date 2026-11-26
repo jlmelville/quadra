@@ -103,6 +103,55 @@ rank-based neighborhood agreement rather than sampled global distances. See the
 [local preservation](local-preservation.html#multi-scale-rnx-agreement) guide
 for its AUC, scale-specific curve, and interpretation.
 
+## Identical Scatterplots, Different Point Identities
+
+Swap the positions of two observations and leave their row IDs fixed. Both point clouds occupy
+the same positions, so the distribution over all six unordered distances stays identical.
+
+```{r permuted-identities}
+x <- cbind(c(0, 1, 4, 10))
+y <- x[c(1, 4, 3, 2), , drop = FALSE]
+pairs <- t(combn(nrow(x), 2))
+c(
+  emd = random_pair_distance_emd(
+    x, y, pairs = pairs, metric_in = "euclidean", metric_out = "euclidean",
+    range_scale = FALSE
+  ),
+  stress = random_pair_distance_stress(
+    x, y, pairs = pairs, metric_in = "euclidean", metric_out = "euclidean",
+    range_scale = FALSE
+  ),
+  neighbor_overlap = mean(nbr_pres(as.matrix(dist(x)), as.matrix(dist(y)), k = 1))
+)
+```
+
+EMD is zero. Matched distances change, giving an RMSE of about 5.48, and every observation loses
+its original nearest neighbor. With a random subset of pairs, the two sets of distances may differ
+even though the complete distributions agree.
+
+## Stress After Fitting One Scale
+
+The full band of `random_pair_distance_band_profile()` fits one multiplier to the output
+distances. Here the three distances from the first point change from `1, 2, 3` to `2, 3, 4`.
+
+```{r fitted-scale-stress}
+x <- cbind(0:3)
+y <- cbind(c(0, 2, 3, 4))
+pairs <- cbind(1L, 2:4)
+c(
+  range_scaled_rmse = random_pair_distance_stress(
+    x, y, pairs = pairs, metric_in = "euclidean", metric_out = "euclidean"
+  ),
+  fitted_scale_stress = random_pair_distance_band_profile(
+    x, y, pairs = pairs, bands = 1
+  )$normalized_stress
+)
+```
+
+Range scaling absorbs the common offset. A multiplier cannot absorb it, so fitted-scale stress
+is about 0.122. See [distance fidelity across scales](distance-band-fidelity.html) for comparisons
+restricted to nearby input pairs.
+
 ## Check Output Scale Alongside Scores
 
 An embedding is collapsed when all observations map to the same point. Its output distances are all

@@ -129,6 +129,57 @@ less than half the number of observations, so they are intended for exact
 small-dataset checks. For larger datasets, use nearest-neighbor preservation
 metrics such as `nn_preservation()` or `nbr_pres_knn()`.
 
+### Where did a gap remove neighbors?
+
+Split a slightly jittered grid down the middle. Pointwise continuity shows which observations
+lost neighbors when the gap opened. Swapping the reference and output makes closing the gap an
+intrusion and swaps the two kinds of rank penalty.
+
+```{r pointwise-tear}
+set.seed(918)
+grid <- as.matrix(expand.grid(
+  x = seq(-1, 1, length.out = 20),
+  y = seq(-1, 1, length.out = 14)
+))
+sheet <- grid + matrix(runif(length(grid), -0.02, 0.02), ncol = 2)
+split_sheet <- sheet
+split_sheet[sheet[, 1] > 0, 1] <- sheet[sheet[, 1] > 0, 1] + 1
+before <- as.matrix(dist(sheet))
+after <- as.matrix(dist(split_sheet))
+tear <- pointwise_rank_preservation(before, after, k = 12)
+merge <- pointwise_rank_preservation(after, before, k = 12)
+round(rbind(
+  opening = vapply(tear, mean, numeric(1)),
+  closing = vapply(merge, mean, numeric(1))
+), 3)
+```
+
+Each query contributes one score. The column means recover the aggregate measures. The plot uses
+`1 - score` to make larger penalties brighter on a shared scale.
+
+```{r pointwise-plot, eval=FALSE, fig.width=8, fig.height=5.8}
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 2.4, 0.5))
+limits <- c(0, max(1 - tear$trustworthiness, 1 - tear$continuity))
+plot_penalties <- function(xy, scores, title) {
+  for (metric in names(scores)) {
+    vizier::embed_plot(
+      xy, x = 1 - scores[[metric]][, "k12"], limits = limits,
+      color_scheme = "grDevices::Viridis", title = paste(title, metric, sep = " / "),
+      fixed_aspect = TRUE, show_axes = FALSE, cex = 1.25
+    )
+  }
+}
+plot_penalties(split_sheet, tear, "Opening the gap")
+plot_penalties(sheet, merge, "Closing the gap")
+```
+
+```{r show-pointwise-plot, echo=FALSE, out.width="100%", fig.alt="Missing-neighbor penalties concentrate along the opened gap. When the gap closes, the same strip incurs false-neighbor penalties."}
+knitr::include_graphics("figures/pointwise-plot.png")
+```
+
+Most of the observations away from the cut keep their neighbors. The bright strip changes
+columns when the direction of the comparison reverses.
+
 ## Local Radius Correlation
 
 Nearest neighbor preservation asks whether the same observations remain nearby.

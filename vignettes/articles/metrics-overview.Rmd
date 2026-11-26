@@ -63,8 +63,10 @@ root mean squared difference.
 
 For these metrics, `Xin` and `metric_in` define the reference geometry.
 
-See the [global preservation](global-preservation.html) article for those
-metrics.
+The [identity-permutation example](global-preservation.html#identical-scatterplots-different-point-identities)
+shows which metrics notice when the same plotted positions belong to different observations.
+Use [distance bands](distance-band-fidelity.html) to compare ordering and fitted-scale stress
+from nearby input pairs through the entire pair sample.
 
 ## Input and Ordering Conventions
 

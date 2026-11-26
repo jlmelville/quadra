@@ -280,3 +280,49 @@ NumericVector continuity_exact_multi(const NumericMatrix &din,
                                      const IntegerVector &k) {
   return rank_penalty_scores(din, dout, k, true);
 }
+
+// [[Rcpp::export(rng = false)]]
+List pointwise_rank_preservation_exact(const NumericMatrix &din,
+                                       const NumericMatrix &dout,
+                                       const IntegerVector &k) {
+  const auto n_obs = validate_exact_distance_matrices(din, dout);
+  const auto rank_ks = validate_rank_penalty_ks(k, n_obs);
+  NumericMatrix trustworthiness(n_obs, rank_ks.size());
+  NumericMatrix continuity(n_obs, rank_ks.size());
+  std::vector<double> normalizers;
+  normalizers.reserve(rank_ks.size());
+  for (const auto rank_k : rank_ks) {
+    normalizers.push_back(static_cast<double>(rank_k) *
+                          static_cast<double>((2 * n_obs) - (3 * rank_k) - 1));
+  }
+
+  for (std::size_t i = 0; i < n_obs; ++i) {
+    if (i % 16 == 0) {
+      Rcpp::checkUserInterrupt();
+    }
+    const auto ranks_in = row_ranks_first_ties(din, i);
+    const auto ranks_out = row_ranks_first_ties(dout, i);
+    for (std::size_t col = 0; col < rank_ks.size(); ++col) {
+      const auto rank_k = rank_ks[col];
+      double false_penalty = 0;
+      double missing_penalty = 0;
+      for (std::size_t j = 0; j < n_obs; ++j) {
+        if (j == i) {
+          continue;
+        }
+        const auto ri = ranks_in[j];
+        const auto ro = ranks_out[j];
+        if (ro <= rank_k && ri > rank_k) {
+          false_penalty += static_cast<double>(ri - rank_k);
+        } else if (ri <= rank_k && ro > rank_k) {
+          missing_penalty += static_cast<double>(ro - rank_k);
+        }
+      }
+      trustworthiness(i, col) = 1.0 - 2.0 * false_penalty / normalizers[col];
+      continuity(i, col) = 1.0 - 2.0 * missing_penalty / normalizers[col];
+    }
+  }
+
+  return List::create(Named("trustworthiness") = trustworthiness,
+                      Named("continuity") = continuity);
+}

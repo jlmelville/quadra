@@ -1,0 +1,223 @@
+---
+title: "Evaluating PCA and UMAP on MNIST"
+description: "Compare neighborhood, distance, and label preservation on the same digits."
+---
+
+PCA and UMAP give different pictures of the same handwritten digits. Use one cohort and compare
+which relationships each picture preserves.
+
+## Load the digits
+
+Install `quadra`, `uwot`, `PRROC`, `snedata`, and `vizier` before running the chunks. The latter
+two are available from GitHub. For the band profile, install `quadra` from this checkout.
+
+```{r mnist-install, eval=FALSE}
+# Run once if the packages are missing:
+# install.packages("pak")
+# pak::pak(c("uwot", "PRROC",
+#            "jlmelville/snedata", "jlmelville/vizier"))
+```
+
+```{r mnist-data, eval=FALSE}
+library(quadra)
+
+digits <- snedata::download_mnist(as = "list")
+train <- split(which(digits$meta$split == "training"),
+               digits$meta$label[digits$meta$split == "training"])
+set.seed(413)
+id <- sort(unlist(lapply(train, sample, size = 500), use.names = FALSE))
+x <- digits$data[id, , drop = FALSE] / 255
+label <- factor(digits$meta$label[id], levels = 0:9)
+names(label) <- id
+rm(digits)
+```
+
+## Fit and plot two embeddings
+
+The 5,000 training images are balanced by digit. Both fits use the same pixels on a 0–1 scale,
+with no per-pixel standardization.
+
+```{r mnist-fit, eval=FALSE}
+pca <- prcomp(x, rank. = 2)$x
+set.seed(414)
+umap <- uwot::umap(
+  x, n_neighbors = 15, min_dist = 0.1, n_threads = 1, n_sgd_threads = 1
+)
+maps <- list(PCA = pca, UMAP = umap)
+```
+
+```{r mnist-embeddings, eval=FALSE, fig.width=9, fig.height=4.5}
+digit_colors <- setNames(grDevices::hcl.colors(10, "Set 2"), levels(label))
+par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+for (method in names(maps)) {
+  xy <- maps[[method]]
+  vizier::embed_plot(
+    xy, colors = unname(digit_colors[as.character(label)]),
+    title = method, fixed_aspect = TRUE, show_axes = FALSE, cex = 0.5
+  )
+  centers <- aggregate(xy, list(digit = label), median)
+  text(centers[[2]], centers[[3]], centers$digit, font = 2)
+}
+```
+
+```{r show-mnist-embeddings, echo=FALSE, out.width="100%", fig.alt="PCA mixes most digits in one cloud. UMAP separates many digits into islands."}
+knitr::include_graphics("figures/mnist-embeddings.png")
+```
+
+## Compare neighbors and distances on all 5,000 rows
+
+Reuse the original-space neighbor graph, pair sample, and triplet sample across both embeddings.
+Look at several neighborhood sizes, including UMAP’s fitting scale of 15.
+
+```{r mnist-full, eval=FALSE}
+set.seed(415)
+pairs <- sample_pairs(nrow(x), 20000)
+triplets <- sample_triplets(nrow(x), 5)
+k <- c(5, 15, 50)
+set.seed(416)
+pca_nn <- nn_preservation(x, pca, k = k, n_threads = 1, ret_extra = TRUE)
+umap_nn <- nn_preservation(
+  pca_nn$nn_in, umap, k = k, n_threads = 1, ret_extra = TRUE
+)
+scores <- function(y, nn) {
+  c(
+    nn$nnp,
+    pair_spearman = random_pair_distance_correlation(
+      x, y, pairs = pairs, method = "spearman", n_threads = 1
+    ),
+    triplet_accuracy = random_triplet_accuracy(
+      x, y, triplets = triplets, n_threads = 1
+    )
+  )
+}
+round(rbind(PCA = scores(pca, pca_nn), UMAP = scores(umap, umap_nn)), 3)
+```
+
+```text
+      nnp5 nnp15 nnp50 pair_spearman triplet_accuracy
+PCA  0.028 0.056 0.115         0.499            0.671
+UMAP 0.257 0.341 0.426         0.342            0.619
+```
+
+```{r mnist-overlap, eval=FALSE, fig.width=9, fig.height=4.5}
+par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+local_scores <- list(PCA = pca_nn$nnpv$nnp15, UMAP = umap_nn$nnpv$nnp15)
+for (method in names(maps)) {
+  vizier::embed_plot(
+    maps[[method]], x = local_scores[[method]], color_scheme = "grDevices::Viridis",
+    limits = c(0, 1), title = method, fixed_aspect = TRUE, show_axes = FALSE, cex = 0.6
+  )
+}
+```
+
+```{r show-mnist-overlap, echo=FALSE, out.width="100%", fig.alt="UMAP has more green and yellow points than PCA on the shared neighbor-overlap scale."}
+knitr::include_graphics("figures/mnist-overlap.png")
+```
+
+Each point is colored by its fraction of retained neighbors at `k = 15`. Both panels use a
+0–1 scale from purple to yellow.
+
+## Compare short and long distances
+
+Use the same pair sample to ask whether each method preserves short distances better than the
+dataset-wide score suggests. The input-pair fractions are cumulative.
+
+```{r mnist-bands, eval=FALSE, fig.width=8, fig.height=3.8}
+bands <- c(0.05, 0.1, 0.2, 0.5, 1)
+profiles <- lapply(maps, function(y) {
+  random_pair_distance_band_profile(x, y, bands = bands, pairs = pairs)
+})
+
+par(mfrow = c(1, 2), mar = c(4, 4, 1, 1))
+for (metric in c("spearman", "normalized_stress")) {
+  title <- if (metric == "spearman") "Spearman correlation" else "Fitted-scale stress"
+  values <- vapply(profiles, function(profile) profile[[metric]], numeric(length(bands)))
+  matplot(
+    bands, values, type = "b", pch = c(16, 17), lty = 1,
+    col = c("#1B60A6", "#A33B20"), xlab = "Input-pair fraction", ylab = title
+  )
+  if (metric == "normalized_stress") legend(
+    "topright", names(profiles), col = c("#1B60A6", "#A33B20"),
+    pch = c(16, 17), lty = 1, bty = "n"
+  )
+}
+```
+
+```{r show-mnist-bands, echo=FALSE, out.width="100%", fig.alt="PCA has lower fitted-scale stress at all shown fractions and higher full-band Spearman."}
+knitr::include_graphics("figures/mnist-bands.png")
+```
+
+PCA has lower fitted-scale stress at each displayed band. It also has higher full-band
+Spearman correlation, while UMAP retains more of the actual nearest neighbors.
+
+## Audit ranks and labels on a fixed subset
+
+One dense double distance matrix for 5,000 observations uses about 191 MiB before temporaries.
+Use 100 observations per digit here, so each matrix uses about 7.6 MiB. All dense diagnostics
+below describe this subset and its candidate neighbors.
+
+```{r mnist-audit, eval=FALSE}
+set.seed(417)
+audit <- sort(unlist(lapply(split(seq_along(label), label), sample, size = 100)))
+audit_label <- label[audit]
+distance <- function(z) as.matrix(dist(z[audit, , drop = FALSE]))
+din <- distance(x)
+dout <- lapply(maps, distance)
+rank_scores <- t(vapply(dout, function(d) {
+  c(
+    trustworthiness = trustworthiness(din, d, k = 15),
+    continuity = continuity(din, d, k = 15),
+    rnx_auc = rnx_auc(din, d)
+  )
+}, numeric(3)))
+round(rank_scores, 3)
+```
+
+```text
+     trustworthiness continuity rnx_auc
+PCA            0.742      0.884   0.173
+UMAP           0.942      0.916   0.340
+```
+
+```{r mnist-labels, eval=FALSE, fig.width=9, fig.height=4.5}
+spaces <- c(list(Input = din), dout)
+roc <- lapply(spaces, function(d) roc_auc(d, audit_label))
+pr <- lapply(spaces, function(d) pr_auc(d, audit_label))
+overall <- function(x) vapply(x, function(z) z$av_auc, numeric(1))
+round(rbind(ROC = overall(roc), PR = overall(pr)), 3)
+
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+series_colors <- c("#404040", "#1B60A6", "#A33B20")
+series_symbols <- c(1, 16, 17)
+retrieval <- list("ROC AUC" = roc, "PR AUC" = pr)
+for (metric in names(retrieval)) {
+  by_digit <- vapply(retrieval[[metric]], function(z) {
+    unlist(z$label_av)[levels(label)]
+  }, numeric(10))
+  matplot(
+    0:9, by_digit, type = "b", lty = 1, pch = series_symbols,
+    col = series_colors, xaxt = "n", ylim = c(0, 1),
+    xlab = "Digit", ylab = paste("Mean per-query", metric)
+  )
+  axis(1, 0:9)
+  baseline <- if (metric == "ROC AUC") 0.5 else 99 / 999
+  abline(h = baseline, col = "grey50", lty = 3)
+  if (metric == "ROC AUC") legend(
+    "bottomright", colnames(by_digit), col = series_colors, pch = series_symbols,
+    lty = 1, bty = "n"
+  )
+}
+```
+
+```text
+    Input   PCA  UMAP
+ROC 0.759 0.757 0.932
+PR  0.431 0.307 0.743
+```
+```{r show-mnist-labels, echo=FALSE, out.width="100%", fig.alt="UMAP gives higher per-digit ROC and PR AUC than input pixels and PCA for every digit."}
+knitr::include_graphics("figures/mnist-labels.png")
+```
+
+The dotted lines mark random retrieval. Each query has 99 same-label candidates out of 999. A higher
+PR AUC in the embedding means same-label images become easier to retrieve. Compare that gain
+with fidelity to the original pixels before interpreting visually separated digits.

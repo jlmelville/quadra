@@ -473,3 +473,37 @@ distance2_matrix <- function(X) {
 distance_matrix <- function(X) {
   sqrt(distance2_matrix(X))
 }
+
+#' Pointwise Trustworthiness and Continuity
+#'
+#' Locate false neighbors and missing neighbors for each observation.
+#' Trustworthiness penalizes neighbors that are close in the embedding but
+#' ranked beyond `k` in the reference. Continuity penalizes reference
+#' neighbors that fall beyond `k` in the embedding.
+#'
+#' @inheritParams trustworthiness
+#' @details Like [trustworthiness()] and [continuity()], this function uses
+#'   exact distance matrices, excludes the diagonal, and breaks ties by column
+#'   order. Ranking is shared between the two measures.
+#' @return A list with matrices `trustworthiness` and `continuity`. Rows
+#'   follow the input observations and retain the row names of `din`, if
+#'   present. Columns are named `k<value>` in requested order. Column means
+#'   reproduce the corresponding aggregate scores up to numerical precision.
+#' @seealso [trustworthiness()], [continuity()]
+#' @examples
+#' x <- as.matrix(iris[, -5])
+#' y <- prcomp(x, rank. = 2)$x
+#' pointwise <- pointwise_rank_preservation(
+#'   as.matrix(dist(x)), as.matrix(dist(y)), k = c(5, 15)
+#' )
+#' head(pointwise$trustworthiness)
+#' @export
+pointwise_rank_preservation <- function(din, dout, k) {
+  validate_distance_matrix_pair(din, dout)
+  k <- validate_rank_penalty_k(k, nrow(din))
+  scores <- pointwise_rank_preservation_exact(din, dout, k)
+  score_dimnames <- list(rownames(din), paste0("k", k))
+  dimnames(scores$trustworthiness) <- score_dimnames
+  dimnames(scores$continuity) <- score_dimnames
+  scores
+}

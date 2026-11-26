@@ -20,6 +20,11 @@ articles:
   - articles/local-preservation
   - articles/global-preservation
   - articles/label-retrieval
+- title: Workflows
+  contents:
+  - articles/mnist-pca-umap
+  - articles/reference-geometry
+  - articles/distance-band-fidelity
 
 reference:
   - title: Local neighborhood preservation
@@ -29,6 +34,7 @@ reference:
       - nbr_pres_knn
       - nn_preservation
       - trustworthiness
+      - pointwise_rank_preservation
       - rnx_curve
       - rnx_auc
   - title: Local scale and graph diagnostics
@@ -43,6 +49,7 @@ reference:
       - random_pair_distance_correlation
       - random_pair_distance_emd
       - random_pair_distance_stress
+      - random_pair_distance_band_profile
   - title: Label retrieval
     desc: Measure how well distances retrieve observations with matching labels.
     contents:
