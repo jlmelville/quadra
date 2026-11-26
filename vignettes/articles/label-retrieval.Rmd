@@ -95,6 +95,55 @@ Both functions require a finite square distance matrix and one nonmissing label
 per observation. The query itself is excluded from its ranking. Labels without
 a defined query remain `NA_real_` in `label_av`.
 
+## Find which class pairs changed
+
+Per-label AUC can tell you that retrieval got worse. Restrict the candidates to two classes to
+see which labels became harder to tell apart.
+
+Start with four separated copies of a small grid. In one output, move the grids in each column
+onto one another. In the other, do the same within each row.
+
+```{r label-pair-example}
+tile <- as.matrix(expand.grid(x = c(-0.125, 0, 0.125), y = c(-0.125, 0, 0.125)))
+label <- rep(LETTERS[1:4], each = nrow(tile))
+make_distances <- function(cx, cy) {
+  xy <- do.call(rbind, lapply(seq_along(cx), function(i) {
+    sweep(tile, 2, c(cx[i], cy[i]), "+")
+  }))
+  as.matrix(dist(xy))
+}
+din <- make_distances(c(0, 0, 4, 4), c(0, 4, 0, 4))
+merge_columns <- make_distances(c(0, 0, 4, 4), c(0, 0, 0, 0))
+merge_rows <- make_distances(c(0, 0, 0, 0), c(0, 4, 0, 4))
+
+pr_by_label <- function(d) unlist(pr_auc(d, label)$label_av)
+round(rbind(columns = pr_by_label(merge_columns), rows = pr_by_label(merge_rows)), 3)
+```
+
+Both outputs give the same PR AUC for each label. Now compare two-class ROC AUC in the input and
+in each output, using the same query and candidate IDs for each pair.
+
+```{r label-pair-roc}
+class_pairs <- combn(unique(label), 2)
+pair_roc <- function(d) {
+  apply(class_pairs, 2, function(classes) {
+    keep <- label %in% classes
+    roc_auc(d[keep, keep], label[keep])$av_auc
+  })
+}
+reference <- pair_roc(din)
+data.frame(
+  pair = apply(class_pairs, 2, paste, collapse = " / "),
+  input_roc = reference,
+  column_merge_change = round(pair_roc(merge_columns) - reference, 3),
+  row_merge_change = round(pair_roc(merge_rows) - reference, 3)
+)
+```
+
+The negative rows identify the pairs that were merged. Positive changes in other comparisons
+mean retrieval became easier between those labels. That can help flag separation exaggerated
+by an embedding. [Jeon et al. on class-pair distortion](https://arxiv.org/abs/2308.00278)
+
 ## Further Reading
 
 Venna, J., Peltonen, J., Nybo, K., Aidos, H., & Kaski, S. (2010).
