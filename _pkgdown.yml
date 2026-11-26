@@ -53,14 +53,16 @@ reference:
       - random_pair_distance_emd
       - random_pair_distance_stress
       - random_pair_distance_band_profile
-  - title: Label retrieval
-    desc: Measure label retrieval and changes in class separation.
+  - title: Label retrieval and class geometry
+    desc: Measure label retrieval, centroid consistency, and angular distortion.
     contents:
       - roc_auc
       - pr_auc
       - label_trustworthiness_continuity
+      - class_angular_distortion_index
   - title: Sampling helpers
     desc: Sample observation pairs or anchored triplets.
     contents:
       - sample_pairs
       - sample_triplets
+      - sample_class_triplets

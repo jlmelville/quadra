@@ -97,7 +97,8 @@ and treat matching labels as relevant. They require the
 [PRROC package](https://cran.r-project.org/package=PRROC).
 
 `label_trustworthiness_continuity()` compares each class pair's centroid separation with
-its separation in the input.
+its separation in the input. `class_angular_distortion_index()` measures changes in the
+angles that one class subtends from points in another.
 
 See the [label retrieval](label-retrieval.html) article for examples and return
 value details.

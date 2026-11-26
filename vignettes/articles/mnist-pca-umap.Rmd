@@ -404,6 +404,81 @@ increases relative to the input, including cases where the embedding makes a pai
 more separated around their centroids. Use the per-pair changes to inspect what drives each score.
 [Label retrieval guide](label-retrieval.html#compare-centroid-separation)
 
+## Compare angular spread from each digit
+
+Class Angular Distortion Index (CADI) compares the angle from one observation to two observations
+of another class. For each triplet, it squares the change in cosine and divides by four. Use one
+sample for both embeddings. Lower values mean better angular preservation.
+[Gunaratne et al.](https://arxiv.org/abs/2605.00637)
+
+```{r mnist-cadi, eval=FALSE}
+set.seed(426)
+angle_triplets <- sample_class_triplets(audit_label, n_triplets = 90000)
+angular <- lapply(maps, function(y) {
+  class_angular_distortion_index(
+    x[audit, , drop = FALSE], y[audit, , drop = FALSE], audit_label,
+    triplets = angle_triplets, ret_extra = TRUE
+  )
+})
+round(vapply(angular, function(result) result$cadi, numeric(1)), 3)
+
+directions <- data.frame(anchor = c("3", "5"), endpoints = c("5", "3"))
+pair_scores <- vapply(angular, function(result) {
+  pair <- result$pairs
+  rows <- match(paste(directions$anchor, directions$endpoints),
+                paste(pair$anchor_class, pair$endpoint_class))
+  pair$cadi[rows]
+}, numeric(nrow(directions)))
+print(cbind(directions, round(pair_scores, 3)), row.names = FALSE)
+```
+
+```text
+ PCA UMAP
+0.05 0.04
+ anchor endpoints   PCA  UMAP
+      3         5 0.075 0.118
+      5         3 0.056 0.040
+```
+
+```{r mnist-cadi-plot, eval=FALSE, fig.width=9, fig.height=4.2}
+angle_change <- lapply(angular, function(result) {
+  (acos(result$cosine_out) - acos(result$cosine_in)) * 180 / pi
+})
+anchor <- audit_label[angle_triplets[, 1]]
+endpoints <- audit_label[angle_triplets[, 2]]
+colors <- c(PCA = "#1B60A6", UMAP = "#A33B20")
+xlim <- range(unlist(angle_change, use.names = FALSE))
+
+par(mfrow = c(1, 2), mar = c(4.3, 4.4, 2.3, 0.7), las = 1)
+for (i in seq_len(nrow(directions))) {
+  keep <- anchor == directions$anchor[i] & endpoints == directions$endpoints[i]
+  cdfs <- lapply(angle_change, function(change) ecdf(change[keep]))
+  plot(
+    cdfs$PCA, col = colors["PCA"], lwd = 2, do.points = FALSE, verticals = TRUE,
+    xlim = xlim, ylim = c(0, 1),
+    main = paste("From digit", directions$anchor[i], "to digit", directions$endpoints[i]),
+    xlab = "Embedding angle minus input angle (degrees)", ylab = "Cumulative fraction"
+  )
+  lines(cdfs$UMAP, col = colors["UMAP"], lwd = 2, do.points = FALSE, verticals = TRUE)
+  abline(v = 0, col = "grey55", lty = 2)
+  if (i == 1) legend("bottomright", names(colors), col = colors, lty = 1, lwd = 2, bty = "n")
+}
+```
+
+```{r show-mnist-cadi, echo=FALSE, out.width="100%", fig.alt="Cumulative distributions of signed angle changes for both directions between 3s and 5s. UMAP both widens and narrows angles substantially from 3s to pairs of 5s. In the reverse direction, the changes are mostly narrowing."}
+knitr::include_graphics("figures/mnist-cadi.png")
+```
+
+In this audit, UMAP improves PR AUC for 3s and 5s by 0.062 relative to the input, while their
+nearest-centroid consistency drops by 0.015. Those scores summarize the pair. CADI shows that
+angles from 3s to pairs of 5s change much more in UMAP than in PCA or in the reverse direction.
+The figure shows both widening and narrowing from 3s to 5s. From 5s to 3s, UMAP mostly narrows
+the angles shown here.
+
+Across audit seeds 417–419, 3-to-5 is UMAP's highest-distortion direction among all 90
+directed digit pairs. It scores 0.118–0.132, versus 0.040–0.051 for 5-to-3. UMAP has lower
+overall CADI than PCA in each audit.
+
 ## Inspect the gaps between digits
 
 Gap Index colors each empty triangle in the embedding by how much its share of the total
