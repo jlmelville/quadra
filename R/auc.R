@@ -87,20 +87,7 @@ validate_auc_inputs <- function(dm, labels) {
     stop("`dm` must have at least 3 rows and columns", call. = FALSE)
   }
 
-  if (!is.atomic(labels) || !is.null(dim(labels))) {
-    stop("`labels` must be a one-dimensional vector", call. = FALSE)
-  }
-  if (length(labels) == 0L) {
-    stop("`labels` must be nonempty", call. = FALSE)
-  }
-  if (length(labels) != nrow(dm)) {
-    stop("`labels` length must equal the number of rows in `dm`", call. = FALSE)
-  }
-  if (anyNA(labels)) {
-    stop("`labels` must not contain missing values", call. = FALSE)
-  }
-
-  invisible(NULL)
+  validate_label_vector(labels, nrow(dm), "dm")
 }
 
 # Area Under the PR Curve of an Observation

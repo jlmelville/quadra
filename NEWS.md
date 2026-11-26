@@ -1,5 +1,6 @@
 # quadra 0.2.1.9000
 
+* Add `label_trustworthiness_continuity()` to detect changes in class-pair centroid consistency.
 * Add `random_pair_distance_band_profile()` for Spearman correlation and fitted-scale stress
   across input-distance bands, with reusable pair samples.
 * Add `pointwise_rank_preservation()` for observation-level trustworthiness and continuity.

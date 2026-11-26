@@ -191,3 +191,25 @@ supported_distances <- function() {
 validate_distance <- function(distance) {
   match.arg(distance, supported_distances())
 }
+
+validate_label_vector <- function(labels, n_obs, input) {
+  if (!is.atomic(labels) || !is.null(dim(labels))) {
+    stop("`labels` must be a one-dimensional vector", call. = FALSE)
+  }
+  if (length(labels) == 0L) {
+    stop("`labels` must be nonempty", call. = FALSE)
+  }
+  if (length(labels) != n_obs) {
+    stop(
+      "`labels` length must equal the number of rows in `",
+      input,
+      "`",
+      call. = FALSE
+    )
+  }
+  if (anyNA(labels)) {
+    stop("`labels` must not contain missing values", call. = FALSE)
+  }
+
+  invisible(NULL)
+}

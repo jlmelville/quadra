@@ -144,6 +144,13 @@ The negative rows identify the pairs that were merged. Positive changes in other
 mean retrieval became easier between those labels. That can help flag separation exaggerated
 by an embedding. [Jeon et al. on class-pair distortion](https://arxiv.org/abs/2308.00278)
 
+## Compare centroid separation
+
+`label_trustworthiness_continuity()` compares each label pair against its separation in the
+input. Trustworthiness penalizes decreases in nearest-centroid consistency. Continuity penalizes
+increases. Use the detailed pair table alongside AUC to distinguish changes around class
+centroids from changes in the retrieval ranks. [MNIST example](mnist-pca-umap.html#compare-pairs-of-digits)
+
 ## Further Reading
 
 Venna, J., Peltonen, J., Nybo, K., Aidos, H., & Kaski, S. (2010).

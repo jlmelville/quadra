@@ -52,10 +52,11 @@ reference:
       - random_pair_distance_stress
       - random_pair_distance_band_profile
   - title: Label retrieval
-    desc: Measure how well distances retrieve observations with matching labels.
+    desc: Measure label retrieval and changes in class separation.
     contents:
       - roc_auc
       - pr_auc
+      - label_trustworthiness_continuity
   - title: Sampling helpers
     desc: Sample observation pairs or anchored triplets.
     contents:

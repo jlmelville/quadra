@@ -221,3 +221,81 @@ knitr::include_graphics("figures/mnist-labels.png")
 The dotted lines mark random retrieval. Each query has 99 same-label candidates out of 999. A higher
 PR AUC in the embedding means same-label images become easier to retrieve. Compare that gain
 with fidelity to the original pixels before interpreting visually separated digits.
+
+## Compare pairs of digits
+
+Recompute ROC and PR AUC with candidates restricted to each pair of digits. Use the same audit
+rows in all three spaces. Then compare distance consistency, the fraction of observations
+nearer their own digit centroid than the other digit's centroid, with half credit for ties.
+
+```{r mnist-class-pairs, eval=FALSE}
+label_results <- lapply(maps, function(y) {
+  label_trustworthiness_continuity(
+    x[audit, , drop = FALSE], y[audit, , drop = FALSE], audit_label, ret_extra = TRUE
+  )
+})
+round(t(vapply(label_results, function(result) result$scores, numeric(2))), 3)
+
+class_pairs <- label_results[[1]]$pairs[, c("label_a", "label_b")]
+pair_name <- apply(class_pairs, 1, function(classes) paste(sort(classes), collapse = "/"))
+pair_auc <- function(dm) {
+  t(vapply(seq_len(nrow(class_pairs)), function(i) {
+    keep <- audit_label %in% unlist(class_pairs[i, ], use.names = FALSE)
+    pair_dm <- dm[keep, keep]
+    c(ROC = roc_auc(pair_dm, audit_label[keep])$av_auc,
+      PR = pr_auc(pair_dm, audit_label[keep])$av_auc)
+  }, numeric(2)))
+}
+input_auc <- pair_auc(din)
+changes <- Map(function(dm, result) {
+  data.frame(pair = pair_name, pair_auc(dm) - input_auc, DSC = result$pairs$change)
+}, dout, label_results)
+
+highlight <- c(PCA = "5/9", UMAP = "2/8")
+example_changes <- do.call(rbind, lapply(names(changes), function(method) {
+  transform(subset(changes[[method]], pair == highlight[[method]]), method = method)
+}))
+print(example_changes[, c("method", "pair", "ROC", "PR", "DSC")], digits = 3, row.names = FALSE)
+```
+
+```text
+     trustworthiness continuity
+PCA            0.874      1.000
+UMAP           0.997      0.988
+ method pair    ROC     PR    DSC
+    PCA  5/9 0.0715 0.0282 -0.095
+   UMAP  2/8 0.2263 0.2049 -0.005
+```
+
+```{r mnist-pair-plot, eval=FALSE, fig.width=8, fig.height=4.2}
+xlim <- range(0, unlist(lapply(changes, function(d) d$PR))) + c(-0.03, 0.05)
+ylim <- range(0, unlist(lapply(changes, function(d) d$DSC))) + c(-0.02, 0.02)
+par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.2, 0.8), las = 1)
+for (method in names(changes)) {
+  d <- changes[[method]]
+  plot(
+    d$PR, d$DSC, type = "n", xlim = xlim, ylim = ylim, main = method,
+    xlab = "Change in pairwise PR AUC", ylab = "Change in distance consistency"
+  )
+  abline(h = 0, v = 0, col = "grey65", lty = 2)
+  points(d$PR, d$DSC, pch = 16, col = "#506579")
+  chosen <- d[d$pair == highlight[[method]], ]
+  points(chosen$PR, chosen$DSC, pch = 17, col = "#A33B20", cex = 1.3)
+  text(chosen$PR, chosen$DSC, chosen$pair, pos = 4, col = "#A33B20")
+}
+```
+
+```{r show-mnist-class-pairs, echo=FALSE, out.width="100%", fig.alt="Changes in PR AUC and centroid consistency for all 45 digit pairs. PCA raises PR AUC for 5 and 9 while lowering centroid consistency. UMAP raises PR AUC for 2 and 8 while centroid consistency stays near its reference value."}
+knitr::include_graphics("figures/mnist-class-pairs.png")
+```
+
+PCA makes 5s and 9s easier to retrieve even as their centroid consistency falls from 0.950 to
+0.855. Across three balanced audit subsets (seeds 417–419) of the same embeddings, their PR AUC
+rose by 0.028–0.044 and consistency fell by 0.080–0.095. UMAP shows a different pattern for 2s
+and 8s. Their PR AUC rises by about 0.2 in all three subsets, with little room for improvement
+in the already high input consistency.
+
+Label trustworthiness averages decreases in consistency as penalties. Label continuity penalizes
+increases relative to the input, including cases where the embedding makes a pair of digits look
+more separated around their centroids. Use the per-pair changes to inspect what drives each score.
+[Label retrieval guide](label-retrieval.html#compare-centroid-separation)
