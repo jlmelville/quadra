@@ -403,3 +403,62 @@ Label trustworthiness averages decreases in consistency as penalties. Label cont
 increases relative to the input, including cases where the embedding makes a pair of digits look
 more separated around their centroids. Use the per-pair changes to inspect what drives each score.
 [Label retrieval guide](label-retrieval.html#compare-centroid-separation)
+
+## Inspect the gaps between digits
+
+Gap Index colors each empty triangle in the embedding by how much its share of the total
+triangle area changes. This comparison uses the same 1,000 audit rows and requires the
+`geometry` package.
+
+```{r mnist-gap-index, eval=FALSE}
+gap_results <- lapply(maps, function(y) {
+  gap_index(x[audit, , drop = FALSE], y[audit, , drop = FALSE], ret_extra = TRUE)
+})
+round(vapply(gap_results, function(result) result$gap_index, numeric(1)), 3)
+
+umap_gap <- gap_results$UMAP
+largest <- which.max(umap_gap$relative_area_out - umap_gap$relative_area_in)
+vertices <- umap_gap$triangles[largest, ]
+sort(as.character(audit_label[vertices]))
+round(100 * c(input = umap_gap$relative_area_in[largest],
+              embedding = umap_gap$relative_area_out[largest]), 2)
+```
+
+```text
+  PCA  UMAP
+0.644 0.739
+[1] "2" "4" "5"
+    input embedding
+     0.09      3.45
+```
+
+```{r mnist-gap-map, eval=FALSE, fig.width=9, fig.height=4.2}
+xy <- maps$UMAP[audit, , drop = FALSE]
+triangle_rows <- c(t(cbind(umap_gap$triangles, NA_integer_)))
+colors <- hcl.colors(101, "Blue-Red 3")
+fill <- colors[round(50 * (1 + umap_gap$deformation)) + 1L]
+
+par(mfrow = c(1, 2), mar = c(0.6, 0.6, 2.7, 0.6))
+vizier::embed_plot(
+  xy, x = umap_rnx$auc, color_scheme = "grDevices::Viridis",
+  title = "Pointwise RNX AUC", fixed_aspect = TRUE, show_axes = FALSE, cex = 0.65
+)
+points(xy[vertices, , drop = FALSE], pch = 21, bg = "white", col = "#20262F", lwd = 1.5)
+
+plot(xy, type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = "Triangle deformation")
+polygon(xy[triangle_rows, 1], xy[triangle_rows, 2], col = fill, border = NA)
+points(xy, pch = 16, cex = 0.28, col = "#20262F90")
+polygon(xy[vertices, , drop = FALSE], border = "#FFF2D9", lwd = 2)
+```
+
+```{r show-mnist-gap-index, echo=FALSE, out.width="100%", fig.alt="The pointwise UMAP map marks three vertices. The triangle map fills the gap among them and outlines it in white."}
+knitr::include_graphics("figures/mnist-gap-index.png")
+```
+
+The outlined triangle between 2s, 4s, and 5s grows from about 0.09% of reference triangle
+area to 3.45% of the area on the UMAP plot. It spans the same digit groups for the other
+audit seeds, 418 and 419. The pointwise map marks its vertices. The regional map shows how
+much space opens between them. Red means expansion and blue means compression.
+
+The triangles fill the convex hull. Their areas describe this sampled scatterplot, including
+its boundary. [Gap Index paper](https://arxiv.org/abs/2607.28324)

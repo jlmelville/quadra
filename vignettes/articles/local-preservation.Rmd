@@ -198,6 +198,13 @@ The alignment allows translation, rotation, and reflection. Scale is fixed, so a
 in size also contributes to the error. The Swiss-roll workflow shows how to calibrate the whole
 embedding once and inspect the remaining per-point errors. [Swiss-roll workflow](reference-geometry.html)
 
+## Gap Index
+
+`gap_index()` uses the Delaunay triangles of a 2D embedding to measure changes in the areas
+between observations. Request `ret_extra = TRUE` for triangle indices, relative areas, and
+signed deformations for a map. The index compares area shares, so shear can preserve the
+score while changing shape. [Swiss-roll map](reference-geometry.html#inspect-area-changes-between-observations)
+
 ## Local Radius Correlation
 
 Nearest neighbor preservation asks whether the same observations remain nearby.

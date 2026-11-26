@@ -1,5 +1,6 @@
 # quadra 0.2.1.9000
 
+* Add `gap_index()` for regional area distortion in two-dimensional embeddings.
 * Add per-anchor counts and accuracy with `random_triplet_accuracy(..., by_anchor = TRUE)`.
 * Add `pointwise_rnx()` for observation-level RNX AUC and selected neighborhood sizes.
 * Add `label_trustworthiness_continuity()` to detect changes in class-pair centroid consistency.

@@ -45,6 +45,11 @@ distance to the `k`th neighbor or the mean distance to the first `k` neighbors.
 `local_procrustes()` checks how much the same reference neighborhood changes shape after
 rigid alignment. It can find distortions even when all members stay together.
 
+## Regional Area Distortion
+
+`gap_index()` locates expansion and compression in the empty triangles of a 2D embedding.
+[MNIST example](mnist-pca-umap.html#inspect-the-gaps-between-digits)
+
 ## Local Graph Diagnostics
 
 `mutual_neighbor_correlation()` compares the mutual-neighbor count pattern in

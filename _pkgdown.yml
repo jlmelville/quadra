@@ -38,10 +38,11 @@ reference:
       - rnx_curve
       - rnx_auc
       - pointwise_rnx
-  - title: Local shape, scale, and graph diagnostics
-    desc: Compare neighborhood shape, radii, and mutual-neighbor patterns.
+  - title: Local and regional geometry
+    desc: Compare neighborhood shape, regional area, radii, and mutual-neighbor patterns.
     contents:
       - local_procrustes
+      - gap_index
       - local_radius_correlation
       - mutual_neighbor_correlation
   - title: Global distance preservation
