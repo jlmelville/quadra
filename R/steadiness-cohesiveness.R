@@ -77,8 +77,9 @@ steadiness_cohesiveness <- function(
     )
   }
   k <- validate_positive_integer(if (is.null(k)) floor(sqrt(n)) else k, "k")
-  if (k >= n)
+  if (k >= n) {
     stop("k must be smaller than the number of observations", call. = FALSE)
+  }
   n_iter <- validate_positive_integer(n_iter, "n_iter")
   ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
   reference <- snc_graph(Xin, k)
@@ -93,7 +94,9 @@ steadiness_cohesiveness <- function(
     ret_extra
   )
   scores <- c(steadiness = steady$score, cohesiveness = cohesive$score)
-  if (!ret_extra) return(scores)
+  if (!ret_extra) {
+    return(scores)
+  }
   list(
     scores = scores,
     pointwise = data.frame(
@@ -105,8 +108,9 @@ steadiness_cohesiveness <- function(
 
 snc_graph <- function(x, k) {
   distances <- as.matrix(stats::dist(x))
-  if (any(!is.finite(distances)))
+  if (any(!is.finite(distances))) {
     stop("Nonfinite computed distance", call. = FALSE)
+  }
   diag(distances) <- Inf
   n <- nrow(x)
   neighbors <- matrix(
@@ -128,7 +132,9 @@ snc_graph <- function(x, k) {
   similarity <- as.matrix(Matrix::tcrossprod(weights))
   diag(similarity) <- 0
   peak <- max(similarity)
-  if (peak > 0) similarity <- similarity / peak
+  if (peak > 0) {
+    similarity <- similarity / peak
+  }
   probability <- matrix(
     similarity[cbind(rep(seq_len(n), k), as.vector(neighbors))],
     nrow = n
@@ -147,7 +153,9 @@ snc_walk <- function(graph, seeds, budget) {
     row <- queue[head]
     take <- stats::runif(ncol(graph$neighbors)) < graph$probability[row, ]
     # Condition the seed's first expansion on at least one accepted link.
-    if (head == 1L && !any(take)) next
+    if (head == 1L && !any(take)) {
+      next
+    }
     queue <- c(queue, graph$neighbors[row, take])
     head <- head + 1L
   }
@@ -156,7 +164,9 @@ snc_walk <- function(graph, seeds, budget) {
 
 snc_partition <- function(similarity) {
   n <- nrow(similarity)
-  if (n < 5L) return(seq_len(n))
+  if (n < 5L) {
+    return(seq_len(n))
+  }
   groups <- dbscan::hdbscan(
     stats::as.dist(1 / (similarity + 0.1)),
     minPts = 5L
@@ -175,8 +185,12 @@ snc_direction <- function(from, to, scale, n_iter, record) {
   n <- nrow(from$neighbors)
   loss <- numeric(n)
   seeds <- which(rowSums(from$probability) > 0)
-  if (!length(seeds)) stop("No walk can expand. Increase k.", call. = FALSE)
-  if (scale <= 0) return(list(score = 1, loss = loss))
+  if (!length(seeds)) {
+    stop("No walk can expand. Increase k.", call. = FALSE)
+  }
+  if (scale <= 0) {
+    return(list(score = 1, loss = loss))
+  }
   if (record) {
     partner_loss <- matrix(0, n, n)
     visits <- matrix(0L, n, n)

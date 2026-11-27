@@ -71,7 +71,9 @@ neighbor_dissimilarity <- function(nn_in, nn_out, k = 15, ret_extra = FALSE) {
   gain <- sqrt(2 * sum(pmax(changed$x, 0)^2)) / k
   loss <- sqrt(2 * sum(pmin(changed$x, 0)^2)) / k
   nd <- max(gain, loss)
-  if (!ret_extra) return(nd)
+  if (!ret_extra) {
+    return(nd)
+  }
 
   before <- as.integer(reference[cbind(changed$i, changed$j)])
   pairs <- data.frame(

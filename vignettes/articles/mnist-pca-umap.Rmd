@@ -49,8 +49,10 @@ and optional audit methods.
 library(quadra)
 
 digits <- snedata::download_mnist(as = "list")
-train <- split(which(digits$meta$split == "training"),
-               digits$meta$label[digits$meta$split == "training"])
+train <- split(
+  which(digits$meta$split == "training"),
+  digits$meta$label[digits$meta$split == "training"]
+)
 set.seed(413)
 id <- sort(unlist(lapply(train, sample, size = 500), use.names = FALSE))
 x <- digits$data[id, , drop = FALSE] / 255
@@ -68,7 +70,11 @@ with no per-pixel standardization.
 pca <- prcomp(x, rank. = 2)$x
 set.seed(414)
 umap <- uwot::umap(
-  x, n_neighbors = 15, min_dist = 0.1, n_threads = 1, n_sgd_threads = 1
+  x,
+  n_neighbors = 15,
+  min_dist = 0.1,
+  n_threads = 1,
+  n_sgd_threads = 1
 )
 maps <- list(PCA = pca, UMAP = umap)
 ```
@@ -79,8 +85,12 @@ par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
 for (method in names(maps)) {
   xy <- maps[[method]]
   vizier::embed_plot(
-    xy, colors = unname(digit_colors[as.character(label)]),
-    title = method, fixed_aspect = TRUE, show_axes = FALSE, cex = 0.5
+    xy,
+    colors = unname(digit_colors[as.character(label)]),
+    title = method,
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    cex = 0.5
   )
   centers <- aggregate(xy, list(digit = label), median)
   text(centers[[2]], centers[[3]], centers$digit, font = 2)
@@ -109,16 +119,27 @@ k <- c(5, 15, 50)
 set.seed(416)
 pca_nn <- nn_preservation(x, pca, k = k, n_threads = 1, ret_extra = TRUE)
 umap_nn <- nn_preservation(
-  pca_nn$nn_in, umap, k = k, n_threads = 1, ret_extra = TRUE
+  pca_nn$nn_in,
+  umap,
+  k = k,
+  n_threads = 1,
+  ret_extra = TRUE
 )
 scores <- function(y, nn) {
   c(
     nn$nnp,
     pair_spearman = random_pair_distance_correlation(
-      x, y, pairs = pairs, method = "spearman", n_threads = 1
+      x,
+      y,
+      pairs = pairs,
+      method = "spearman",
+      n_threads = 1
     ),
     triplet_accuracy = random_triplet_accuracy(
-      x, y, triplets = triplets, n_threads = 1
+      x,
+      y,
+      triplets = triplets,
+      n_threads = 1
     )
   )
 }
@@ -136,8 +157,14 @@ par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
 local_scores <- list(PCA = pca_nn$nnpv$nnp15, UMAP = umap_nn$nnpv$nnp15)
 for (method in names(maps)) {
   vizier::embed_plot(
-    maps[[method]], x = local_scores[[method]], color_scheme = "grDevices::Viridis",
-    limits = c(0, 1), title = method, fixed_aspect = TRUE, show_axes = FALSE, cex = 0.6
+    maps[[method]],
+    x = local_scores[[method]],
+    color_scheme = "grDevices::Viridis",
+    limits = c(0, 1),
+    title = method,
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    cex = 0.6
   )
 }
 ```
@@ -158,7 +185,11 @@ when we also restrict the candidates to the 1,000-image sample.
 
 ```{r mnist-audit-rows, eval=FALSE}
 set.seed(417)
-audit <- sort(unlist(lapply(split(seq_along(label), label), sample, size = 100)))
+audit <- sort(unlist(lapply(
+  split(seq_along(label), label),
+  sample,
+  size = 100
+)))
 ```
 
 For each query, `exact_rank_profiles()` gives us RNX, the fraction of shared neighbors adjusted
@@ -170,10 +201,14 @@ for chance. Undoing the adjustment gives us the number of neighbors the two spac
 spot_k <- 15L
 spot <- exact_rank_profiles(x, maps, k = spot_k, query_rows = audit)
 pool <- nrow(x) - 1L
-exact_hits <- vapply(spot, function(p) {
-  overlap <- (spot_k + (pool - spot_k) * p$curve[, 1]) / pool
-  round(spot_k * overlap)
-}, numeric(length(audit)))
+exact_hits <- vapply(
+  spot,
+  function(p) {
+    overlap <- (spot_k + (pool - spot_k) * p$curve[, 1]) / pool
+    round(spot_k * overlap)
+  },
+  numeric(length(audit))
+)
 ```
 
 There are two ways to get a list of 15 neighbors from the approximate search. We can ask for 15,
@@ -182,28 +217,53 @@ exact pixel neighbors, keeping the embedding graphs fixed.
 
 ```{r mnist-search-audit, eval=FALSE}
 set.seed(416)
-narrow <- nn_preservation(x, pca_nn$nn_out, k = spot_k, n_threads = 1, ret_extra = TRUE)
+narrow <- nn_preservation(
+  x,
+  pca_nn$nn_out,
+  k = spot_k,
+  n_threads = 1,
+  ret_extra = TRUE
+)
 brute <- rnndescent::brute_force_knn_query(
-  x[audit, , drop = FALSE], reference = x, k = spot_k + 1L, metric = "sqeuclidean", n_threads = 1
+  x[audit, , drop = FALSE],
+  reference = x,
+  k = spot_k + 1L,
+  metric = "sqeuclidean",
+  n_threads = 1
 )$idx
-exact_ids <- t(vapply(seq_along(audit), function(j) {
-  ids <- brute[j, ]
-  head(ids[ids != audit[j]], spot_k)
-}, numeric(spot_k)))
+exact_ids <- t(vapply(
+  seq_along(audit),
+  function(j) {
+    ids <- brute[j, ]
+    head(ids[ids != audit[j]], spot_k)
+  },
+  numeric(spot_k)
+))
 
 prefix <- function(graph) graph$idx[audit, seq_len(spot_k), drop = FALSE]
-pixel_ids <- list(Exact = exact_ids, Search50 = prefix(pca_nn$nn_in),
-                  Search15 = prefix(narrow$nn_in))
+pixel_ids <- list(
+  Exact = exact_ids,
+  Search50 = prefix(pca_nn$nn_in),
+  Search15 = prefix(narrow$nn_in)
+)
 map_ids <- list(PCA = prefix(pca_nn$nn_out), UMAP = prefix(umap_nn$nn_out))
 shared <- function(graph, ref) {
-  vapply(seq_len(nrow(graph)), function(j) sum(graph[j, ] %in% ref[j, ]), integer(1))
+  vapply(
+    seq_len(nrow(graph)),
+    function(j) sum(graph[j, ] %in% ref[j, ]),
+    integer(1)
+  )
 }
 summary15 <- lapply(pixel_ids, function(ids) {
   hits <- vapply(map_ids, shared, integer(length(audit)), ref = ids)
   found <- shared(ids, exact_ids)
-  c(pixel_recall = mean(found) / spot_k, queries_missing = sum(found < spot_k),
-    colMeans(hits) / spot_k, changed_PCA = sum(hits[, "PCA"] != exact_hits[, "PCA"]),
-    changed_UMAP = sum(hits[, "UMAP"] != exact_hits[, "UMAP"]))
+  c(
+    pixel_recall = mean(found) / spot_k,
+    queries_missing = sum(found < spot_k),
+    colMeans(hits) / spot_k,
+    changed_PCA = sum(hits[, "PCA"] != exact_hits[, "PCA"]),
+    changed_UMAP = sum(hits[, "UMAP"] != exact_hits[, "UMAP"])
+  )
 })
 round(do.call(rbind, summary15), 4)
 ```
@@ -236,8 +296,13 @@ reciprocity <- lapply(graphs, function(g) {
   r <- mutual_neighbor_correlation(g$nn_in, g$nn_out, k = 15, ret_extra = TRUE)
   lost_all <- g$nnpv$nnp15 == 0
   change <- (r$mutual_neighbor_out - r$mutual_neighbor_in)[lost_all, 1]
-  c(zero_overlap = length(change), gained_five_or_more = sum(change >= 5),
-    lost_five_or_more = sum(change <= -5), min_change = min(change), max_change = max(change))
+  c(
+    zero_overlap = length(change),
+    gained_five_or_more = sum(change >= 5),
+    lost_five_or_more = sum(change <= -5),
+    min_change = min(change),
+    max_change = max(change)
+  )
 })
 do.call(rbind, reciprocity)
 ```
@@ -266,16 +331,36 @@ profiles <- lapply(maps, function(y) {
 
 par(mfrow = c(1, 2), mar = c(4, 4, 1, 1))
 for (metric in c("spearman", "normalized_stress")) {
-  title <- if (metric == "spearman") "Spearman correlation" else "Fitted-scale stress"
-  values <- vapply(profiles, function(profile) profile[[metric]], numeric(length(bands)))
+  title <- if (metric == "spearman") {
+    "Spearman correlation"
+  } else {
+    "Fitted-scale stress"
+  }
+  values <- vapply(
+    profiles,
+    function(profile) profile[[metric]],
+    numeric(length(bands))
+  )
   matplot(
-    bands, values, type = "b", pch = c(16, 17), lty = 1,
-    col = c("#1B60A6", "#A33B20"), xlab = "Input-pair fraction", ylab = title
+    bands,
+    values,
+    type = "b",
+    pch = c(16, 17),
+    lty = 1,
+    col = c("#1B60A6", "#A33B20"),
+    xlab = "Input-pair fraction",
+    ylab = title
   )
-  if (metric == "normalized_stress") legend(
-    "topright", names(profiles), col = c("#1B60A6", "#A33B20"),
-    pch = c(16, 17), lty = 1, bty = "n"
-  )
+  if (metric == "normalized_stress") {
+    legend(
+      "topright",
+      names(profiles),
+      col = c("#1B60A6", "#A33B20"),
+      pch = c(16, 17),
+      lty = 1,
+      bty = "n"
+    )
+  }
 }
 ```
 
@@ -301,13 +386,17 @@ audit_label <- label[audit]
 distance <- function(z) as.matrix(dist(z[audit, , drop = FALSE]))
 din <- distance(x)
 dout <- lapply(maps, distance)
-rank_scores <- t(vapply(dout, function(d) {
-  c(
-    trustworthiness = trustworthiness(din, d, k = 15),
-    continuity = continuity(din, d, k = 15),
-    rnx_auc = rnx_auc(din, d)
-  )
-}, numeric(3)))
+rank_scores <- t(vapply(
+  dout,
+  function(d) {
+    c(
+      trustworthiness = trustworthiness(din, d, k = 15),
+      continuity = continuity(din, d, k = 15),
+      rnx_auc = rnx_auc(din, d)
+    )
+  },
+  numeric(3)
+))
 round(rank_scores, 3)
 ```
 
@@ -334,21 +423,38 @@ series_colors <- c("#404040", "#1B60A6", "#A33B20")
 series_symbols <- c(1, 16, 17)
 retrieval <- list("ROC AUC" = roc, "PR AUC" = pr)
 for (metric in names(retrieval)) {
-  by_digit <- vapply(retrieval[[metric]], function(z) {
-    unlist(z$label_av)[levels(label)]
-  }, numeric(10))
+  by_digit <- vapply(
+    retrieval[[metric]],
+    function(z) {
+      unlist(z$label_av)[levels(label)]
+    },
+    numeric(10)
+  )
   matplot(
-    0:9, by_digit, type = "b", lty = 1, pch = series_symbols,
-    col = series_colors, xaxt = "n", ylim = c(0, 1),
-    xlab = "Digit", ylab = paste("Mean per-query", metric)
+    0:9,
+    by_digit,
+    type = "b",
+    lty = 1,
+    pch = series_symbols,
+    col = series_colors,
+    xaxt = "n",
+    ylim = c(0, 1),
+    xlab = "Digit",
+    ylab = paste("Mean per-query", metric)
   )
   axis(1, 0:9)
   baseline <- if (metric == "ROC AUC") 0.5 else 99 / 999
   abline(h = baseline, col = "grey50", lty = 3)
-  if (metric == "ROC AUC") legend(
-    "bottomright", colnames(by_digit), col = series_colors, pch = series_symbols,
-    lty = 1, bty = "n"
-  )
+  if (metric == "ROC AUC") {
+    legend(
+      "bottomright",
+      colnames(by_digit),
+      col = series_colors,
+      pch = series_symbols,
+      lty = 1,
+      bty = "n"
+    )
+  }
 }
 ```
 
@@ -378,16 +484,26 @@ sizes <- c(1, 3, 5, 10, 15, 25, 50, 100, 150, 250, 400)
 umap_rnx <- pointwise_rnx(din, dout$UMAP, k = sizes)
 umap_penalties <- pointwise_rank_preservation(din, dout$UMAP, k = 15)
 digits_of_interest <- c("0", "7")
-digit_curves <- vapply(digits_of_interest, function(digit) {
-  colMeans(umap_rnx$curve[audit_label == digit, , drop = FALSE])
-}, numeric(length(sizes)))
-digit_summary <- t(vapply(digits_of_interest, function(digit) {
-  keep <- audit_label == digit
-  c(digit_curves[c("rnx15", "rnx100", "rnx250"), digit],
-    auc = mean(umap_rnx$auc[keep]),
-    trustworthiness15 = mean(umap_penalties$trustworthiness[keep, 1]),
-    continuity15 = mean(umap_penalties$continuity[keep, 1]))
-}, numeric(6)))
+digit_curves <- vapply(
+  digits_of_interest,
+  function(digit) {
+    colMeans(umap_rnx$curve[audit_label == digit, , drop = FALSE])
+  },
+  numeric(length(sizes))
+)
+digit_summary <- t(vapply(
+  digits_of_interest,
+  function(digit) {
+    keep <- audit_label == digit
+    c(
+      digit_curves[c("rnx15", "rnx100", "rnx250"), digit],
+      auc = mean(umap_rnx$auc[keep]),
+      trustworthiness15 = mean(umap_penalties$trustworthiness[keep, 1]),
+      continuity15 = mean(umap_penalties$continuity[keep, 1])
+    )
+  },
+  numeric(6)
+))
 round(digit_summary, 3)
 ```
 
@@ -401,12 +517,26 @@ round(digit_summary, 3)
 colors <- c("#17628A", "#BD542D")
 par(mar = c(4.3, 4.3, 1.2, 1.1), las = 1)
 matplot(
-  sizes, digit_curves, type = "b", log = "x", xaxt = "n", pch = c(16, 17), lty = 1,
-  col = colors, xlab = "Neighborhood size (log scale)", ylab = "Mean pointwise RNX"
+  sizes,
+  digit_curves,
+  type = "b",
+  log = "x",
+  xaxt = "n",
+  pch = c(16, 17),
+  lty = 1,
+  col = colors,
+  xlab = "Neighborhood size (log scale)",
+  ylab = "Mean pointwise RNX"
 )
 axis(1, at = c(1, 3, 5, 15, 50, 100, 250, 400))
-legend("topleft", paste("Digit", digits_of_interest), col = colors, pch = c(16, 17),
-       lty = 1, bty = "n")
+legend(
+  "topleft",
+  paste("Digit", digits_of_interest),
+  col = colors,
+  pch = c(16, 17),
+  lty = 1,
+  bty = "n"
+)
 ```
 
 ```{r show-mnist-pointwise-rnx, echo=FALSE, out.width="100%", fig.alt="The mean RNX for digit 0 is higher at small k. Digit 7 leads at k of 100 and 250."}
@@ -429,18 +559,38 @@ take about 572 MiB before temporaries.
 ```{r mnist-full-ranks, eval=FALSE}
 audit_k <- c(15L, 100L, 250L)
 scaled_k <- 5L * audit_k
-full_ranks <- exact_rank_profiles(x, maps, k = sort(unique(c(audit_k, scaled_k))), mrre = TRUE)
+full_ranks <- exact_rank_profiles(
+  x,
+  maps,
+  k = sort(unique(c(audit_k, scaled_k))),
+  mrre = TRUE
+)
 
 rank_summary <- function(rows) {
-  t(vapply(full_ranks, function(p) {
-    c(trustworthiness = mean(p$trustworthiness[rows, "k15"]),
-      continuity = mean(p$continuity[rows, "k15"]), rnx_auc = mean(p$auc[rows]))
-  }, numeric(3)))
+  t(vapply(
+    full_ranks,
+    function(p) {
+      c(
+        trustworthiness = mean(p$trustworthiness[rows, "k15"]),
+        continuity = mean(p$continuity[rows, "k15"]),
+        rnx_auc = mean(p$auc[rows])
+      )
+    },
+    numeric(3)
+  ))
 }
-scores <- rbind(rank_scores, rank_summary(audit), rank_summary(seq_len(nrow(x))))
-comparison <- data.frame(queries = rep(c(1000, 1000, 5000), each = 2),
-                         candidates_per_query = rep(c(999, 4999, 4999), each = 2),
-                         method = rep(names(maps), 3), round(scores, 3), row.names = NULL)
+scores <- rbind(
+  rank_scores,
+  rank_summary(audit),
+  rank_summary(seq_len(nrow(x)))
+)
+comparison <- data.frame(
+  queries = rep(c(1000, 1000, 5000), each = 2),
+  candidates_per_query = rep(c(999, 4999, 4999), each = 2),
+  method = rep(names(maps), 3),
+  round(scores, 3),
+  row.names = NULL
+)
 print(comparison, row.names = FALSE)
 ```
 
@@ -479,12 +629,25 @@ delta <- cbind(
 colors <- c("#263748", "#A33B20", "#17628A")
 symbols <- c(16, 17, 1)
 par(mar = c(4.2, 4.5, 0.6, 0.8), las = 1)
-matplot(audit_k, delta, type = "n", xaxt = "n",
-        xlab = "Neighborhood size in the audit", ylab = "Mean RNX for 0s minus mean RNX for 7s")
+matplot(
+  audit_k,
+  delta,
+  type = "n",
+  xaxt = "n",
+  xlab = "Neighborhood size in the audit",
+  ylab = "Mean RNX for 0s minus mean RNX for 7s"
+)
 axis(1, at = audit_k)
 abline(h = 0, col = "grey65")
 matlines(audit_k, delta, type = "o", col = colors, lty = 1:3, pch = symbols)
-legend("bottomleft", colnames(delta), col = colors, lty = 1:3, pch = symbols, bty = "n")
+legend(
+  "bottomleft",
+  colnames(delta),
+  col = colors,
+  lty = 1:3,
+  pch = symbols,
+  bty = "n"
+)
 ```
 
 ```{r show-mnist-pool-scales, echo=FALSE, out.width="100%", fig.alt="At 100 and 250 neighbors the audit favors 7s and the full pool favors 0s on the same queries. Increasing the full-pool neighborhood size fivefold restores the audit ordering."}
@@ -508,15 +671,23 @@ neighbors on the map and looks up their pixel ranks.
 
 ```{r mnist-mrre, eval=FALSE}
 rank_scores15 <- lapply(full_ranks, function(p) {
-  cbind(RNX = p$curve[, "rnx15"], trust = p$trustworthiness[, "k15"],
-        continuity = p$continuity[, "k15"], AUC = p$auc,
-        input_error = p$mrre_input[, "k15"], output_error = p$mrre_output[, "k15"])
+  cbind(
+    RNX = p$curve[, "rnx15"],
+    trust = p$trustworthiness[, "k15"],
+    continuity = p$continuity[, "k15"],
+    AUC = p$auc,
+    input_error = p$mrre_input[, "k15"],
+    output_error = p$mrre_output[, "k15"]
+  )
 })
 round(t(vapply(rank_scores15, colMeans, numeric(6))), 3)
 delta15 <- rank_scores15$UMAP - rank_scores15$PCA
 ahead <- apply(delta15[, 1:4] > 0, 1, all)
-c(ahead = sum(ahead), higher_input_error = sum(ahead & delta15[, "input_error"] > 0),
-  higher_output_error = sum(ahead & delta15[, "output_error"] > 0))
+c(
+  ahead = sum(ahead),
+  higher_input_error = sum(ahead & delta15[, "input_error"] > 0),
+  higher_output_error = sum(ahead & delta15[, "output_error"] > 0)
+)
 ```
 
 ```text
@@ -538,7 +709,9 @@ output error among those 4,012. The figure shows the query and its nearest neigh
 i <- which.max(ifelse(ahead, delta15[, "output_error"], -Inf))
 neighbor_order <- function(coords) {
   candidates <- seq_len(nrow(coords))[-i]
-  d2 <- rowSums(sweep(coords[candidates, , drop = FALSE], 2, coords[i, ], "-")^2)
+  d2 <- rowSums(
+    sweep(coords[candidates, , drop = FALSE], 2, coords[i, ], "-")^2
+  )
   candidates[order(d2)]
 }
 neighbors <- lapply(c(list(Pixels = x), maps), neighbor_order)
@@ -549,8 +722,16 @@ titles <- c("Query", "Nearest in pixels", "Nearest in PCA", "Nearest in UMAP")
 captions <- c(paste("Training row", id[i]), paste("Pixel rank", pixel_rank))
 par(mfrow = c(1, 4), mar = c(1.8, 0.3, 2.1, 0.3))
 for (j in seq_along(rows)) {
-  snedata::show_mnist_digit(x, rows[j], axes = FALSE, asp = 1, xlab = "", ylab = "",
-                            col = gray.colors(256, start = 1, end = 0), main = titles[j])
+  snedata::show_mnist_digit(
+    x,
+    rows[j],
+    axes = FALSE,
+    asp = 1,
+    xlab = "",
+    ylab = "",
+    col = gray.colors(256, start = 1, end = 0),
+    main = titles[j]
+  )
   mtext(captions[j], side = 1, line = 0.3)
 }
 ```
@@ -578,13 +759,23 @@ anchor_triplets <- sample_triplets(length(audit), n_triplets = 512)
 pca_rnx <- pointwise_rnx(din, dout$PCA)$auc
 anchor_results <- lapply(maps, function(y) {
   random_triplet_accuracy(
-    x[audit, , drop = FALSE], y[audit, , drop = FALSE],
-    triplets = anchor_triplets, by_anchor = TRUE, n_threads = 1
+    x[audit, , drop = FALSE],
+    y[audit, , drop = FALSE],
+    triplets = anchor_triplets,
+    by_anchor = TRUE,
+    n_threads = 1
   )
 })
 change_rnx <- umap_rnx$auc - pca_rnx
-change_triplets <- anchor_results$UMAP$by_anchor$accuracy - anchor_results$PCA$by_anchor$accuracy
-round(c(rnx_auc = mean(change_rnx > 0), triplet_accuracy = mean(change_triplets > 0)), 3)
+change_triplets <- anchor_results$UMAP$by_anchor$accuracy -
+  anchor_results$PCA$by_anchor$accuracy
+round(
+  c(
+    rnx_auc = mean(change_rnx > 0),
+    triplet_accuracy = mean(change_triplets > 0)
+  ),
+  3
+)
 ```
 
 ```text
@@ -595,17 +786,34 @@ round(c(rnx_auc = mean(change_rnx > 0), triplet_accuracy = mean(change_triplets 
 ```{r mnist-anchor-triplets-plot, eval=FALSE, fig.width=6.8, fig.height=4.4}
 par(mar = c(4.4, 4.5, 1.1, 1.1), las = 1)
 plot(
-  change_rnx, change_triplets, type = "n",
+  change_rnx,
+  change_triplets,
+  type = "n",
   xlab = "RNX AUC difference (UMAP minus PCA)",
   ylab = "Triplet accuracy difference (UMAP minus PCA)"
 )
 abline(v = 0, h = 0, col = "grey65", lty = 2)
 is_one <- audit_label == "1"
-points(change_rnx[!is_one], change_triplets[!is_one], pch = 16, cex = 0.64, col = "#61768C70")
-points(change_rnx[is_one], change_triplets[is_one], pch = 17, cex = 0.78, col = "#A33B20")
+points(
+  change_rnx[!is_one],
+  change_triplets[!is_one],
+  pch = 16,
+  cex = 0.64,
+  col = "#61768C70"
+)
+points(
+  change_rnx[is_one],
+  change_triplets[is_one],
+  pch = 17,
+  cex = 0.78,
+  col = "#A33B20"
+)
 legend(
-  "topright", c("Other digits", "Digit 1"), pch = c(16, 17),
-  col = c("#61768C", "#A33B20"), bty = "n"
+  "topright",
+  c("Other digits", "Digit 1"),
+  pch = c(16, 17),
+  col = c("#61768C", "#A33B20"),
+  bty = "n"
 )
 ```
 
@@ -631,27 +839,52 @@ consistency. We use the unrescaled fraction from
 ```{r mnist-class-pairs, eval=FALSE}
 label_results <- lapply(maps, function(y) {
   label_trustworthiness_continuity(
-    x[audit, , drop = FALSE], y[audit, , drop = FALSE], audit_label, ret_extra = TRUE
+    x[audit, , drop = FALSE],
+    y[audit, , drop = FALSE],
+    audit_label,
+    ret_extra = TRUE
   )
 })
 round(t(vapply(label_results, function(result) result$scores, numeric(2))), 3)
 
 input_auc <- class_pair_auc(din, audit_label)
-changes <- Map(function(dm, result) {
-  output_auc <- class_pair_auc(dm, audit_label)
-  keys <- c("label_a", "label_b")
-  stopifnot(identical(input_auc[keys], output_auc[keys]),
-            identical(input_auc[keys], result$pairs[keys]))
-  pair <- apply(input_auc[keys], 1, function(classes) paste(sort(classes), collapse = "/"))
-  data.frame(pair = pair, ROC = output_auc$roc - input_auc$roc,
-             PR = output_auc$pr - input_auc$pr, DSC = result$pairs$change)
-}, dout, label_results)
+changes <- Map(
+  function(dm, result) {
+    output_auc <- class_pair_auc(dm, audit_label)
+    keys <- c("label_a", "label_b")
+    stopifnot(
+      identical(input_auc[keys], output_auc[keys]),
+      identical(input_auc[keys], result$pairs[keys])
+    )
+    pair <- apply(input_auc[keys], 1, function(classes) {
+      paste(sort(classes), collapse = "/")
+    })
+    data.frame(
+      pair = pair,
+      ROC = output_auc$roc - input_auc$roc,
+      PR = output_auc$pr - input_auc$pr,
+      DSC = result$pairs$change
+    )
+  },
+  dout,
+  label_results
+)
 
 highlight <- c(PCA = "5/9", UMAP = "2/8")
-example_changes <- do.call(rbind, lapply(names(changes), function(method) {
-  transform(subset(changes[[method]], pair == highlight[[method]]), method = method)
-}))
-print(example_changes[, c("method", "pair", "ROC", "PR", "DSC")], digits = 3, row.names = FALSE)
+example_changes <- do.call(
+  rbind,
+  lapply(names(changes), function(method) {
+    transform(
+      subset(changes[[method]], pair == highlight[[method]]),
+      method = method
+    )
+  })
+)
+print(
+  example_changes[, c("method", "pair", "ROC", "PR", "DSC")],
+  digits = 3,
+  row.names = FALSE
+)
 ```
 
 ```text
@@ -670,8 +903,14 @@ par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.2, 0.8), las = 1)
 for (method in names(changes)) {
   d <- changes[[method]]
   plot(
-    d$PR, d$DSC, type = "n", xlim = xlim, ylim = ylim, main = method,
-    xlab = "Change in pairwise PR AUC", ylab = "Change in distance consistency"
+    d$PR,
+    d$DSC,
+    type = "n",
+    xlim = xlim,
+    ylim = ylim,
+    main = method,
+    xlab = "Change in pairwise PR AUC",
+    ylab = "Change in distance consistency"
   )
   abline(h = 0, v = 0, col = "grey65", lty = 2)
   points(d$PR, d$DSC, pch = 16, col = "#506579")
@@ -711,19 +950,28 @@ set.seed(426)
 angle_triplets <- sample_class_triplets(audit_label, n_triplets = 90000)
 angular <- lapply(maps, function(y) {
   class_angular_distortion_index(
-    x[audit, , drop = FALSE], y[audit, , drop = FALSE], audit_label,
-    triplets = angle_triplets, ret_extra = TRUE
+    x[audit, , drop = FALSE],
+    y[audit, , drop = FALSE],
+    audit_label,
+    triplets = angle_triplets,
+    ret_extra = TRUE
   )
 })
 round(vapply(angular, function(result) result$cadi, numeric(1)), 3)
 
 directions <- data.frame(anchor = c("3", "5"), endpoints = c("5", "3"))
-pair_scores <- vapply(angular, function(result) {
-  pair <- result$pairs
-  rows <- match(paste(directions$anchor, directions$endpoints),
-                paste(pair$anchor_class, pair$endpoint_class))
-  pair$cadi[rows]
-}, numeric(nrow(directions)))
+pair_scores <- vapply(
+  angular,
+  function(result) {
+    pair <- result$pairs
+    rows <- match(
+      paste(directions$anchor, directions$endpoints),
+      paste(pair$anchor_class, pair$endpoint_class)
+    )
+    pair$cadi[rows]
+  },
+  numeric(nrow(directions))
+)
 print(cbind(directions, round(pair_scores, 3)), row.names = FALSE)
 ```
 
@@ -749,14 +997,40 @@ for (i in seq_len(nrow(directions))) {
   keep <- anchor == directions$anchor[i] & endpoints == directions$endpoints[i]
   cdfs <- lapply(angle_change, function(change) ecdf(change[keep]))
   plot(
-    cdfs$PCA, col = colors["PCA"], lwd = 2, do.points = FALSE, verticals = TRUE,
-    xlim = xlim, ylim = c(0, 1),
-    main = paste("From digit", directions$anchor[i], "to digit", directions$endpoints[i]),
-    xlab = "Embedding angle minus input angle (degrees)", ylab = "Cumulative fraction"
+    cdfs$PCA,
+    col = colors["PCA"],
+    lwd = 2,
+    do.points = FALSE,
+    verticals = TRUE,
+    xlim = xlim,
+    ylim = c(0, 1),
+    main = paste(
+      "From digit",
+      directions$anchor[i],
+      "to digit",
+      directions$endpoints[i]
+    ),
+    xlab = "Embedding angle minus input angle (degrees)",
+    ylab = "Cumulative fraction"
   )
-  lines(cdfs$UMAP, col = colors["UMAP"], lwd = 2, do.points = FALSE, verticals = TRUE)
+  lines(
+    cdfs$UMAP,
+    col = colors["UMAP"],
+    lwd = 2,
+    do.points = FALSE,
+    verticals = TRUE
+  )
   abline(v = 0, col = "grey55", lty = 2)
-  if (i == 1) legend("bottomright", names(colors), col = colors, lty = 1, lwd = 2, bty = "n")
+  if (i == 1) {
+    legend(
+      "bottomright",
+      names(colors),
+      col = colors,
+      lty = 1,
+      lwd = 2,
+      bty = "n"
+    )
+  }
 }
 ```
 
@@ -787,7 +1061,11 @@ index and provide a [reference implementation](https://codeberg.org/jros/gap-ind
 
 ```{r mnist-gap-index, eval=FALSE}
 gap_results <- lapply(maps, function(y) {
-  gap_index(x[audit, , drop = FALSE], y[audit, , drop = FALSE], ret_extra = TRUE)
+  gap_index(
+    x[audit, , drop = FALSE],
+    y[audit, , drop = FALSE],
+    ret_extra = TRUE
+  )
 })
 round(vapply(gap_results, function(result) result$gap_index, numeric(1)), 3)
 
@@ -795,8 +1073,14 @@ umap_gap <- gap_results$UMAP
 largest <- which.max(umap_gap$relative_area_out - umap_gap$relative_area_in)
 vertices <- umap_gap$triangles[largest, ]
 sort(as.character(audit_label[vertices]))
-round(100 * c(input = umap_gap$relative_area_in[largest],
-              embedding = umap_gap$relative_area_out[largest]), 2)
+round(
+  100 *
+    c(
+      input = umap_gap$relative_area_in[largest],
+      embedding = umap_gap$relative_area_out[largest]
+    ),
+  2
+)
 ```
 
 ```text
@@ -815,12 +1099,31 @@ fill <- colors[round(50 * (1 + umap_gap$deformation)) + 1L]
 
 par(mfrow = c(1, 2), mar = c(0.6, 0.6, 2.7, 0.6))
 vizier::embed_plot(
-  xy, x = umap_rnx$auc, color_scheme = "grDevices::Viridis",
-  title = "Pointwise RNX AUC", fixed_aspect = TRUE, show_axes = FALSE, cex = 0.65
+  xy,
+  x = umap_rnx$auc,
+  color_scheme = "grDevices::Viridis",
+  title = "Pointwise RNX AUC",
+  fixed_aspect = TRUE,
+  show_axes = FALSE,
+  cex = 0.65
 )
-points(xy[vertices, , drop = FALSE], pch = 21, bg = "white", col = "#20262F", lwd = 1.5)
+points(
+  xy[vertices, , drop = FALSE],
+  pch = 21,
+  bg = "white",
+  col = "#20262F",
+  lwd = 1.5
+)
 
-plot(xy, type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = "Triangle deformation")
+plot(
+  xy,
+  type = "n",
+  asp = 1,
+  axes = FALSE,
+  xlab = "",
+  ylab = "",
+  main = "Triangle deformation"
+)
 polygon(xy[triangle_rows, 1], xy[triangle_rows, 2], col = fill, border = NA)
 points(xy, pch = 16, cex = 0.28, col = "#20262F90")
 polygon(xy[vertices, , drop = FALSE], border = "#FFF2D9", lwd = 2)
@@ -851,19 +1154,30 @@ The authors also provide their
 
 ```{r mnist-groups, eval=FALSE}
 set.seed(451)
-groups <- steadiness_cohesiveness(x[audit, , drop = FALSE], xy, ret_extra = TRUE)
+groups <- steadiness_cohesiveness(
+  x[audit, , drop = FALSE],
+  xy,
+  ret_extra = TRUE
+)
 round(groups$scores, 3)
 
 # Delineate visible islands using only their two embedding coordinates.
 islands <- dbscan::hdbscan(xy, minPts = 15)$cluster
 members <- split(which(islands > 0), islands[islands > 0])
-by_island <- t(vapply(members, function(rows) {
-  incident <- rowSums(matrix(umap_gap$triangles %in% rows, ncol = 3)) > 0
-  c(n = length(rows), RNX = mean(umap_rnx$auc[rows]),
-    gap = mean(abs(umap_gap$deformation[incident])),
-    steadiness = mean(groups$pointwise$steadiness[rows]),
-    cohesiveness = mean(groups$pointwise$cohesiveness[rows]))
-}, numeric(5)))
+by_island <- t(vapply(
+  members,
+  function(rows) {
+    incident <- rowSums(matrix(umap_gap$triangles %in% rows, ncol = 3)) > 0
+    c(
+      n = length(rows),
+      RNX = mean(umap_rnx$auc[rows]),
+      gap = mean(abs(umap_gap$deformation[incident])),
+      steadiness = mean(groups$pointwise$steadiness[rows]),
+      cohesiveness = mean(groups$pointwise$cohesiveness[rows])
+    )
+  },
+  numeric(5)
+))
 island <- members[[which.max(by_island[, "RNX"])]]
 round(by_island[order(by_island[, "RNX"], decreasing = TRUE), ], 3)
 ```
@@ -897,8 +1211,15 @@ against all 999 audit candidates per query, then inspect the queries inside the 
 ```{r mnist-island-retrieval, eval=FALSE}
 query_pr <- pr_auc(dout$UMAP, audit_label, ret_extra = TRUE)$query_auc
 majority <- names(which.max(table(audit_label[island])))
-type <- ifelse(audit_label[island] == majority, paste("Digit", majority), "Other digits")
-cbind(queries = table(type), median_PR = round(tapply(query_pr[island], type, median), 3))
+type <- ifelse(
+  audit_label[island] == majority,
+  paste("Digit", majority),
+  "Other digits"
+)
+cbind(
+  queries = table(type),
+  median_PR = round(tapply(query_pr[island], type, median), 3)
+)
 ```
 
 ```text
@@ -910,15 +1231,28 @@ Other digits       6     0.090
 ```{r mnist-group-map, eval=FALSE, fig.width=10, fig.height=3.8}
 par(mfrow = c(1, 3), mar = c(0.6, 0.6, 2.4, 0.6))
 for (key in c("steadiness", "cohesiveness")) {
-  vizier::embed_plot(xy, x = groups$pointwise[[key]], color_scheme = "grDevices::Viridis",
-                     limits = c(0, 1), fixed_aspect = TRUE, show_axes = FALSE,
-                     title = paste("Local", key), cex = 0.65)
+  vizier::embed_plot(
+    xy,
+    x = groups$pointwise[[key]],
+    color_scheme = "grDevices::Viridis",
+    limits = c(0, 1),
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    title = paste("Local", key),
+    cex = 0.65
+  )
   hull <- island[chull(xy[island, , drop = FALSE])]
   polygon(xy[hull, , drop = FALSE], border = "#263748", lwd = 1.5)
 }
-vizier::embed_plot(xy[island, , drop = FALSE], x = query_pr[island],
-                   color_scheme = "grDevices::Viridis", limits = c(0, 1),
-                   fixed_aspect = TRUE, show_axes = FALSE, title = "Query PR AUC inside island")
+vizier::embed_plot(
+  xy[island, , drop = FALSE],
+  x = query_pr[island],
+  color_scheme = "grDevices::Viridis",
+  limits = c(0, 1),
+  fixed_aspect = TRUE,
+  show_axes = FALSE,
+  title = "Query PR AUC inside island"
+)
 other <- island[audit_label[island] != majority]
 points(xy[other, , drop = FALSE], pch = 1, cex = 1.35, lwd = 1.5)
 ```
@@ -939,7 +1273,14 @@ and `k`. [Fujiwara et al., equation 3](https://arxiv.org/abs/2206.13891)
 Their [FEALM code](https://github.com/takanori-fujiwara/fealm) implements the comparison.
 
 ```{r mnist-nd-full, eval=FALSE}
-round(vapply(graphs, function(g) neighbor_dissimilarity(g$nn_in, g$nn_out, k = 15), numeric(1)), 2)
+round(
+  vapply(
+    graphs,
+    function(g) neighbor_dissimilarity(g$nn_in, g$nn_out, k = 15),
+    numeric(1)
+  ),
+  2
+)
 ```
 
 ```text
@@ -959,20 +1300,41 @@ audit_graph <- function(d) {
 }
 pixel <- audit_graph(din)
 embedded <- audit_graph(dout$UMAP)
-changes <- neighbor_dissimilarity(pixel, embedded, k = 15, ret_extra = TRUE)$pairs
+changes <- neighbor_dissimilarity(
+  pixel,
+  embedded,
+  k = 15,
+  ret_extra = TRUE
+)$pairs
 gains <- subset(changes, shared_in == 0 & shared_out >= 8)
 linked <- function(i, j, g) j %in% g$idx[i, ] || i %in% g$idx[j, ]
-direct <- mapply(function(i, j) linked(i, j, pixel) || linked(i, j, embedded), gains$i, gains$j)
+direct <- mapply(
+  function(i, j) linked(i, j, pixel) || linked(i, j, embedded),
+  gains$i,
+  gains$j
+)
 indirect <- gains[!direct, ]
 pair <- indirect[order(-indirect$shared_out, indirect$i, indirect$j)[1], ]
 rows <- c(pair$i, pair$j)
 
 set.seed(451)
-reliability15 <- steadiness_cohesiveness(x[audit, , drop = FALSE], xy, k = 15, ret_extra = TRUE)
-c(qualifying_pairs = nrow(indirect), shared_in = pair$shared_in, shared_out = pair$shared_out)
-data.frame(training_row = id[audit[rows]],
-           retained = nbr_pres_knn(pixel$idx, embedded$idx, k = 15)[rows] * 15,
-           round(reliability15$pointwise[rows, ], 3), row.names = NULL)
+reliability15 <- steadiness_cohesiveness(
+  x[audit, , drop = FALSE],
+  xy,
+  k = 15,
+  ret_extra = TRUE
+)
+c(
+  qualifying_pairs = nrow(indirect),
+  shared_in = pair$shared_in,
+  shared_out = pair$shared_out
+)
+data.frame(
+  training_row = id[audit[rows]],
+  retained = nbr_pres_knn(pixel$idx, embedded$idx, k = 15)[rows] * 15,
+  round(reliability15$pointwise[rows, ], 3),
+  row.names = NULL
+)
 ```
 
 ```text
