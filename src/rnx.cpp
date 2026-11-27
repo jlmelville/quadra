@@ -6,10 +6,12 @@
 
 #include <Rcpp.h>
 
+#include "native-validation.h"
+
 using namespace Rcpp;
 
-std::size_t validate_exact_distance_matrices(const NumericMatrix &din,
-                                             const NumericMatrix &dout) {
+int validate_exact_distance_matrices(const NumericMatrix &din,
+                                     const NumericMatrix &dout) {
   if (din.nrow() != dout.nrow() || din.ncol() != dout.ncol()) {
     stop("din and dout must have the same dimensions");
   }
@@ -19,7 +21,7 @@ std::size_t validate_exact_distance_matrices(const NumericMatrix &din,
   if (din.nrow() < 3) {
     stop("exact rank metrics require at least three observations");
   }
-  return static_cast<std::size_t>(din.nrow());
+  return din.nrow();
 }
 
 bool rank_value_less(double lhs, double rhs) {
@@ -93,8 +95,10 @@ std::vector<double> max_rank_histogram(const NumericMatrix &din,
 
 double rnx_at_k(double overlap_count, std::size_t n_queries,
                 std::size_t n_ranks, std::size_t k) {
-  const double qnx = overlap_count / (static_cast<double>(k) * n_queries);
-  return ((qnx * n_ranks) - k) / static_cast<double>(n_ranks - k);
+  const double size = static_cast<double>(k);
+  const double ranks = static_cast<double>(n_ranks);
+  const double qnx = overlap_count / (size * static_cast<double>(n_queries));
+  return ((qnx * ranks) - size) / (ranks - size);
 }
 
 double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
@@ -110,8 +114,9 @@ double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
     if (counts != nullptr) {
       (*counts)[k] = top_left;
     }
-    num += rnx / k;
-    den += 1.0 / k;
+    const double size = static_cast<double>(k);
+    num += rnx / size;
+    den += 1.0 / size;
   }
   return num / den;
 }
@@ -199,8 +204,8 @@ NumericVector rank_penalty_scores(const NumericMatrix &din,
     }
   }
 
-  NumericVector scores(rank_ks.size());
-  for (std::size_t k_idx = 0; k_idx < rank_ks.size(); ++k_idx) {
+  NumericVector scores(k.size());
+  for (R_xlen_t k_idx = 0; k_idx < scores.size(); ++k_idx) {
     const std::size_t rank_k = rank_ks[k_idx];
     const double normalization =
         static_cast<double>(n_obs) * static_cast<double>(rank_k) *
@@ -270,8 +275,8 @@ NumericVector rnx_curve_direct(const NumericMatrix &din,
     full_curve[rank_k] = rnx_at_k(top_left, n_obs, n_ranks, rank_k);
   }
 
-  NumericVector curve(rank_ks.size());
-  for (std::size_t i = 0; i < rank_ks.size(); ++i) {
+  NumericVector curve(k.size());
+  for (R_xlen_t i = 0; i < curve.size(); ++i) {
     curve[i] = full_curve[rank_ks[i]];
   }
   return curve;
@@ -347,13 +352,14 @@ void set_row_penalties(const std::vector<std::size_t> &ranks_in,
 List pointwise_rank_preservation_exact(const NumericMatrix &din,
                                        const NumericMatrix &dout,
                                        const IntegerVector &k) {
-  const auto n_obs = validate_exact_distance_matrices(din, dout);
+  const int n_obs = validate_exact_distance_matrices(din, dout);
+  const int n_sizes = quadra::checked_matrix_extent(k.size(), "k");
   const auto rank_ks = validate_rank_penalty_ks(k, n_obs);
-  NumericMatrix trustworthiness(n_obs, rank_ks.size());
-  NumericMatrix continuity(n_obs, rank_ks.size());
+  NumericMatrix trustworthiness(n_obs, n_sizes);
+  NumericMatrix continuity(n_obs, n_sizes);
   const auto normalizers = penalty_normalizers(n_obs, rank_ks);
 
-  for (std::size_t i = 0; i < n_obs; ++i) {
+  for (int i = 0; i < n_obs; ++i) {
     if (i % 16 == 0) {
       Rcpp::checkUserInterrupt();
     }
@@ -370,15 +376,16 @@ List pointwise_rank_preservation_exact(const NumericMatrix &din,
 // [[Rcpp::export(rng = false)]]
 List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
                          const IntegerVector &k) {
-  const auto n_obs = validate_exact_distance_matrices(din, dout);
+  const int n_obs = validate_exact_distance_matrices(din, dout);
+  const int n_sizes = quadra::checked_matrix_extent(k.size(), "k");
   const std::size_t n_ranks = n_obs - 1;
   const auto rank_ks = validate_rnx_curve_ks(k, n_ranks);
   NumericVector auc(n_obs);
-  NumericMatrix curve(n_obs, rank_ks.size());
+  NumericMatrix curve(n_obs, n_sizes);
   std::vector<double> histogram(n_ranks + 1, 0);
   std::vector<double> row_counts(rank_ks.empty() ? 0 : n_ranks);
 
-  for (std::size_t i = 0; i < n_obs; ++i) {
+  for (int i = 0; i < n_obs; ++i) {
     if (i % 16 == 0) {
       Rcpp::checkUserInterrupt();
     }
@@ -446,7 +453,8 @@ void set_relative_rank_errors(const std::vector<std::size_t> &selected,
   for (std::size_t j = 0; j < selected.size(); ++j) {
     const auto rank = selected[j];
     if (rank > 0 && rank < errors.size()) {
-      errors[rank] = std::abs(static_cast<double>(other[j]) - rank) / rank;
+      const double r = static_cast<double>(rank);
+      errors[rank] = std::abs(static_cast<double>(other[j]) - r) / r;
     }
   }
   std::partial_sum(errors.begin(), errors.end(), errors.begin());
@@ -478,12 +486,16 @@ List coordinate_rank_profiles(const NumericMatrix &input,
   if (n < 3 || input.ncol() < 1 || embeddings.size() < 1) {
     stop("Expected reference coordinates and at least one embedding");
   }
+  const int n_queries =
+      quadra::checked_matrix_extent(query_rows.size(), "query_rows");
+  const int n_sizes = quadra::checked_matrix_extent(k.size(), "k");
   const auto sizes = validate_rank_penalty_ks(k, n);
   const auto normalizers = penalty_normalizers(n, sizes);
   const auto max_k = mrre ? *std::max_element(sizes.begin(), sizes.end()) : 0;
   std::vector<double> errors(max_k + 1), mrre_normalizers(max_k + 1);
   for (std::size_t r = 1; r <= max_k; ++r) {
-    mrre_normalizers[r] = mrre_normalizers[r - 1] + (n - 2.0 * r) / r;
+    const double rank = static_cast<double>(r);
+    mrre_normalizers[r] = mrre_normalizers[r - 1] + (n - 2.0 * rank) / rank;
   }
   std::vector<NumericMatrix> maps;
   std::vector<CoordinateRankProfile> profiles;
@@ -493,10 +505,10 @@ List coordinate_rank_profiles(const NumericMatrix &input,
       stop("Each embedding must have the same rows as the reference");
     }
     maps.push_back(map);
-    profiles.emplace_back(query_rows.size(), sizes.size(), mrre);
+    profiles.emplace_back(n_queries, n_sizes, mrre);
   }
   std::vector<double> distances(n), histogram(n), row_counts(n);
-  for (R_xlen_t q = 0; q < query_rows.size(); ++q) {
+  for (int q = 0; q < n_queries; ++q) {
     if (query_rows[q] < 1 || query_rows[q] > n) {
       stop("query_rows contains a position outside the reference");
     }
@@ -525,7 +537,7 @@ List coordinate_rank_profiles(const NumericMatrix &input,
     }
   }
   List result(embeddings.size());
-  for (std::size_t m = 0; m < profiles.size(); ++m) {
+  for (R_xlen_t m = 0; m < result.size(); ++m) {
     const auto &p = profiles[m];
     List profile = List::create(Named("trustworthiness") = p.trustworthiness,
                                 Named("continuity") = p.continuity,

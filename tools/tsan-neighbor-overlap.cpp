@@ -1,6 +1,7 @@
 #include "neighbor-overlap-core.h"
 
 #include <cstddef>
+#include <exception>
 #include <iostream>
 #include <vector>
 
@@ -22,7 +23,7 @@ bool overlap_counts_match(std::size_t n_threads,
 
 } // namespace
 
-int main() {
+int main() try {
   constexpr std::size_t n_obs = 257;
   constexpr std::size_t n_cols = 32;
 
@@ -61,4 +62,7 @@ int main() {
   }
 
   return 0;
+} catch (const std::exception &error) {
+  std::cerr << "overlap check failed: " << error.what() << '\n';
+  return 1;
 }

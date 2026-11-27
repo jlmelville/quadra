@@ -24,14 +24,21 @@ inline std::size_t checked_thread_count(double n_threads) {
   return static_cast<std::size_t>(n_threads);
 }
 
-inline std::size_t checked_nonnegative_count(double value, const char *name) {
+inline int checked_nonnegative_count(double value, const char *name) {
   if (!std::isfinite(value) || value < 0 || value != std::floor(value)) {
     Rcpp::stop("%s must be finite, whole, and nonnegative", name);
   }
   if (value > static_cast<double>((std::numeric_limits<int>::max)())) {
     Rcpp::stop("%s exceeds the supported integer range", name);
   }
-  return static_cast<std::size_t>(value);
+  return static_cast<int>(value);
+}
+
+inline int checked_matrix_extent(R_xlen_t length, const char *name) {
+  if (length > (std::numeric_limits<int>::max)()) {
+    Rcpp::stop("length of %s exceeds the R matrix dimension limit", name);
+  }
+  return static_cast<int>(length);
 }
 
 } // namespace quadra

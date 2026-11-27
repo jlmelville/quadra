@@ -145,6 +145,15 @@ test_that("explicit-triplet native boundary protects native indexing", {
     "even number of rows"
   )
 
+  for (endpoint in c(-1, 3, 1.5, NA_real_, Inf)) {
+    invalid <- legacy
+    invalid[1, 1] <- endpoint
+    expect_error(
+      triplet_sample(invalid, xin, xin),
+      "zero-based observation indices"
+    )
+  }
+
   expect_error(
     triplet_plan_sample(matrix(integer(), nrow = 0, ncol = 3), xin, xin),
     "at least one row"

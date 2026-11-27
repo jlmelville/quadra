@@ -1,27 +1,22 @@
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
-#include <functional>
 #include <limits>
-#include <memory>
 #include <string>
 #include <vector>
 
 #include <Rcpp.h>
 
 #include "rnndescent/random.h"
-#include "tdoann/distance.h"
 
 #include "distance.h"
 #include "native-validation.h"
 #include "pforr.h"
 
 using namespace Rcpp;
-using It = typename std::vector<double>::const_iterator;
-using Dfun = double(It, It, It);
-using TripIt = typename std::vector<std::size_t>::const_iterator;
 
-std::size_t validate_observation_matrices(const NumericMatrix &xin,
-                                          const NumericMatrix &xout) {
+int validate_observation_matrices(const NumericMatrix &xin,
+                                  const NumericMatrix &xout) {
   if (xin.ncol() != xout.ncol()) {
     stop("xin and xout must have the same number of observations");
   }
@@ -29,11 +24,11 @@ std::size_t validate_observation_matrices(const NumericMatrix &xin,
     stop("xin and xout must each have at least one feature and three "
          "observations");
   }
-  return static_cast<std::size_t>(xin.ncol());
+  return xin.ncol();
 }
 
-void validate_triplet_layout(const NumericMatrix &triplets, std::size_t n_obs) {
-  if (triplets.ncol() != static_cast<int>(n_obs)) {
+void validate_triplet_layout(const NumericMatrix &triplets, int n_obs) {
+  if (triplets.ncol() != n_obs) {
     stop("triplets must have one column per observation");
   }
   if ((triplets.nrow() % 2) != 0) {
@@ -51,9 +46,13 @@ struct AnchorTripletCounts {
   std::size_t sampled{0};
 };
 
+struct TripletDetails {
+  explicit TripletDetails(std::size_t n)
+      : anchor(n), endpoint1(n), endpoint2(n), agreement(n) {}
+  std::vector<int> anchor, endpoint1, endpoint2, agreement;
+};
+
 int compare_distances(double lhs, double rhs) {
-  check_distance_finite(lhs);
-  check_distance_finite(rhs);
   return (lhs > rhs) - (lhs < rhs);
 }
 
@@ -64,32 +63,19 @@ std::size_t n_parallel_chunks(std::size_t begin, std::size_t end,
   return std::max<std::size_t>(ranges.size(), 1);
 }
 
-int update_triplet_counts(TripletCounts &counts, std::size_t p1, std::size_t p2,
-                          const It xin_i_begin, const It xin_i_end,
-                          const It xin_begin, std::size_t xin_ncol,
-                          const std::function<Dfun> &dfunin,
-                          const It xout_i_begin, const It xout_i_end,
-                          const It xout_begin, std::size_t xout_ncol,
-                          const std::function<Dfun> &dfunout) {
-
-  const auto input_distance_1 =
-      dfunin(xin_i_begin, xin_i_end, xin_begin + p1 * xin_ncol);
-  const auto input_distance_2 =
-      dfunin(xin_i_begin, xin_i_end, xin_begin + p2 * xin_ncol);
-
-  const int input_order = compare_distances(input_distance_1, input_distance_2);
+int update_triplet_counts(TripletCounts &counts, std::size_t anchor,
+                          std::size_t p1, std::size_t p2,
+                          const DistanceSpace &input,
+                          const DistanceSpace &output) {
+  const int input_order =
+      compare_distances(input.between(anchor, p1), input.between(anchor, p2));
   if (input_order == 0) {
     return NA_LOGICAL;
   }
 
-  const auto output_distance_1 =
-      dfunout(xout_i_begin, xout_i_end, xout_begin + p1 * xout_ncol);
-  const auto output_distance_2 =
-      dfunout(xout_i_begin, xout_i_end, xout_begin + p2 * xout_ncol);
-
-  ++counts.comparisons;
   const int output_order =
-      compare_distances(output_distance_1, output_distance_2);
+      compare_distances(output.between(anchor, p1), output.between(anchor, p2));
+  ++counts.comparisons;
   if (input_order == output_order) {
     ++counts.agreements;
     return TRUE;
@@ -106,108 +92,31 @@ double summarize_triplet_counts(const std::vector<TripletCounts> &counts) {
   if (total_counts.comparisons == 0) {
     return NA_REAL;
   }
-  return total_counts.agreements /
+  return static_cast<double>(total_counts.agreements) /
          static_cast<double>(total_counts.comparisons);
-}
-
-TripletCounts legacy_triplet_sample_inner(
-    std::size_t begin, std::size_t end, std::size_t n_triplets_per_observation,
-    const TripIt triplets_begin, const It xin_begin, std::size_t xin_ncol,
-    const std::function<Dfun> &dfunin, const It xout_begin,
-    std::size_t xout_ncol, const std::function<Dfun> &dfunout) {
-
-  TripletCounts counts;
-  const std::size_t endpoints_per_observation = n_triplets_per_observation * 2;
-  for (std::size_t i = begin; i < end; i++) {
-    const TripIt observation_triplets =
-        triplets_begin + i * endpoints_per_observation;
-    const It xin_i_begin = xin_begin + i * xin_ncol;
-    const It xin_i_end = xin_i_begin + xin_ncol;
-    const It xout_i_begin = xout_begin + i * xout_ncol;
-    const It xout_i_end = xout_i_begin + xout_ncol;
-
-    for (std::size_t j = 0; j < n_triplets_per_observation; j++) {
-      const TripIt endpoints = observation_triplets + j * 2;
-      update_triplet_counts(counts, *endpoints, *(endpoints + 1), xin_i_begin,
-                            xin_i_end, xin_begin, xin_ncol, dfunin,
-                            xout_i_begin, xout_i_end, xout_begin, xout_ncol,
-                            dfunout);
-    }
-  }
-  return counts;
-}
-
-double legacy_triplet_sample(TripIt triplets_begin, TripIt triplets_end,
-                             std::size_t n_obs, It xin_begin, It xin_end,
-                             It xout_begin, It xout_end,
-                             const std::function<Dfun> &dfunin,
-                             const std::function<Dfun> &dfunout,
-                             std::size_t n_threads) {
-
-  const std::size_t n_triplets_per_observation =
-      (triplets_end - triplets_begin) / n_obs / 2;
-  const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
-  const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
-  std::vector<TripletCounts> counts(n_parallel_chunks(0, n_obs, n_threads));
-
-  auto worker = [&](std::size_t begin, std::size_t end, std::size_t chunk_id) {
-    const auto chunk_counts = legacy_triplet_sample_inner(
-        begin, end, n_triplets_per_observation, triplets_begin, xin_begin,
-        xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout);
-    counts[chunk_id].agreements += chunk_counts.agreements;
-    counts[chunk_id].comparisons += chunk_counts.comparisons;
-  };
-
-  pforr::parallel_for_indexed(0, n_obs, worker, n_threads);
-  return summarize_triplet_counts(counts);
-}
-
-TripletCounts triplet_plan_sample_inner(
-    std::size_t begin, std::size_t end, const std::vector<std::size_t> &anchor,
-    const std::vector<std::size_t> &endpoint1,
-    const std::vector<std::size_t> &endpoint2, const It xin_begin,
-    std::size_t xin_ncol, const std::function<Dfun> &dfunin,
-    const It xout_begin, std::size_t xout_ncol,
-    const std::function<Dfun> &dfunout, std::vector<int> *agreement) {
-
-  TripletCounts counts;
-  for (std::size_t i = begin; i < end; i++) {
-    const It xin_i_begin = xin_begin + anchor[i] * xin_ncol;
-    const It xin_i_end = xin_i_begin + xin_ncol;
-    const It xout_i_begin = xout_begin + anchor[i] * xout_ncol;
-    const It xout_i_end = xout_i_begin + xout_ncol;
-
-    const int outcome = update_triplet_counts(
-        counts, endpoint1[i], endpoint2[i], xin_i_begin, xin_i_end, xin_begin,
-        xin_ncol, dfunin, xout_i_begin, xout_i_end, xout_begin, xout_ncol,
-        dfunout);
-    if (agreement != nullptr) {
-      (*agreement)[i] = outcome;
-    }
-  }
-  return counts;
 }
 
 double triplet_plan_sample(const std::vector<std::size_t> &anchor,
                            const std::vector<std::size_t> &endpoint1,
                            const std::vector<std::size_t> &endpoint2,
-                           std::size_t n_obs, It xin_begin, It xin_end,
-                           It xout_begin, It xout_end,
-                           const std::function<Dfun> &dfunin,
-                           const std::function<Dfun> &dfunout,
-                           std::size_t n_threads, std::vector<int> *agreement) {
+                           const DistanceSpace &input,
+                           const DistanceSpace &output, std::size_t n_threads,
+                           std::vector<int> *agreement) {
 
-  const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
-  const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
   std::vector<TripletCounts> counts(
       n_parallel_chunks(0, anchor.size(), n_threads));
 
   auto worker = [&](std::size_t begin, std::size_t end, std::size_t chunk_id) {
-    const auto chunk_counts = triplet_plan_sample_inner(
-        begin, end, anchor, endpoint1, endpoint2, xin_begin, xin_nfeat, dfunin,
-        xout_begin, xout_nfeat, dfunout, agreement);
-    counts[chunk_id].agreements += chunk_counts.agreements;
-    counts[chunk_id].comparisons += chunk_counts.comparisons;
+    TripletCounts chunk;
+    for (std::size_t i = begin; i < end; ++i) {
+      const int outcome = update_triplet_counts(chunk, anchor[i], endpoint1[i],
+                                                endpoint2[i], input, output);
+      if (agreement != nullptr) {
+        (*agreement)[i] = outcome;
+      }
+    }
+    counts[chunk_id].agreements += chunk.agreements;
+    counts[chunk_id].comparisons += chunk.comparisons;
   };
 
   pforr::parallel_for_indexed(anchor.size(), worker, n_threads);
@@ -220,21 +129,12 @@ std::size_t avoid_anchor_index(std::size_t idx, std::size_t anchor) {
 
 TripletCounts random_triplet_sample_inner(
     std::size_t begin, std::size_t end, std::size_t n_triplets_per_observation,
-    std::size_t n_obs, tdoann::RandomIntGenerator<uint64_t> &int_sampler,
-    const It xin_begin, std::size_t xin_ncol, const std::function<Dfun> &dfunin,
-    const It xout_begin, std::size_t xout_ncol,
-    const std::function<Dfun> &dfunout, std::vector<int> *returned_anchor,
-    std::vector<int> *returned_endpoint1, std::vector<int> *returned_endpoint2,
-    std::vector<int> *agreement,
-    std::vector<AnchorTripletCounts> &anchor_counts) {
+    int n_obs, tdoann::RandomIntGenerator<uint64_t> &int_sampler,
+    const DistanceSpace &input, const DistanceSpace &output,
+    TripletDetails *details, std::vector<AnchorTripletCounts> &anchor_counts) {
 
   TripletCounts counts;
   for (std::size_t i = begin; i < end; i++) {
-    const It xin_i_begin = xin_begin + i * xin_ncol;
-    const It xin_i_end = xin_i_begin + xin_ncol;
-    const It xout_i_begin = xout_begin + i * xout_ncol;
-    const It xout_i_end = xout_i_begin + xout_ncol;
-
     TripletCounts &row_counts =
         anchor_counts.empty() ? counts : anchor_counts[i].defined;
     for (std::size_t j = 0; j < n_triplets_per_observation; j++) {
@@ -242,15 +142,14 @@ TripletCounts random_triplet_sample_inner(
       const std::size_t p1 = avoid_anchor_index(idxs[0], i);
       const std::size_t p2 = avoid_anchor_index(idxs[1], i);
 
-      const int outcome = update_triplet_counts(
-          row_counts, p1, p2, xin_i_begin, xin_i_end, xin_begin, xin_ncol,
-          dfunin, xout_i_begin, xout_i_end, xout_begin, xout_ncol, dfunout);
-      if (agreement != nullptr) {
+      const int outcome =
+          update_triplet_counts(row_counts, i, p1, p2, input, output);
+      if (details != nullptr) {
         const std::size_t row = i * n_triplets_per_observation + j;
-        (*returned_anchor)[row] = static_cast<int>(i + 1);
-        (*returned_endpoint1)[row] = static_cast<int>(p1 + 1);
-        (*returned_endpoint2)[row] = static_cast<int>(p2 + 1);
-        (*agreement)[row] = outcome;
+        details->anchor[row] = static_cast<int>(i + 1);
+        details->endpoint1[row] = static_cast<int>(p1 + 1);
+        details->endpoint2[row] = static_cast<int>(p2 + 1);
+        details->agreement[row] = outcome;
       }
     }
     if (!anchor_counts.empty()) {
@@ -262,15 +161,11 @@ TripletCounts random_triplet_sample_inner(
   return counts;
 }
 
-double random_triplet_sample(
-    std::size_t n_triplets_per_observation, std::size_t n_obs, It xin_begin,
-    It xin_end, It xout_begin, It xout_end, const std::function<Dfun> &dfunin,
-    const std::function<Dfun> &dfunout, std::size_t n_threads,
-    std::vector<int> *returned_anchor, std::vector<int> *returned_endpoint1,
-    std::vector<int> *returned_endpoint2, std::vector<int> *agreement,
-    std::vector<AnchorTripletCounts> &anchor_counts) {
-  const std::size_t xin_nfeat = (xin_end - xin_begin) / n_obs;
-  const std::size_t xout_nfeat = (xout_end - xout_begin) / n_obs;
+double random_triplet_sample(std::size_t n_triplets_per_observation, int n_obs,
+                             const DistanceSpace &input,
+                             const DistanceSpace &output, std::size_t n_threads,
+                             TripletDetails *details,
+                             std::vector<AnchorTripletCounts> &anchor_counts) {
 
   rnndescent::ParallelIntRNGAdapter<uint64_t, rnndescent::DQIntSampler>
       sampler_provider;
@@ -281,10 +176,8 @@ double random_triplet_sample(
   auto worker = [&](std::size_t begin, std::size_t end, std::size_t chunk_id) {
     auto thread_sampler = sampler_provider.get_parallel_instance(chunk_id);
     const auto chunk_counts = random_triplet_sample_inner(
-        begin, end, n_triplets_per_observation, n_obs, *thread_sampler,
-        xin_begin, xin_nfeat, dfunin, xout_begin, xout_nfeat, dfunout,
-        returned_anchor, returned_endpoint1, returned_endpoint2, agreement,
-        anchor_counts);
+        begin, end, n_triplets_per_observation, n_obs, *thread_sampler, input,
+        output, details, anchor_counts);
     counts[chunk_id].agreements += chunk_counts.agreements;
     counts[chunk_id].comparisons += chunk_counts.comparisons;
   };
@@ -295,18 +188,19 @@ double random_triplet_sample(
 
 DataFrame
 anchor_triplet_result(const std::vector<AnchorTripletCounts> &anchor_counts) {
-  const auto n = anchor_counts.size();
+  // One row per observation in the input R matrix.
+  const auto n = static_cast<int>(anchor_counts.size());
   IntegerVector anchor(n), sampled(n), defined(n), agreed(n);
   NumericVector accuracy(n);
-  for (std::size_t i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i) {
     const auto &row = anchor_counts[i];
-    anchor[i] = static_cast<int>(i + 1);
+    anchor[i] = i + 1;
     sampled[i] = static_cast<int>(row.sampled);
     defined[i] = static_cast<int>(row.defined.comparisons);
     agreed[i] = static_cast<int>(row.defined.agreements);
     accuracy[i] = row.defined.comparisons == 0
                       ? NA_REAL
-                      : row.defined.agreements /
+                      : static_cast<double>(row.defined.agreements) /
                             static_cast<double>(row.defined.comparisons);
   }
   return DataFrame::create(_["anchor"] = anchor, _["n_sampled"] = sampled,
@@ -314,26 +208,22 @@ anchor_triplet_result(const std::vector<AnchorTripletCounts> &anchor_counts) {
                            _["accuracy"] = accuracy);
 }
 
-SEXP triplet_result(double accuracy, bool ret_triplets,
-                    const std::vector<int> &anchor,
-                    const std::vector<int> &endpoint1,
-                    const std::vector<int> &endpoint2,
-                    const std::vector<int> &agreement,
+SEXP triplet_result(double accuracy, const TripletDetails *details,
                     const std::vector<AnchorTripletCounts> &anchor_counts) {
-  if (!ret_triplets && anchor_counts.empty()) {
+  if (details == nullptr && anchor_counts.empty()) {
     return Rcpp::wrap(accuracy);
   }
 
   List result = List::create(_["accuracy"] = accuracy);
-  if (ret_triplets) {
-    const int n_triplets = static_cast<int>(anchor.size());
+  if (details != nullptr) {
+    const int n_triplets = static_cast<int>(details->anchor.size());
     IntegerMatrix triplets(n_triplets, 3);
     LogicalVector agreement_result(n_triplets);
     for (int i = 0; i < n_triplets; i++) {
-      triplets(i, 0) = anchor[i];
-      triplets(i, 1) = endpoint1[i];
-      triplets(i, 2) = endpoint2[i];
-      agreement_result[i] = agreement[i];
+      triplets(i, 0) = details->anchor[i];
+      triplets(i, 1) = details->endpoint1[i];
+      triplets(i, 2) = details->endpoint2[i];
+      agreement_result[i] = details->agreement[i];
     }
     colnames(triplets) =
         CharacterVector::create("anchor", "endpoint1", "endpoint2");
@@ -353,18 +243,37 @@ double triplet_sample(const NumericMatrix &triplets, const NumericMatrix &xin,
                       const std::string &metric_out = "sqeuclidean",
                       double n_threads = 0) {
 
-  const std::size_t n_obs = validate_observation_matrices(xin, xout);
+  const int n_obs = validate_observation_matrices(xin, xout);
   validate_triplet_layout(triplets, n_obs);
   const std::size_t thread_count = quadra::checked_thread_count(n_threads);
-  const std::function<Dfun> dfunin = create_dfun(metric_in);
-  const std::function<Dfun> dfunout = create_dfun(metric_out);
-  const auto triplets_cpp = Rcpp::as<std::vector<std::size_t>>(triplets);
-  const auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
-  const auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
+  const DistanceSpace input(xin, metric_in), output(xout, metric_out);
+  std::vector<std::size_t> endpoints;
+  endpoints.reserve(triplets.size());
+  for (const double endpoint : triplets) {
+    if (!(endpoint >= 0 && endpoint < n_obs &&
+          endpoint == std::floor(endpoint))) {
+      stop("triplets must contain whole, zero-based observation indices");
+    }
+    endpoints.push_back(static_cast<std::size_t>(endpoint));
+  }
+  const std::size_t endpoints_per_observation = triplets.nrow();
+  std::vector<TripletCounts> counts(n_parallel_chunks(0, n_obs, thread_count));
 
-  return legacy_triplet_sample(triplets_cpp.begin(), triplets_cpp.end(), n_obs,
-                               xin_cpp.begin(), xin_cpp.end(), xout_cpp.begin(),
-                               xout_cpp.end(), dfunin, dfunout, thread_count);
+  auto worker = [&](std::size_t begin, std::size_t end, std::size_t chunk_id) {
+    TripletCounts chunk;
+    for (std::size_t i = begin; i < end; ++i) {
+      const std::size_t offset = i * endpoints_per_observation;
+      for (std::size_t j = 0; j < endpoints_per_observation; j += 2) {
+        update_triplet_counts(chunk, i, endpoints[offset + j],
+                              endpoints[offset + j + 1], input, output);
+      }
+    }
+    counts[chunk_id].agreements += chunk.agreements;
+    counts[chunk_id].comparisons += chunk.comparisons;
+  };
+
+  pforr::parallel_for_indexed(0, n_obs, worker, thread_count);
+  return summarize_triplet_counts(counts);
 }
 
 // [[Rcpp::export(rng = false)]]
@@ -375,7 +284,7 @@ SEXP triplet_plan_sample(const IntegerMatrix &triplets,
                          double n_threads = 0, bool ret_triplets = false,
                          bool ret_anchors = false) {
 
-  const std::size_t n_obs = validate_observation_matrices(xin, xout);
+  const int n_obs = validate_observation_matrices(xin, xout);
   if (triplets.nrow() < 1 || triplets.ncol() != 3) {
     stop("triplets must have at least one row and exactly three columns");
   }
@@ -385,17 +294,9 @@ SEXP triplet_plan_sample(const IntegerMatrix &triplets,
   std::vector<std::size_t> anchor(triplet_count);
   std::vector<std::size_t> endpoint1(triplet_count);
   std::vector<std::size_t> endpoint2(triplet_count);
-  std::vector<int> returned_anchor;
-  std::vector<int> returned_endpoint1;
-  std::vector<int> returned_endpoint2;
-  std::vector<int> agreement;
-  if (ret_triplets) {
-    returned_anchor.resize(triplet_count);
-    returned_endpoint1.resize(triplet_count);
-    returned_endpoint2.resize(triplet_count);
-  }
-  if (ret_triplets || ret_anchors) {
-    agreement.resize(triplet_count);
+  TripletDetails details(ret_triplets ? triplet_count : 0);
+  if (ret_anchors && !ret_triplets) {
+    details.agreement.resize(triplet_count);
   }
 
   for (std::size_t i = 0; i < triplet_count; i++) {
@@ -417,34 +318,29 @@ SEXP triplet_plan_sample(const IntegerMatrix &triplets,
     endpoint1[i] = static_cast<std::size_t>(endpoint1_i - 1);
     endpoint2[i] = static_cast<std::size_t>(endpoint2_i - 1);
     if (ret_triplets) {
-      returned_anchor[i] = anchor_i;
-      returned_endpoint1[i] = endpoint1_i;
-      returned_endpoint2[i] = endpoint2_i;
+      details.anchor[i] = anchor_i;
+      details.endpoint1[i] = endpoint1_i;
+      details.endpoint2[i] = endpoint2_i;
     }
   }
 
-  const std::function<Dfun> dfunin = create_dfun(metric_in);
-  const std::function<Dfun> dfunout = create_dfun(metric_out);
-  const auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
-  const auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
+  const DistanceSpace input(xin, metric_in), output(xout, metric_out);
 
   const double accuracy = triplet_plan_sample(
-      anchor, endpoint1, endpoint2, n_obs, xin_cpp.begin(), xin_cpp.end(),
-      xout_cpp.begin(), xout_cpp.end(), dfunin, dfunout, thread_count,
-      agreement.empty() ? nullptr : &agreement);
+      anchor, endpoint1, endpoint2, input, output, thread_count,
+      details.agreement.empty() ? nullptr : &details.agreement);
 
   std::vector<AnchorTripletCounts> anchor_counts(ret_anchors ? n_obs : 0);
   if (ret_anchors) {
     for (std::size_t i = 0; i < triplet_count; ++i) {
       auto &row = anchor_counts[anchor[i]];
       ++row.sampled;
-      row.defined.comparisons += agreement[i] != NA_LOGICAL;
-      row.defined.agreements += agreement[i] == TRUE;
+      row.defined.comparisons += details.agreement[i] != NA_LOGICAL;
+      row.defined.agreements += details.agreement[i] == TRUE;
     }
   }
 
-  return triplet_result(accuracy, ret_triplets, returned_anchor,
-                        returned_endpoint1, returned_endpoint2, agreement,
+  return triplet_result(accuracy, ret_triplets ? &details : nullptr,
                         anchor_counts);
 }
 
@@ -456,7 +352,7 @@ SEXP random_triplet_sample(const NumericMatrix &xin, const NumericMatrix &xout,
                            double n_threads = 0, bool ret_triplets = false,
                            bool ret_anchors = false) {
 
-  const std::size_t n_obs = validate_observation_matrices(xin, xout);
+  const int n_obs = validate_observation_matrices(xin, xout);
   const std::size_t triplet_count =
       quadra::checked_nonnegative_count(n_triplets, "n_triplets");
   const std::size_t thread_count = quadra::checked_thread_count(n_threads);
@@ -467,36 +363,19 @@ SEXP random_triplet_sample(const NumericMatrix &xin, const NumericMatrix &xout,
     stop("detailed triplet sample exceeds the supported integer range");
   }
   const std::size_t comparison_count = n_obs * triplet_count;
-  std::vector<int> returned_anchor;
-  std::vector<int> returned_endpoint1;
-  std::vector<int> returned_endpoint2;
-  std::vector<int> agreement;
-  if (ret_triplets) {
-    returned_anchor.resize(comparison_count);
-    returned_endpoint1.resize(comparison_count);
-    returned_endpoint2.resize(comparison_count);
-    agreement.resize(comparison_count);
-  }
+  TripletDetails details(ret_triplets ? comparison_count : 0);
 
-  const std::function<Dfun> dfunin = create_dfun(metric_in);
-  const std::function<Dfun> dfunout = create_dfun(metric_out);
-  const auto xin_cpp = Rcpp::as<std::vector<double>>(xin);
-  const auto xout_cpp = Rcpp::as<std::vector<double>>(xout);
+  const DistanceSpace input(xin, metric_in), output(xout, metric_out);
 
   std::vector<AnchorTripletCounts> anchor_counts(ret_anchors ? n_obs : 0);
   double accuracy;
   {
     Rcpp::RNGScope rng_scope;
-    accuracy = random_triplet_sample(
-        triplet_count, n_obs, xin_cpp.begin(), xin_cpp.end(), xout_cpp.begin(),
-        xout_cpp.end(), dfunin, dfunout, thread_count,
-        ret_triplets ? &returned_anchor : nullptr,
-        ret_triplets ? &returned_endpoint1 : nullptr,
-        ret_triplets ? &returned_endpoint2 : nullptr,
-        ret_triplets ? &agreement : nullptr, anchor_counts);
+    accuracy =
+        random_triplet_sample(triplet_count, n_obs, input, output, thread_count,
+                              ret_triplets ? &details : nullptr, anchor_counts);
   }
 
-  return triplet_result(accuracy, ret_triplets, returned_anchor,
-                        returned_endpoint1, returned_endpoint2, agreement,
+  return triplet_result(accuracy, ret_triplets ? &details : nullptr,
                         anchor_counts);
 }

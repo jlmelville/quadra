@@ -35,12 +35,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // random_distances
-List random_distances(NumericMatrix xin, NumericMatrix xout, const std::string& metric_in, const std::string& metric_out, double n_pairs, double n_threads, Nullable<IntegerMatrix> pairs, bool ret_pairs);
+List random_distances(const NumericMatrix& xin, const NumericMatrix& xout, const std::string& metric_in, const std::string& metric_out, double n_pairs, double n_threads, Nullable<IntegerMatrix> pairs, bool ret_pairs);
 RcppExport SEXP _quadra_random_distances(SEXP xinSEXP, SEXP xoutSEXP, SEXP metric_inSEXP, SEXP metric_outSEXP, SEXP n_pairsSEXP, SEXP n_threadsSEXP, SEXP pairsSEXP, SEXP ret_pairsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type xin(xinSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type xout(xoutSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type xin(xinSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type xout(xoutSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_in(metric_inSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type metric_out(metric_outSEXP);
     Rcpp::traits::input_parameter< double >::type n_pairs(n_pairsSEXP);

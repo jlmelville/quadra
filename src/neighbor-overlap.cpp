@@ -59,6 +59,7 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
     stop("idx and ref_idx must have the same number of rows");
   }
 
+  const int n_sizes = quadra::checked_matrix_extent(k.size(), "k");
   const auto queries =
       prepare_k_queries(k, std::min(idx.ncol(), ref_idx.ncol()));
   const std::size_t n_obs = idx.nrow();
@@ -68,11 +69,11 @@ IntegerMatrix neighbor_overlap_counts(const NumericMatrix &idx,
   const auto idx_cpp = copy_neighbor_indices(idx, max_k);
   const auto ref_idx_cpp = copy_neighbor_indices(ref_idx, max_k);
 
-  std::vector<int> counts(n_obs * static_cast<std::size_t>(k.size()), 0);
+  std::vector<int> counts(n_obs * n_sizes, 0);
   quadra::detail::compute_overlap_counts(idx_cpp, ref_idx_cpp, n_obs, queries,
                                          counts, thread_count);
 
-  IntegerMatrix result(n_obs, k.size());
+  IntegerMatrix result(idx.nrow(), n_sizes);
   std::copy(counts.begin(), counts.end(), result.begin());
   return result;
 }

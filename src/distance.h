@@ -28,14 +28,16 @@
 #define QUADRA_DISTANCE_H
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <stdexcept>
 #include <string>
-#include <vector>
+
+#include <Rcpp.h>
 
 #include "tdoann/distance.h"
 
-using It = typename std::vector<double>::const_iterator;
+using It = const double *;
 
 inline void check_distance_finite(double distance) {
   if (!std::isfinite(distance)) {
@@ -63,5 +65,28 @@ create_dfun(const std::string &metric) {
     throw std::invalid_argument("Unknown distance metric: " + metric);
   }
 }
+
+// Construct on the R thread. Workers read the matrix storage while its Rcpp
+// owner is alive, and all workers join before the exported call returns.
+class DistanceSpace {
+public:
+  DistanceSpace(const Rcpp::NumericMatrix &coordinates,
+                const std::string &metric)
+      : data_(coordinates.begin()), n_features_(coordinates.nrow()),
+        distance_(create_dfun(metric)) {}
+
+  double between(std::size_t lhs, std::size_t rhs) const {
+    const auto first = data_ + lhs * n_features_;
+    const double value =
+        distance_(first, first + n_features_, data_ + rhs * n_features_);
+    check_distance_finite(value);
+    return value;
+  }
+
+private:
+  const double *data_;
+  std::size_t n_features_;
+  std::function<double(It, It, It)> distance_;
+};
 
 #endif // QUADRA_DISTANCE_H
