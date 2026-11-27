@@ -318,6 +318,27 @@ idx-only nearest-neighbor graphs are enough. It should be interpreted alongside
 neighbor-identity metrics such as `nn_preservation()` and scale metrics such as
 `local_radius_correlation()`.
 
+### Which pairs share the same neighbors?
+
+Put 16 labeled observations on a ring. The reference graph links each row to the rows one step
+away in either direction. Compare it with two rings that take longer steps between the same
+observations. Every link is reciprocal and both new rings replace every direct neighbor.
+
+```{r shared-neighbor-rings, eval=requireNamespace("Matrix", quietly = TRUE)}
+ring <- function(step) {
+  i <- 0:15
+  list(idx = cbind((i + step) %% 16 + 1L, (i - step) %% 16 + 1L))
+}
+vapply(c(step7 = 7, step3 = 3), function(step) {
+  neighbor_dissimilarity(ring(1), ring(step), k = 2)
+}, numeric(1))
+```
+
+With step seven, rows two positions apart still share one neighbor, so Neighbor Dissimilarity
+(ND) is zero. With step three, that shared neighbor goes to pairs six positions apart. ND rises
+to 2.83. Each pair can gain or lose shared neighbors even if its two rows never link directly.
+[MNIST example](mnist-pca-umap.html#which-images-acquire-shared-neighbors)
+
 ## Multi-Scale RNX Agreement
 
 `rnx_auc()` summarizes exact rank-based neighborhood agreement across all

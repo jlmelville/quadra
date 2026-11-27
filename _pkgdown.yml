@@ -40,12 +40,13 @@ reference:
       - rnx_auc
       - pointwise_rnx
   - title: Local and regional geometry
-    desc: Compare neighborhood shape, regional area, radii, and mutual-neighbor patterns.
+    desc: Compare neighborhood shape, regional area, radii, and shared or reciprocal neighbors.
     contents:
       - local_procrustes
       - gap_index
       - local_radius_correlation
       - mutual_neighbor_correlation
+      - neighbor_dissimilarity
   - title: Global distance preservation
     desc: Compare sampled distances and distance orderings.
     contents:

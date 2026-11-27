@@ -144,4 +144,42 @@ Each group has 45 observations, but 471 of the 488 qualifying pairs come from th
 The sparse group's fitted-scale stress is 0.315. Pooling it with the unchanged dense group
 reduces the reported stress to 0.124.
 
+## Which observations account for the pooled error?
+
+Use the one multiplier fitted to all 488 qualifying pairs. Split each pair's squared residual
+equally between its endpoints and divide by the sum of squared input distances in the band.
+Summing those allocations gives squared normalized stress. Keep the endpoint counts to see how
+much evidence each observation contributes.
+
+```{r bands-endpoints}
+pooled <- random_pair_distance_band_profile(reference, changed, bands = radius,
+  band_type = "radius", pairs = pairs, ret_extra = TRUE)
+inside <- pooled$distance_in <= radius
+din <- pooled$distance_in[inside]
+residual <- din - pooled$fitted_scale * pooled$distance_out[inside]
+half <- residual^2 / (2 * sum(din^2))
+ends <- as.vector(pooled$pairs[inside, , drop = FALSE])
+totals <- rowsum(rep(half, 2), ends)
+allocated <- numeric(nrow(reference))
+allocated[as.integer(rownames(totals))] <- totals[, 1]
+incidents <- tabulate(ends, nrow(reference))
+stopifnot(isTRUE(all.equal(sqrt(sum(allocated)), pooled$profile$normalized_stress)))
+
+region <- factor(group, levels = c("A", "B"), labels = c("Dense", "Sparse"))
+by_group <- split(seq_along(group), region)
+round(t(vapply(by_group, function(i) {
+  c(points_covered = sum(incidents[i] > 0), pair_ends = sum(incidents[i]),
+    squared_error_share = sum(allocated[i]) / sum(allocated))
+}, numeric(3))), 3)
+top <- head(order(allocated, decreasing = TRUE), 5)
+data.frame(row = top, group = region[top], incident_pairs = incidents[top],
+           error_share = round(allocated[top] / sum(allocated), 3))
+```
+
+The stretched sparse group accounts for 94.1% of the squared error on only 34 of 976 pair ends.
+The five largest allocations all belong to sparse points, each appearing in only one or two pairs.
+Seventeen sparse points have no qualifying pair at this radius and hence no evidence about their
+distortion here. The unchanged dense group contributes some error because the pooled multiplier
+is 0.969.
+
 For the fixed-radius approach, see [Takaeda's distance-band benchmark](https://arxiv.org/abs/2608.21779).

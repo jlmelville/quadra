@@ -200,6 +200,33 @@ queries for PCA and eleven for UMAP. A missed pixel neighbor affects overlap onl
 it for its replacement changes the number shared with the embedding. UMAP's advantage holds in
 both searches on this sample.
 
+## Do the new neighbors point back?
+
+When a query loses all 15 pixel neighbors, its overlap score is zero. Its replacement neighbors
+can still differ in how many list the query among their own 15 neighbors. Count the change in
+reciprocal links on the same full-cohort graphs.
+
+```{r mnist-reciprocity, eval=FALSE}
+graphs <- list(PCA = pca_nn, UMAP = umap_nn)
+reciprocity <- lapply(graphs, function(g) {
+  r <- mutual_neighbor_correlation(g$nn_in, g$nn_out, k = 15, ret_extra = TRUE)
+  lost_all <- g$nnpv$nnp15 == 0
+  change <- (r$mutual_neighbor_out - r$mutual_neighbor_in)[lost_all, 1]
+  c(zero_overlap = length(change), gained_five_or_more = sum(change >= 5),
+    lost_five_or_more = sum(change <= -5), min_change = min(change), max_change = max(change))
+})
+do.call(rbind, reciprocity)
+```
+
+```text
+     zero_overlap gained_five_or_more lost_five_or_more min_change max_change
+PCA          2757                1613                21         -8         15
+UMAP          100                  69                 2         -6         15
+```
+
+Of the 100 UMAP queries that lose every pixel neighbor, 69 gain at least five reciprocal links.
+A high reciprocal count can describe a tightly connected set of entirely new neighbors.
+
 ## Compare short and long distances
 
 Use the same pair sample to ask whether each method preserves short distances better than the
@@ -850,3 +877,60 @@ knitr::include_graphics("figures/mnist-group-map.png")
 The first two panels outline the same island. The last enlarges it and circles the six queries
 with labels other than 1. Purple indicates low scores and yellow high scores in all three panels.
 [Steadiness and Cohesiveness](https://arxiv.org/abs/2107.07859)
+
+## Which images acquire shared neighbors?
+
+Compare PCA and UMAP on the same 5,000 pixel-graph rows. Neighbor Dissimilarity (ND) measures
+changes in the fraction of neighbors shared by each *pair* of images. The score takes the larger
+of the total gain and loss, each measured by a Frobenius norm. Compare scores at fixed graph size
+and `k`. [Fujiwara et al., equation 3](https://arxiv.org/abs/2206.13891)
+
+```{r mnist-nd-full, eval=FALSE}
+round(vapply(graphs, function(g) neighbor_dissimilarity(g$nn_in, g$nn_out, k = 15), numeric(1)), 2)
+```
+
+```text
+   PCA   UMAP
+169.23 133.45
+```
+
+UMAP changes the pattern of shared neighbors less overall. To inspect a particular pair
+alongside the group diagnostics, return to the 1,000 audit rows. Look for images that went from
+zero shared neighbors to at least eight, and that never directly listed each other in either
+space. Select the pair with the largest gain, breaking ties by audit row positions.
+
+```{r mnist-nd-pair, eval=FALSE}
+audit_graph <- function(d) {
+  diag(d) <- Inf
+  list(idx = t(apply(d, 1, function(row) head(order(row), 15))))
+}
+pixel <- audit_graph(din)
+embedded <- audit_graph(dout$UMAP)
+changes <- neighbor_dissimilarity(pixel, embedded, k = 15, ret_extra = TRUE)$pairs
+gains <- subset(changes, shared_in == 0 & shared_out >= 8)
+linked <- function(i, j, g) j %in% g$idx[i, ] || i %in% g$idx[j, ]
+direct <- mapply(function(i, j) linked(i, j, pixel) || linked(i, j, embedded), gains$i, gains$j)
+indirect <- gains[!direct, ]
+pair <- indirect[order(-indirect$shared_out, indirect$i, indirect$j)[1], ]
+rows <- c(pair$i, pair$j)
+
+set.seed(451)
+reliability15 <- steadiness_cohesiveness(x[audit, , drop = FALSE], xy, k = 15, ret_extra = TRUE)
+c(qualifying_pairs = nrow(indirect), shared_in = pair$shared_in, shared_out = pair$shared_out)
+data.frame(training_row = id[audit[rows]],
+           retained = nbr_pres_knn(pixel$idx, embedded$idx, k = 15)[rows] * 15,
+           round(reliability15$pointwise[rows, ], 3), row.names = NULL)
+```
+
+```text
+qualifying_pairs        shared_in       shared_out
+              69                0               12
+  training_row retained steadiness cohesiveness
+1        24684        3      0.994        0.933
+2        57524        2      0.995        1.000
+```
+
+The two images retain three and two pixel neighbors individually, and both have Steadiness above
+0.99. The pair table shows what changed between them. They now share 12 of their 15 neighbors.
+Across the three balanced audit draws (seeds 417–419), 69, 76, and 71 pairs meet the same cutoff
+without either image directly listing the other.

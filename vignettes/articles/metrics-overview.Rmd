@@ -69,6 +69,9 @@ the input and output nearest-neighbor graphs. It asks whether points with many
 or few reciprocal nearest-neighbor relationships in the input graph have
 similar counts in the output graph.
 
+Use `neighbor_dissimilarity()` when the question is which pairs of observations gain or lose
+shared neighbors. [Graph comparison](local-preservation.html#which-pairs-share-the-same-neighbors)
+
 ## Global Distance Preservation
 
 `quadra` also contains random triplet and random pair distance methods for

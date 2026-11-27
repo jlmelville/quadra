@@ -323,6 +323,61 @@ and retains fewer of its 15 nearest neighbors. Its mean triplet accuracy there i
 0.12 higher. The maps use the intrinsic reference and put the outer end at the right.
 Red favors LTSA, blue favors PCA, and both use the same scale centered at zero.
 
+## Where does the neighborhood radius shrink or grow?
+
+Calibrate each map once using the fitted multiplier from its full intrinsic distance band. For
+each query, measure the distance to the 15th neighbor in each space. A radius ratio of one means
+unchanged local scale. Taking the base-two logarithm gives a halving and a doubling equal weight
+on opposite sides of zero.
+
+```{r roll-radius, eval=FALSE}
+multipliers <- vapply(band_results$Intrinsic, function(z) z$fitted_scale[z$band == 1], numeric(1))
+radii <- Map(function(y, multiplier) {
+  local_radius_correlation(flat, y * multiplier, k = k, nn_method_in = "brute",
+                           metric_in = "euclidean", metric_out = "euclidean", ret_extra = TRUE)
+}, maps, multipliers)
+ratio <- lapply(radii, function(r) r$scale_out[, 1] / r$scale_in[, 1])
+fifth <- cut(s, quantile(s, seq(0, 1, by = 0.2)), include.lowest = TRUE, labels = FALSE)
+median_ratio <- sapply(ratio, function(z) tapply(z, fifth, median))
+ltsa_overlap <- nbr_pres_knn(radii$LTSA$nn_in$idx, radii$LTSA$nn_out$idx, k)
+round(cbind(median_ratio, LTSA_overlap = tapply(ltsa_overlap, fifth, mean)), 2)
+```
+
+```text
+   PCA LTSA LTSA_overlap
+1 0.93 0.93         0.43
+2 1.03 0.80         0.42
+3 0.96 1.22         0.50
+4 1.05 0.96         0.50
+5 1.01 1.02         0.45
+```
+
+```{r roll-radius-map, eval=FALSE, fig.width=7, fig.height=5.7}
+palette <- colorRampPalette(c("#174B85", "#CDD0D3", "#AB361C"))(101)
+layout(matrix(1:3), heights = c(1, 1, 0.24))
+par(mar = c(0.3, 0.5, 1.8, 0.5))
+for (method in names(ratio)) {
+  value <- log2(ratio[[method]])
+  colors <- palette[1L + round(50 * (1 + pmax(-1, pmin(1, value))))]
+  vizier::embed_plot(flat, colors = colors, fixed_aspect = TRUE, show_axes = FALSE,
+                     title = method, cex = 1.2)
+  abline(v = quantile(s, c(0.2, 0.4, 0.6, 0.8)), col = "grey45", lty = 3)
+}
+par(mar = c(1.6, 5, 0.2, 5))
+image(seq(-1, 1, length.out = 101), 1, matrix(1:101), col = palette,
+      axes = FALSE, xlab = "", ylab = "")
+mtext(c("Half the radius", "Unchanged", "Twice the radius"), side = 1, at = -1:1, line = 0.15)
+```
+
+```{r show-roll-radius-map, echo=FALSE, out.width="100%", fig.alt="Dotted lines divide each flat roll into five strips. LTSA has a blue second strip and a red middle strip, while median PCA radii stay near the reference in all five."}
+knitr::include_graphics("figures/roll-radius-map.png")
+```
+
+Read the strips from the inner end on the left. In LTSA the second strip has a median radius
+ratio of 0.80 and the middle strip 1.22. The next strip has a median ratio of 0.96, even though
+both it and the middle strip retain about half their neighbors. PCA's strip medians stay between
+0.93 and 1.05. Each space chooses its own neighbors for this radius measurement.
+
 ## Compare local shape after alignment
 
 Neighbor overlap counts retained neighbors. To look at their shape, select the 15 nearest
@@ -331,27 +386,15 @@ Calibrate each embedding once using all pair distances, then fit rotation or ref
 translation within each patch. This leaves patch-by-patch stretch visible.
 
 ```{r roll-shape, eval=FALSE}
-original_distances <- dist(flat)
-reference_dist <- as.matrix(original_distances)
-diag(reference_dist) <- Inf
-reference_graph <- list(idx = t(apply(reference_dist, 1, order)[seq_len(k), , drop = FALSE]))
-radius <- function(d) apply(d, 1, sort)[k, ]
-
-multipliers <- vapply(band_results$Intrinsic, function(z) z$fitted_scale[z$band == 1], numeric(1))
-inspect_shape <- function(y, multiplier) {
-  calibrated <- multiplier * y
-  shape <- local_procrustes(flat, calibrated, k = k, nn_in = reference_graph, ret_extra = TRUE)
-  error <- shape$pointwise_error
-  i <- which.max(error)
-  output_dist <- as.matrix(dist(calibrated))
-  overlap <- nbr_pres(as.matrix(original_distances), output_dist, k)
-  diag(output_dist) <- Inf
-  c(
-    row = i, patch_error = error[i], overlap = overlap[i],
-    radius_ratio = unname(radius(output_dist)[i] / radius(reference_dist)[i])
-  )
+reference_graph <- radii[[1]]$nn_in
+inspect_shape <- function(y, multiplier, r) {
+  shape <- local_procrustes(flat, y * multiplier, k = k, nn_in = reference_graph, ret_extra = TRUE)
+  i <- which.max(shape$pointwise_error)
+  overlap <- nbr_pres_knn(reference_graph$idx, r$nn_out$idx, k)
+  c(row = i, patch_error = shape$pointwise_error[i], overlap = overlap[i],
+    radius_ratio = unname(r$scale_out[i, 1] / r$scale_in[i, 1]))
 }
-round(do.call(rbind, Map(inspect_shape, maps, multipliers)), 3)
+round(do.call(rbind, Map(inspect_shape, maps, multipliers, radii)), 3)
 ```
 
 ```text

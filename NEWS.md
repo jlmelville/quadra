@@ -1,5 +1,7 @@
 # quadra 0.2.1.9000
 
+* Add `neighbor_dissimilarity()` to compare shared neighbors in two graphs and identify the
+  observation pairs that gain or lose them.
 * Add `exact_rank_profiles()` for exact Euclidean rank comparisons across embeddings using
   one query's distance and rank workspace at a time. Set `mrre = TRUE` for directional mean
   relative rank errors among each query's closest input and output neighbors. Use `query_rows`
