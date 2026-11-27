@@ -61,6 +61,27 @@ For a worked example, pick the question closest to yours.
 - How can two clouds merge while their short distances still look perfect?
   [Compare the bands](https://jlmelville.github.io/quadra/articles/distance-band-fidelity.html).
 
+## Acknowledgments
+
+[ZADU], the Python library by Hyeon Jeon and colleagues, pointed us to several measures, including
+the [Gap Index] of Ros, Arleo and Paulovich. For Steadiness and Cohesiveness, Quadra follows ZADU
+0.5.4 in how it weights shared neighbors and how it combines losses in the pointwise maps.
+
+- The distance-band profile comes from [Yoshio Takaeda's benchmark]. It asks how well distances
+  are preserved among pairs that fall within a given radius in the input.
+- For the Class Angular Distortion Index, Quadra follows [Gunaratne, Kobourov and Miller's code].
+  The cosine of an angle can change by at most two, so dividing the mean squared change by four
+  puts the score on a scale from zero to one.
+- The idea of comparing distance distributions with Earth Mover's Distance comes from
+  [Heiser and Lau's work on single-cell data]. Quadra estimates those distributions by sampling
+  pairs of observations.
+
+[ZADU]: https://github.com/hj-n/zadu
+[Gap Index]: https://arxiv.org/abs/2607.28324
+[Yoshio Takaeda's benchmark]: https://github.com/toorpia/dr-fidelity-benchmark
+[Gunaratne, Kobourov and Miller's code]: https://github.com/KaviruGunaratne/cadi
+[Heiser and Lau's work on single-cell data]: https://github.com/KenLauLab/DR-structure-preservation
+
 ## License
 
 [GPLv3 or later](https://www.gnu.org/licenses/gpl-3.0.txt).
