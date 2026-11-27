@@ -284,7 +284,7 @@ take about 572 MiB before temporaries.
 ```{r mnist-full-ranks, eval=FALSE}
 audit_k <- c(15L, 100L, 250L)
 scaled_k <- 5L * audit_k
-full_ranks <- exact_rank_profiles(x, maps, k = sort(unique(c(audit_k, scaled_k))))
+full_ranks <- exact_rank_profiles(x, maps, k = sort(unique(c(audit_k, scaled_k))), mrre = TRUE)
 
 rank_summary <- function(rows) {
   t(vapply(full_ranks, function(p) {
@@ -352,6 +352,67 @@ same switch at 100 and 250 neighbors. The audit's broader-scale advantage for 7s
 when neighborhood size tracks the fraction of candidates. Across all 5,000 queries, the mean
 RNX difference (0s minus 7s) is +0.083 at 100 neighbors and −0.080 at 500. With the full pool,
 7s also lead in mean RNX AUC on each matched query set, by 0.009–0.020.
+
+## Inspect the closest neighbors within the first 15
+
+Input MRRE asks where each of the 15 closest pixel neighbors ended up. Output MRRE starts with the
+15 closest neighbors in the embedding and looks up their pixel ranks. Both give the closest
+neighbor the most weight. Reuse the full-pool ranks to compare these errors with the earlier scores.
+
+```{r mnist-mrre, eval=FALSE}
+rank_scores15 <- lapply(full_ranks, function(p) {
+  cbind(RNX = p$curve[, "rnx15"], trust = p$trustworthiness[, "k15"],
+        continuity = p$continuity[, "k15"], AUC = p$auc,
+        input_error = p$mrre_input[, "k15"], output_error = p$mrre_output[, "k15"])
+})
+round(t(vapply(rank_scores15, colMeans, numeric(6))), 3)
+delta15 <- rank_scores15$UMAP - rank_scores15$PCA
+ahead <- apply(delta15[, 1:4] > 0, 1, all)
+c(ahead = sum(ahead), higher_input_error = sum(ahead & delta15[, "input_error"] > 0),
+  higher_output_error = sum(ahead & delta15[, "output_error"] > 0))
+```
+
+```text
+       RNX trust continuity   AUC input_error output_error
+PCA  0.053 0.730      0.914 0.144       0.074        0.271
+UMAP 0.339 0.958      0.960 0.311       0.028        0.040
+              ahead  higher_input_error higher_output_error
+               4012                  34                  51
+```
+
+UMAP leads on average in both directions. Among the 4,012 images where all four earlier scores
+favor UMAP, 51 have higher output MRRE in UMAP. Inspect the query with the largest increase in
+output error among those 4,012. The figure shows the query and its nearest neighbor in each space.
+
+```{r mnist-mrre-neighbors, eval=FALSE, fig.width=8, fig.height=2.6}
+i <- which.max(ifelse(ahead, delta15[, "output_error"], -Inf))
+neighbor_order <- function(coords) {
+  candidates <- seq_len(nrow(coords))[-i]
+  d2 <- rowSums(sweep(coords[candidates, , drop = FALSE], 2, coords[i, ], "-")^2)
+  candidates[order(d2)]
+}
+neighbors <- lapply(c(list(Pixels = x), maps), neighbor_order)
+nearest <- vapply(neighbors, head, integer(1), n = 1)
+pixel_rank <- match(nearest, neighbors$Pixels)
+rows <- c(i, nearest)
+titles <- c("Query", "Nearest in pixels", "Nearest in PCA", "Nearest in UMAP")
+captions <- c(paste("Training row", id[i]), paste("Pixel rank", pixel_rank))
+par(mfrow = c(1, 4), mar = c(1.8, 0.3, 2.1, 0.3))
+for (j in seq_along(rows)) {
+  snedata::show_mnist_digit(x, rows[j], axes = FALSE, asp = 1, xlab = "", ylab = "",
+                            col = gray.colors(256, start = 1, end = 0), main = titles[j])
+  mtext(captions[j], side = 1, line = 0.3)
+}
+```
+
+```{r show-mnist-mrre-neighbors, echo=FALSE, out.width="100%", fig.alt="Four handwritten digits. For the query 7, the nearest PCA neighbor is a 9 ranked 67th in pixel space. The nearest UMAP neighbor is a 7 ranked 3,331st."}
+knitr::include_graphics("figures/mnist-mrre-neighbors.png")
+```
+
+For this 7, UMAP retains four of the 15 closest pixel neighbors and PCA retains none. Yet UMAP
+assigns first place to a 7 ranked 3,331st by pixel distance. PCA assigns first place to a 9
+ranked 67th. That first position carries enough weight to raise UMAP's output error to 0.212,
+compared with 0.053 for PCA. The digit labels and the pixel distances answer different questions.
 
 ## Check distance ordering from each anchor
 

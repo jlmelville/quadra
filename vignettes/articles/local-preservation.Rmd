@@ -358,6 +358,32 @@ current query's distance and rank workspace. This lets the MNIST workflow expand
 pool while scoring the same audit queries.
 [Full-pool MNIST comparison](mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images)
 
+## Can the same neighbors come back in a different order?
+
+Mean relative rank error (MRRE) measures how far individual neighbors move in the ranking.
+`mrre_input` follows the first `k` input neighbors into the embedding. `mrre_output` follows the
+embedding's first `k` neighbors back to the input. Both weight a change at rank 1 twice as much as
+the same change at rank 2. Zero means all selected ranks are unchanged.
+[Co-ranking definitions, equations 5 and 6](https://proceedings.mlr.press/v4/lee08a/lee08a.pdf)
+
+Keep the query at zero and cycle its three nearest neighbors in opposite directions. In the first
+map the original nearest neighbor moves to second place. In the second map it moves to third.
+
+```{r local-mrre-cycle}
+line <- cbind(0:7)
+cycles <- list(forward = cbind(c(0, 2, 3, 1, 4:7)), reverse = cbind(c(0, 3, 1, 2, 4:7)))
+cycle_ranks <- exact_rank_profiles(line, cycles, k = 3, mrre = TRUE)
+round(t(vapply(cycle_ranks, function(p) {
+  c(RNX = p$curve[[1]], trust = p$trustworthiness[[1]], continuity = p$continuity[[1]],
+    AUC = p$auc[[1]], input_error = p$mrre_input[[1]], output_error = p$mrre_output[[1]])
+}, numeric(6))), 3)
+```
+
+All three neighbors stay inside the cutoff. Even the full pointwise RNX curves coincide because
+the two cycles retain the same number of neighbors at every size. The input and output errors
+exchange places when the cycle reverses. Use these errors when it matters which neighbor occupies
+the first few positions. [MNIST example](mnist-pca-umap.html#inspect-the-closest-neighbors-within-the-first-15)
+
 ## Do groups merge or split?
 
 Place three clouds apart, then move two of their centers together. Steadiness measures how well

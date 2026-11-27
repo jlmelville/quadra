@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <numeric>
 #include <vector>
 
 #include <Rcpp.h>
@@ -417,25 +418,55 @@ std::vector<std::size_t> euclidean_row_ranks(const NumericMatrix &x,
                          [&](std::size_t j) { return distances[j]; });
 }
 
+// Each selected rank occurs exactly once, so every nonzero slot is
+// overwritten before the prefix sum for this row.
+void set_relative_rank_errors(const std::vector<std::size_t> &selected,
+                              const std::vector<std::size_t> &other,
+                              const std::vector<std::size_t> &sizes,
+                              const std::vector<double> &normalizers,
+                              std::vector<double> &errors, int row,
+                              NumericMatrix &result) {
+  for (std::size_t j = 0; j < selected.size(); ++j) {
+    const auto rank = selected[j];
+    if (rank > 0 && rank < errors.size()) {
+      errors[rank] = std::abs(static_cast<double>(other[j]) - rank) / rank;
+    }
+  }
+  std::partial_sum(errors.begin(), errors.end(), errors.begin());
+  for (std::size_t col = 0; col < sizes.size(); ++col) {
+    const auto k = sizes[col];
+    result(row, col) = errors[k] / normalizers[k];
+  }
+}
+
 struct CoordinateRankProfile {
   NumericMatrix trustworthiness;
   NumericMatrix continuity;
   NumericVector auc;
   NumericMatrix curve;
-  CoordinateRankProfile(int n, int n_sizes)
+  NumericMatrix mrre_input;
+  NumericMatrix mrre_output;
+  CoordinateRankProfile(int n, int n_sizes, bool mrre)
       : trustworthiness(n, n_sizes), continuity(n, n_sizes), auc(n),
-        curve(n, n_sizes) {}
+        curve(n, n_sizes), mrre_input(n, mrre ? n_sizes : 0),
+        mrre_output(n, mrre ? n_sizes : 0) {}
 };
 
 // [[Rcpp::export(rng = false)]]
 List coordinate_rank_profiles(const NumericMatrix &input,
-                              const List &embeddings, const IntegerVector &k) {
+                              const List &embeddings, const IntegerVector &k,
+                              bool mrre) {
   const int n = input.nrow();
   if (n < 3 || input.ncol() < 1 || embeddings.size() < 1) {
     stop("Expected reference coordinates and at least one embedding");
   }
   const auto sizes = validate_rank_penalty_ks(k, n);
   const auto normalizers = penalty_normalizers(n, sizes);
+  const auto max_k = mrre ? *std::max_element(sizes.begin(), sizes.end()) : 0;
+  std::vector<double> errors(max_k + 1), mrre_normalizers(max_k + 1);
+  for (std::size_t r = 1; r <= max_k; ++r) {
+    mrre_normalizers[r] = mrre_normalizers[r - 1] + (n - 2.0 * r) / r;
+  }
   std::vector<NumericMatrix> maps;
   std::vector<CoordinateRankProfile> profiles;
   for (R_xlen_t m = 0; m < embeddings.size(); ++m) {
@@ -444,7 +475,7 @@ List coordinate_rank_profiles(const NumericMatrix &input,
       stop("Each embedding must have the same rows as the reference");
     }
     maps.push_back(map);
-    profiles.emplace_back(n, sizes.size());
+    profiles.emplace_back(n, sizes.size(), mrre);
   }
   std::vector<double> distances(n), histogram(n), row_curve(n);
   for (int i = 0; i < n; ++i) {
@@ -455,6 +486,12 @@ List coordinate_rank_profiles(const NumericMatrix &input,
       auto &p = profiles[m];
       set_row_penalties(reference, embedded, sizes, normalizers, i,
                         p.trustworthiness, p.continuity);
+      if (mrre) {
+        set_relative_rank_errors(reference, embedded, sizes, mrre_normalizers,
+                                 errors, i, p.mrre_input);
+        set_relative_rank_errors(embedded, reference, sizes, mrre_normalizers,
+                                 errors, i, p.mrre_output);
+      }
       std::fill(histogram.begin(), histogram.end(), 0.0);
       accumulate_max_ranks(reference, embedded, i, histogram);
       p.auc[i] = rnx_auc_from_max_rank_histogram(histogram, 1, &row_curve);
@@ -466,9 +503,14 @@ List coordinate_rank_profiles(const NumericMatrix &input,
   List result(embeddings.size());
   for (std::size_t m = 0; m < profiles.size(); ++m) {
     const auto &p = profiles[m];
-    result[m] = List::create(Named("trustworthiness") = p.trustworthiness,
-                             Named("continuity") = p.continuity,
-                             Named("auc") = p.auc, Named("curve") = p.curve);
+    List profile = List::create(Named("trustworthiness") = p.trustworthiness,
+                                Named("continuity") = p.continuity,
+                                Named("auc") = p.auc, Named("curve") = p.curve);
+    if (mrre) {
+      profile["mrre_input"] = p.mrre_input;
+      profile["mrre_output"] = p.mrre_output;
+    }
+    result[m] = profile;
   }
   return result;
 }

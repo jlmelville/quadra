@@ -38,6 +38,10 @@ For Euclidean coordinates, `exact_rank_profiles()` computes pointwise trustworth
 and RNX across embeddings with a shared reference. The full candidate pool stays available at
 each query. [MNIST comparison](mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images)
 
+To check whether the closest neighbors retain their order, set `mrre = TRUE`. Compare input and
+output mean relative rank error at the same `k`. Smaller values indicate better preservation.
+[Worked example](local-preservation.html#can-the-same-neighbors-come-back-in-a-different-order)
+
 See the [local preservation](local-preservation.html) article for examples and
 related local diagnostics.
 

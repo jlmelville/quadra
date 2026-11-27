@@ -186,10 +186,8 @@ For each observation, compare LTSA to PCA at `k = 15` and by RNX AUC. Both compa
 use the same rows. Count a win only when LTSA has the higher score.
 
 ```{r roll-pointwise-rnx, eval=FALSE}
-map_distances <- lapply(maps, function(y) as.matrix(dist(y)))
-rnx_differences <- lapply(references, function(reference) {
-  din <- as.matrix(dist(reference))
-  scores <- lapply(map_distances, function(dout) pointwise_rnx(din, dout, k = k))
+roll_ranks <- lapply(references, exact_rank_profiles, embeddings = maps, k = k, mrre = TRUE)
+rnx_differences <- lapply(roll_ranks, function(scores) {
   cbind(rnx15 = scores$LTSA$curve[, 1] - scores$PCA$curve[, 1],
         auc = scores$LTSA$auc - scores$PCA$auc)
 })
@@ -223,6 +221,50 @@ At `k = 15`, LTSA has higher overlap for about 55% of points under either refere
 sizes, LTSA has higher AUC for about 39% of points under the ambient reference and 66% under
 the intrinsic reference. The maps put both comparisons on the flat roll. Red favors LTSA,
 blue favors PCA, and both panels use the same scale centered at zero.
+
+## Where did the nearest surface neighbor go?
+
+At 15 neighbors LTSA has higher mean RNX, trustworthiness, and continuity under the intrinsic
+reference, as well as higher RNX AUC. Look at individual queries where all four agree. Input MRRE
+weights displacement of the closest reference neighbors most heavily. Check how often it favors
+PCA there, then trace the nearest reference neighbor into each map.
+
+```{r roll-mrre, eval=FALSE}
+neighbor_order <- function(coords, i) {
+  ids <- seq_len(nrow(coords))[-i]
+  d2 <- rowSums(sweep(coords[ids, , drop = FALSE], 2, coords[i, ], "-")^2)
+  ids[order(d2)]
+}
+roll_errors <- lapply(names(references), function(ref) {
+  scores <- roll_ranks[[ref]]
+  p <- scores$PCA
+  l <- scores$LTSA
+  ahead <- l$curve[, 1] > p$curve[, 1] & l$auc > p$auc &
+    l$trustworthiness[, 1] > p$trustworthiness[, 1] & l$continuity[, 1] > p$continuity[, 1]
+  inspect <- which(ahead & l$mrre_input[, 1] > p$mrre_input[, 1])
+  nearest_rank <- vapply(inspect, function(i) {
+    nearest <- neighbor_order(references[[ref]], i)[1]
+    vapply(maps, function(y) match(nearest, neighbor_order(y, i)), integer(1))
+  }, integer(length(maps)))
+  median_rank <- apply(nearest_rank, 1, median)
+  c(ahead = sum(ahead), higher_input_error = length(inspect),
+    higher_output_error = sum(ahead & l$mrre_output[, 1] > p$mrre_output[, 1]),
+    median_rank)
+})
+print(do.call(rbind, setNames(roll_errors, names(references))))
+```
+
+```text
+          ahead higher_input_error higher_output_error PCA LTSA
+Ambient     146                 29                   2   4   11
+Intrinsic   209                 29                   1   4   11
+```
+
+On the flat reference, 29 of the 209 queries that favor LTSA on all four scores have higher
+input MRRE in LTSA. For those 29 queries, the nearest surface neighbor has a median rank
+of 11 in LTSA and 4 in PCA. The ambient reference gives the same
+two medians for its own set of 29 queries. Average continuity near 0.985 for both maps at this
+size can coexist with substantial movement of the closest neighbor.
 
 ## Check distance ordering from each anchor
 
@@ -340,7 +382,7 @@ stopifnot(identical(gap_maps$Ambient$triangles, gap_maps$Intrinsic$triangles))
 intrinsic <- gap_maps$Intrinsic
 largest <- which.max(intrinsic$relative_area_out - intrinsic$relative_area_in)
 vertices <- intrinsic$triangles[largest, ]
-ltsa_rnx <- pointwise_rnx(as.matrix(dist(flat)), map_distances$LTSA)$auc
+ltsa_rnx <- roll_ranks$Intrinsic$LTSA$auc
 expanded <- gap_maps$Ambient$deformation < 0 & intrinsic$deformation > 0
 round(c(
   intrinsic_deformation = intrinsic$deformation[largest],

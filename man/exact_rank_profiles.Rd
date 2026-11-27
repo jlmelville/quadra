@@ -4,7 +4,7 @@
 \alias{exact_rank_profiles}
 \title{Exact Rank Profiles from Euclidean Coordinates}
 \usage{
-exact_rank_profiles(Xin, embeddings, k)
+exact_rank_profiles(Xin, embeddings, k, mrre = FALSE)
 }
 \arguments{
 \item{Xin}{Dense reference coordinates with observations in rows.}
@@ -16,13 +16,18 @@ ignored. All coordinate values must be finite.}
 
 \item{k}{Unique neighborhood sizes, each positive and less than half the
 number of observations. This range supports both rank penalties.}
+
+\item{mrre}{Logical. Include mean relative rank errors (MRRE) for input
+neighbors and output neighbors? Defaults to \code{FALSE}.}
 }
 \value{
 A list in embedding order, retaining the names of \code{embeddings}.
 Each entry contains pointwise \code{trustworthiness} and \code{continuity}
 matrices, the RNX \code{auc} vector, and the RNX \code{curve} matrix at the
 requested sizes. Rows retain the reference row names. Average over
-rows for the corresponding aggregate scores.
+rows for the corresponding aggregate scores. With \code{mrre = TRUE}, each
+entry also contains \code{mrre_input} and \code{mrre_output} matrices at the
+requested sizes. Smaller errors indicate better rank preservation.
 }
 \description{
 Compare several embeddings against the same candidate neighbors. For each
@@ -38,10 +43,21 @@ The method evaluates all query-candidate distances. Distance and rank
 workspace grows linearly with the number of observations. Returned
 profiles use space proportional to observations, requested sizes, and
 embeddings.
+
+For MRRE, select the first \code{k} neighbors in one space. For each of these
+neighbors, divide the absolute change in rank by its rank in the selecting
+space. Sum and divide by \code{sum((n - 2 * r) / r)} over ranks 1 through \code{k}.
+Identical rankings give zero and reversed rankings give one. For large
+neighborhoods, other permutations can exceed one under this normalization.
 }
 \examples{
 x <- as.matrix(iris[, -5])
 y <- prcomp(x)$x[, 1:2]
-profile <- exact_rank_profiles(x, list(PCA = y), k = c(5, 15))
-colMeans(profile$PCA$trustworthiness)
+profile <- exact_rank_profiles(x, list(PCA = y), k = c(5, 15), mrre = TRUE)
+colMeans(profile$PCA$mrre_input)
+}
+\references{
+Lee, J. A. and Verleysen, M. (2008).
+Quality assessment of nonlinear dimensionality reduction based on K-ary
+neighborhoods. \url{https://proceedings.mlr.press/v4/lee08a.html}
 }
