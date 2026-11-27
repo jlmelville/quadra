@@ -67,6 +67,8 @@ For a worked example, pick the question closest to yours.
 the [Gap Index] of Ros, Arleo and Paulovich. For Steadiness and Cohesiveness, Quadra follows ZADU
 0.5.4 in how it weights shared neighbors and how it combines losses in the pointwise maps.
 
+- [drnb] inspired three comparisons in Quadra. We compare the distance ranks of sampled pairs,
+  estimate stress from sampled pairs, and compare counts of reciprocal neighbors between spaces.
 - The distance-band profile comes from [Yoshio Takaeda's benchmark]. It asks how well distances
   are preserved among pairs that fall within a given radius in the input.
 - For the Class Angular Distortion Index, Quadra follows [Gunaratne, Kobourov and Miller's code].
@@ -77,6 +79,7 @@ the [Gap Index] of Ros, Arleo and Paulovich. For Steadiness and Cohesiveness, Qu
   pairs of observations.
 
 [ZADU]: https://github.com/hj-n/zadu
+[drnb]: https://github.com/jlmelville/drnb
 [Gap Index]: https://arxiv.org/abs/2607.28324
 [Yoshio Takaeda's benchmark]: https://github.com/toorpia/dr-fidelity-benchmark
 [Gunaratne, Kobourov and Miller's code]: https://github.com/KaviruGunaratne/cadi

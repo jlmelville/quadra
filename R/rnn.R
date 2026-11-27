@@ -130,7 +130,10 @@
 #' @seealso The [rnndescent](https://github.com/jlmelville/rnndescent) package
 #'   and the [rnndescent::brute_force_knn()] and [rnndescent::nnd_knn()]
 #'   functions.
-#' @references
+#' @references Chen and Buja (2009) measure overlap by the fraction of
+#' neighbors retained. \doi{10.1198/jasa.2009.0111}
+#'
+#' For the approximate search used to find those neighbors, see
 #' Dong, W., Moses, C., & Li, K. (2011, March).
 #' Efficient k-nearest neighbor graph construction for generic similarity measures.
 #' In *Proceedings of the 20th international conference on World Wide Web*
@@ -318,6 +321,10 @@ nn_preservation <- function(
 #'   * `scale_in`: a matrix of input local scale values, one column per `k`.
 #'   * `scale_out`: a matrix of output local scale values, one column per `k`.
 #'
+#' @references Narayan, Berger and Cho (2021) compare local radii to assess
+#' density preservation in den-SNE and densMAP. Quadra uses the distance
+#' to the kth neighbor or the mean of the first k neighbor distances.
+#' \doi{10.1038/s41587-020-00801-7}
 #' @seealso [nn_preservation()] for neighbor-identity preservation and
 #'   [trustworthiness()] for exact rank-penalty neighborhood preservation on
 #'   distance matrices.
@@ -501,6 +508,9 @@ local_radius_correlation <- function(
 #'   * `mutual_neighbor_out`: a matrix of output mutual-neighbor counts, one
 #'   column per `k`.
 #'
+#' @references The `soccur` measure in
+#' [drnb](https://github.com/jlmelville/drnb) counts each point's reciprocal
+#' neighbors and correlates the two sets of counts.
 #' @seealso [nn_preservation()] for neighbor-identity preservation and
 #'   [local_radius_correlation()] for local scale preservation.
 #' @examples

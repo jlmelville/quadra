@@ -47,6 +47,11 @@ pointwise <- pointwise_rank_preservation(
 )
 head(pointwise$trustworthiness)
 }
+\references{
+Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
+projection methods: An experimental study. In \emph{Artificial Neural Networks -
+ICANN 2001} (pp. 485-491). \doi{10.1007/3-540-44668-0_68}
+}
 \seealso{
 \code{\link[=trustworthiness]{trustworthiness()}}, \code{\link[=continuity]{continuity()}}
 }

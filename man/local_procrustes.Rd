@@ -87,6 +87,10 @@ head(result$pointwise_error)
 Goldberg, Y., & Ritov, Y. (2009). Local Procrustes for Manifold
 Embedding: A Measure of Embedding Quality and Embedding Algorithms.
 \url{https://arxiv.org/abs/0806.2669}
+Quadra follows their construction by matching the same observations
+in both patches. The fit keeps scale fixed within each patch.
+\href{https://github.com/hj-n/zadu/tree/v0.5.4}{ZADU 0.5.4} selects
+neighbors separately in each space.
 }
 \seealso{
 \code{\link[=nn_preservation]{nn_preservation()}}, \code{\link[=local_radius_correlation]{local_radius_correlation()}}

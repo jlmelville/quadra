@@ -82,7 +82,10 @@ random_pair_distance_correlation(iris_x, iris_pca2)
 Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 Ng, L. G., ... & Newell, E. W. (2019).
 Dimensionality reduction for visualizing single-cell data using UMAP.
-\emph{Nature biotechnology}, \emph{37}(1), 38-44.
+\emph{Nature Biotechnology}, \emph{37}(1), 38-44. \doi{10.1038/nbt.4314}
+Becht et al. compare corresponding distances. The Spearman option was
+inspired by the random-pair comparisons in
+\href{https://github.com/jlmelville/drnb}{drnb}.
 }
 \seealso{
 \code{\link[=random_pair_distance_emd]{random_pair_distance_emd()}}, \code{\link[=random_pair_distance_stress]{random_pair_distance_stress()}}, and

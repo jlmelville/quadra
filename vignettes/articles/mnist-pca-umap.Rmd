@@ -95,6 +95,11 @@ knitr::include_graphics("figures/mnist-embeddings.png")
 
 Use all 5,000 images. Reuse the pixel neighbor graph, pair sample, and triplet sample across both
 embeddings. Look at several neighborhood sizes, including UMAP’s fitting scale of 15.
+For neighbor overlap we count the fraction retained, as in
+[Chen and Buja](https://doi.org/10.1198/jasa.2009.0111).
+The sampled Spearman comparison draws on [drnb](https://github.com/jlmelville/drnb).
+[Wang and colleagues](https://jmlr.org/papers/v22/20-1061.html) use triplet accuracy to evaluate
+distance ordering in embeddings.
 
 ```{r mnist-full, eval=FALSE}
 set.seed(415)
@@ -158,6 +163,8 @@ audit <- sort(unlist(lapply(split(seq_along(label), label), sample, size = 100))
 
 For each query, `exact_rank_profiles()` gives us RNX, the fraction of shared neighbors adjusted
 for chance. Undoing the adjustment gives us the number of neighbors the two spaces share out of 15.
+[Lee and colleagues describe RNX](https://doi.org/10.1016/j.neucom.2012.12.036) and its
+[weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
 ```{r mnist-search-exact, eval=FALSE}
 spot_k <- 15L
@@ -220,7 +227,8 @@ both searches on this sample.
 
 When a query loses all 15 pixel neighbors, its overlap score is zero. Its replacement neighbors
 can still differ in how many list the query among their own 15 neighbors. Count the change in
-reciprocal links on the same full-cohort graphs.
+reciprocal links on the same full-cohort graphs. The count comparison draws on
+[drnb](https://github.com/jlmelville/drnb).
 
 ```{r mnist-reciprocity, eval=FALSE}
 graphs <- list(PCA = pca_nn, UMAP = umap_nn)
@@ -246,7 +254,9 @@ A high reciprocal count can describe a tightly connected set of entirely new nei
 ### Compare short and long distances
 
 Use the same pair sample to ask whether each method preserves short distances better than the
-dataset-wide score suggests. The input-pair fractions are cumulative.
+dataset-wide score suggests. The input-pair fractions are cumulative. The rank and fitted-scale
+stress comparisons follow [Takaeda's benchmark](https://arxiv.org/abs/2608.21779).
+Here we use sampled pairs.
 
 ```{r mnist-bands, eval=FALSE, fig.width=8, fig.height=3.8}
 bands <- c(0.05, 0.1, 0.2, 0.5, 1)
@@ -283,6 +293,8 @@ Spearman correlation, while UMAP retains more of the actual nearest neighbors.
 One dense double distance matrix for 5,000 observations uses about 191 MiB before temporaries.
 Use 100 observations per digit here, so each matrix uses about 7.6 MiB. All dense diagnostics
 computed from these matrices describe this subset and its candidate neighbors.
+Trustworthiness and continuity, introduced by
+[Venna and Kaski](https://doi.org/10.1007/3-540-44668-0_68), penalize misplaced neighbors by rank.
 
 ```{r mnist-audit, eval=FALSE}
 audit_label <- label[audit]
@@ -304,6 +316,11 @@ round(rank_scores, 3)
 PCA            0.742      0.884   0.173
 UMAP           0.942      0.916   0.340
 ```
+
+We can also treat each image as a retrieval query and ask whether the other images of its digit
+rank ahead of different digits. [Venna and colleagues](https://jmlr.org/papers/v11/venna10a.html)
+use this retrieval view to evaluate embeddings. Quadra computes the AUCs with
+[PRROC](https://cran.r-project.org/package=PRROC), using its Davis–Goadrich PR area.
 
 ```{r mnist-labels, eval=FALSE, fig.width=9, fig.height=4.5}
 spaces <- c(list(Input = din), dout)
@@ -487,6 +504,7 @@ Keeping four of the closest 15 images sounds better than keeping none. Does it m
 the *first* neighbor? Mean relative rank error (MRRE) gives that first position the most weight.
 Input MRRE follows the closest pixel neighbors into each map. Output MRRE takes the closest
 neighbors on the map and looks up their pixel ranks.
+[Lee and Verleysen describe MRRE](https://proceedings.mlr.press/v4/lee08a.html).
 
 ```{r mnist-mrre, eval=FALSE}
 rank_scores15 <- lapply(full_ranks, function(p) {
@@ -606,6 +624,9 @@ pool raises the fraction favoring UMAP by RNX AUC from 89.4% to 95.3%.
 Recompute ROC and PR AUC with candidates restricted to each pair of digits. Use the same audit
 rows in all three spaces. Then compare distance consistency, the fraction of observations
 nearer their own digit centroid than the other digit's centroid, with half credit for ties.
+[Jeon and colleagues](https://arxiv.org/abs/2308.00278) track gains and losses in class-pair
+consistency. We use the unrescaled fraction from
+[Sips and colleagues](https://doi.org/10.1111/j.1467-8659.2009.01467.x).
 
 ```{r mnist-class-pairs, eval=FALSE}
 label_results <- lapply(maps, function(y) {
@@ -680,7 +701,10 @@ more separated around their centroids. Use the per-pair changes to inspect what 
 Class Angular Distortion Index (CADI) compares the angle from one observation to two observations
 of another class. For each triplet, it squares the change in cosine and divides by four. Use one
 sample for both embeddings. Lower values mean better angular preservation.
-[Gunaratne et al.](https://arxiv.org/abs/2605.00637)
+[Gunaratne, Kobourov and Miller](https://arxiv.org/abs/2605.00637) introduced CADI. Quadra follows
+the normalization in their [code](https://github.com/KaviruGunaratne/cadi). Their sampler picks
+classes first. Quadra samples eligible triplets uniformly. These audit classes are balanced, but
+class sizes can affect the overall score in other data.
 
 ```{r mnist-cadi, eval=FALSE}
 set.seed(426)
@@ -758,7 +782,8 @@ overall CADI than PCA in each audit.
 
 Gap Index colors each empty triangle in the embedding by how much its share of the total
 triangle area changes. This comparison uses the same 1,000 audit rows and requires the
-`geometry` package.
+`geometry` package. [Ros, Arleo and Paulovich](https://arxiv.org/abs/2607.28324) introduced the
+index and provide a [reference implementation](https://codeberg.org/jros/gap-index).
 
 ```{r mnist-gap-index, eval=FALSE}
 gap_results <- lapply(maps, function(y) {
@@ -811,14 +836,18 @@ audit seeds, 418 and 419. The pointwise map marks its vertices. The regional map
 much space opens between them. Red means expansion and blue means compression.
 
 The triangles fill the convex hull. Their areas describe this sampled scatterplot, including
-its boundary. [Gap Index paper](https://arxiv.org/abs/2607.28324)
+its boundary.
 
 ### Check groups without digit labels
 
 Steadiness grows groups in the embedding and checks them in pixel space. Cohesiveness grows
 groups in pixel space and checks them in the embedding. Both use shared-neighbor similarities.
 Use the same audit rows as before. Run the group calculation before looking at the digit labels.
-This section requires the `dbscan` and `Matrix` packages.
+This section requires the `dbscan` and `Matrix` packages. The measures are from
+[Jeon and colleagues](https://doi.org/10.1109/TVCG.2021.3114833). Quadra follows
+[ZADU 0.5.4](https://github.com/hj-n/zadu) for shared-neighbor and map weights.
+The authors also provide their
+[original implementation](https://github.com/hj-n/steadiness-cohesiveness).
 
 ```{r mnist-groups, eval=FALSE}
 set.seed(451)
@@ -900,7 +929,6 @@ knitr::include_graphics("figures/mnist-group-map.png")
 
 The first two panels outline the same island. The last enlarges it and circles the six queries
 with labels other than 1. Purple indicates low scores and yellow high scores in all three panels.
-[Steadiness and Cohesiveness](https://arxiv.org/abs/2107.07859)
 
 ### Which images acquire shared neighbors?
 
@@ -908,6 +936,7 @@ Compare PCA and UMAP on the same 5,000 pixel-graph rows. Neighbor Dissimilarity 
 changes in the fraction of neighbors shared by each *pair* of images. The score takes the larger
 of the total gain and loss, each measured by a Frobenius norm. Compare scores at fixed graph size
 and `k`. [Fujiwara et al., equation 3](https://arxiv.org/abs/2206.13891)
+Their [FEALM code](https://github.com/takanori-fujiwara/fealm) implements the comparison.
 
 ```{r mnist-nd-full, eval=FALSE}
 round(vapply(graphs, function(g) neighbor_dissimilarity(g$nn_in, g$nn_out, k = 15), numeric(1)), 2)

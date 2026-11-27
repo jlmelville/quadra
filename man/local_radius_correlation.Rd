@@ -159,6 +159,12 @@ cached <- local_radius_correlation(
 )
 local_radius_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
 }
+\references{
+Narayan, Berger and Cho (2021) compare local radii to assess
+density preservation in den-SNE and densMAP. Quadra uses the distance
+to the kth neighbor or the mean of the first k neighbor distances.
+\doi{10.1038/s41587-020-00801-7}
+}
 \seealso{
 \code{\link[=nn_preservation]{nn_preservation()}} for neighbor-identity preservation and
 \code{\link[=trustworthiness]{trustworthiness()}} for exact rank-penalty neighborhood preservation on

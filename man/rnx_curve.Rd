@@ -39,10 +39,9 @@ dout <- as.matrix(stats::dist(iris_pca))
 rnx_curve(din, dout, k = c(5, 15, 30))
 }
 \references{
-Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
-Multi-scale similarities in stochastic neighbour embedding: Reducing
-dimensionality while preserving both local and global structure.
-\emph{Neurocomputing}, \emph{169}, 246-261.
+Lee, Renard, Bernard, Dupont and Verleysen (2013) define the RNX curve
+by adjusting neighborhood overlap for chance.
+\doi{10.1016/j.neucom.2012.12.036}
 }
 \seealso{
 \code{\link[=rnx_auc]{rnx_auc()}} for a weighted summary of the complete curve.

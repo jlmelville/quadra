@@ -60,6 +60,9 @@ Fujiwara, T., Kuo, Y.-H., Ynnerman, A., and Ma, K.-L.
 (2023). Feature Learning for Nonlinear Dimensionality Reduction toward
 Maximal Extraction of Hidden Patterns, equation 3.
 \url{https://arxiv.org/abs/2206.13891}
+The authors implement the graph comparison in
+\href{https://github.com/takanori-fujiwara/fealm}{FEALM}. Quadra also
+reports which observation pairs gained or lost shared neighbors.
 }
 \seealso{
 \code{\link[=mutual_neighbor_correlation]{mutual_neighbor_correlation()}}, \code{\link[=nn_preservation]{nn_preservation()}}

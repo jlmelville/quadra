@@ -57,6 +57,8 @@ your budget, use the same representative subset in every space and report the ca
 
 For `steadiness_cohesiveness()`, start with a representative subset. It takes coordinates, then
 builds dense distance and similarity matrices and repeatedly clusters sampled groups.
+[Jeon and colleagues introduced the measures](https://doi.org/10.1109/TVCG.2021.3114833).
+Quadra follows [ZADU 0.5.4](https://github.com/hj-n/zadu) for shared-neighbor and map weights.
 Asking for pointwise scores adds more square matrices. Fewer iterations save CPU while the dense
 allocations remain. The MNIST workflow ran exact coordinate ranks for all 5,000 images and used
 1,000 for the group comparison.
@@ -84,16 +86,21 @@ the number of queries, the size of the candidate pool and `k`.
 ## Local Neighborhood Preservation
 
 `nbr_pres()` compares neighborhoods from exact distance matrices.
-`nn_preservation()` and `nbr_pres_knn()` compare nearest-neighbor graphs.
+`nn_preservation()` and `nbr_pres_knn()` compare nearest-neighbor graphs. All three count
+the fraction of neighbors retained, as in [Chen and Buja](https://doi.org/10.1198/jasa.2009.0111).
 
 `trustworthiness()` and `continuity()` score misplaced neighbors by their ranks.
 `rnx_auc()` summarizes rank-based neighborhood agreement over many neighborhood sizes, while
 `rnx_curve()` retains the individual scales. `pointwise_rnx()` gives the comparison per observation.
+The rank penalties are from [Venna and Kaski](https://doi.org/10.1007/3-540-44668-0_68).
+[Lee and colleagues](https://doi.org/10.1016/j.neucom.2012.12.036) describe the RNX curve and
+its [weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
 To see how far the closest neighbors move in the ranking, use `exact_rank_profiles()` with
 `mrre = TRUE`. A first neighbor that slips to fifth counts more than a tenth neighbor that slips
 to fourteenth. You can follow the input neighbors into the embedding or trace the embedding's
 neighbors back to the input.
+[Lee and Verleysen's rank errors](https://proceedings.mlr.press/v4/lee08a.html)
 [Worked example](local-preservation.html#can-the-same-neighbors-come-back-in-a-different-order)
 
 See the [local preservation](local-preservation.html) article for examples and
@@ -105,15 +112,20 @@ Neighbor identity does not say whether dense and sparse regions keep their
 relative scale. `local_radius_correlation()` compares the local radius around
 each observation in the input data and output embedding, using either the
 distance to the `k`th neighbor or the mean distance to the first `k` neighbors.
+[Narayan, Berger and Cho](https://doi.org/10.1038/s41587-020-00801-7) use local radii to assess
+density preservation in den-SNE and densMAP.
 
 ## Local Shape Preservation
 
 `local_procrustes()` checks how much the same reference neighborhood changes shape after
-rigid alignment. It can find distortions even when all members stay together.
+rigid alignment. It can find distortions even when all members stay together. The matched patches
+follow [Goldberg and Ritov](https://arxiv.org/abs/0806.2669). Quadra uses a fixed-scale residual.
 
 ## Regional Area Distortion
 
 `gap_index()` locates expansion and compression in the empty triangles of a 2D embedding.
+[Ros, Arleo and Paulovich introduced the index](https://arxiv.org/abs/2607.28324).
+Their [implementation](https://codeberg.org/jros/gap-index) is available.
 [MNIST example](mnist-pca-umap.html#inspect-the-gaps-between-digits)
 
 ## Local Graph Diagnostics
@@ -122,30 +134,35 @@ rigid alignment. It can find distortions even when all members stay together.
 the input and output nearest-neighbor graphs. It asks whether points with many
 or few reciprocal nearest-neighbor relationships in the input graph have
 similar counts in the output graph.
+The comparison draws on [drnb](https://github.com/jlmelville/drnb).
 
 Use `neighbor_dissimilarity()` when the question is which pairs of observations gain or lose
-shared neighbors. [Graph comparison](local-preservation.html#which-pairs-share-the-same-neighbors)
+shared neighbors. [Fujiwara and colleagues](https://arxiv.org/abs/2206.13891) define the measure.
+[Graph comparison](local-preservation.html#which-pairs-share-the-same-neighbors)
 
 ## Global Distance Preservation
 
 `quadra` also contains random triplet and random pair distance methods for
 global structure preservation:
 
-* `random_triplet_accuracy()` checks whether sampled distance orderings are
-preserved.
-* `random_pair_distance_correlation()` measures Pearson or Spearman correlation
-between sampled input and output distances.
-* `random_pair_distance_emd()` compares sampled distance distributions using
-Earth Mover's Distance.
-* `random_pair_distance_stress()` compares matched sampled distances with a
-root mean squared difference.
+* `random_triplet_accuracy()` checks whether sampled distance orderings are preserved, as in
+  [Wang and colleagues](https://jmlr.org/papers/v22/20-1061.html).
+* `random_pair_distance_correlation()` measures Pearson or Spearman correlation between sampled
+  input and output distances. See [Becht and colleagues](https://doi.org/10.1038/nbt.4314) and
+  [drnb](https://github.com/jlmelville/drnb).
+* `random_pair_distance_emd()` compares sampled distance distributions using Earth Mover's Distance,
+  following [Heiser and Lau](https://doi.org/10.1016/j.celrep.2020.107576) and their
+  [code](https://github.com/KenLauLab/DR-structure-preservation).
+* `random_pair_distance_stress()` compares matched sampled distances with a root mean squared
+  difference. This comparison draws on [drnb](https://github.com/jlmelville/drnb).
 
 For these metrics, `Xin` and `metric_in` define the reference geometry.
 
 The [identity-permutation example](global-preservation.html#identical-scatterplots-different-point-identities)
 shows which metrics notice when the same plotted positions belong to different observations.
 Use [distance bands](distance-band-fidelity.html) to compare ordering and fitted-scale stress
-from nearby input pairs through the entire pair sample.
+from nearby input pairs through the entire pair sample. The rank and fitted-scale stress comparisons
+follow [Takaeda's benchmark](https://arxiv.org/abs/2608.21779). Quadra samples pairs by default.
 
 ## Input and Ordering Conventions
 
@@ -168,7 +185,10 @@ and treat matching labels as relevant. They require the
 For each class pair, `label_trustworthiness_continuity()` asks how many observations fall closer
 to their own class centroid and how that fraction changes in the embedding.
 `class_angular_distortion_index()` measures changes in the angles that one class subtends from
-points in another.
+points in another. These measures come from [Jeon and colleagues](https://arxiv.org/abs/2308.00278)
+and [Gunaratne, Kobourov and Miller](https://arxiv.org/abs/2605.00637), respectively.
+For the former, Quadra uses the unrescaled distance consistency of
+[Sips and colleagues](https://doi.org/10.1111/j.1467-8659.2009.01467.x).
 
 See the [label retrieval](label-retrieval.html) article for examples and return
 value details.

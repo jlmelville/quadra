@@ -9,6 +9,12 @@ choose them in the input, then see what happens as we widen the radius to includ
 Spearman correlation tells us whether the distances keep their order. Normalized stress tells us
 how closely their lengths match after we fit one scale factor for the whole band.
 
+The rank and fitted-scale stress comparisons follow
+[Takaeda's benchmark](https://arxiv.org/abs/2608.21779)
+and its [code](https://github.com/toorpia/dr-fidelity-benchmark). Takaeda credits
+[Smelser, Miller and Kobourov](https://arxiv.org/abs/2408.07724) for the scale-invariant stress.
+Quadra samples pairs by default and can return the sampled pairs and their distances.
+
 ## Preserve short distances and create false neighbors
 
 Make two separated copies of an irregular cloud. In the output, move one copy almost on top of
@@ -188,5 +194,3 @@ error. The five points with the largest contributions all come from that cloud. 
 just one or two pairs. Another 17 points in the same cloud have no partner within the radius, so
 this band tells us nothing about their distortion. Even the unchanged cloud contributes a little
 error because we multiply its distances by the same fitted factor of 0.969.
-
-For the fixed-radius approach, see [Takaeda's distance-band benchmark](https://arxiv.org/abs/2608.21779).

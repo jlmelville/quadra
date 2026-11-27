@@ -69,7 +69,10 @@ sample_pairs <- function(n_obs, n_pairs = 1000) {
 #' @references Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 #' Ng, L. G., ... & Newell, E. W. (2019).
 #' Dimensionality reduction for visualizing single-cell data using UMAP.
-#' *Nature biotechnology*, *37*(1), 38-44.
+#' *Nature Biotechnology*, *37*(1), 38-44. \doi{10.1038/nbt.4314}
+#' Becht et al. compare corresponding distances. The Spearman option was
+#' inspired by the random-pair comparisons in
+#' [drnb](https://github.com/jlmelville/drnb).
 #' @seealso [random_pair_distance_emd()], [random_pair_distance_stress()], and
 #'   [random_triplet_accuracy()] for other global preservation measures.
 #' @examples
@@ -149,9 +152,11 @@ random_pair_distance_correlation <- function(
 #' @return The EMD, or a list with `emd`, `pairs`, `distance_in`, and
 #'   `distance_out` when `ret_extra = TRUE`.
 #' @references Heiser, C. N., & Lau, K. S. (2020).
-#' A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
-#' *Cell reports*, *31*(5), 107576.
-#' <https://github.com/KenLauLab/DR-structure-preservation>
+#' A quantitative framework for evaluating single-cell data structure
+#' preservation by dimensionality reduction techniques.
+#' *Cell Reports*, *31*(5), 107576. \doi{10.1016/j.celrep.2020.107576}
+#' Their [code](https://github.com/KenLauLab/DR-structure-preservation)
+#' compares distance distributions. Quadra estimates them from sampled pairs.
 #' @seealso [random_pair_distance_correlation()],
 #'   [random_pair_distance_stress()], and [random_triplet_accuracy()] for other
 #'   global preservation measures.
@@ -224,6 +229,10 @@ emd <- function(x, y) {
 #' @param range_scale Whether to scale each sampled distance vector to `[0, 1]`.
 #' @return The stress, or a list with `stress`, `pairs`, `distance_in`, and
 #'   `distance_out` when `ret_extra = TRUE`.
+#' @references The approximate stress calculation in
+#' [drnb](https://github.com/jlmelville/drnb) inspired this measure.
+#' Quadra samples pairs and takes a root mean square, scaling each set of
+#' distances to its own range by default.
 #' @seealso [random_pair_distance_correlation()],
 #'   [random_pair_distance_emd()], and [random_triplet_accuracy()] for other
 #'   measures of global structure preservation.

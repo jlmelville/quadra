@@ -75,6 +75,7 @@ gap_index(x[keep, ], y[keep, ])
 Ros, J., Arleo, A., & Paulovich, F. (2026).
 Measuring Distortion in the Empty Regions of Dimensionality Reduction
 Scatterplots with the Gap Index. \url{https://arxiv.org/abs/2607.28324}
+The authors provide \href{https://codeberg.org/jros/gap-index}{reference code}.
 }
 \seealso{
 \code{\link[=local_procrustes]{local_procrustes()}}, \code{\link[=pointwise_rnx]{pointwise_rnx()}}

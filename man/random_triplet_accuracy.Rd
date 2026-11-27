@@ -99,7 +99,11 @@ random_triplet_accuracy(iris_x, iris_pca2)
 Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
 Understanding how dimension reduction tools work: an empirical approach to
 deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
-\emph{J Mach. Learn. Res}, \emph{22}, 1-73. \url{https://jmlr.org/papers/v22/20-1061.html}.
+\emph{JMLR}, \emph{22}, 1-73. \url{https://jmlr.org/papers/v22/20-1061.html}
+Wang et al. use random triplet accuracy to compare embeddings.
+\href{https://github.com/jlmelville/drnb}{drnb} also reports the fraction of
+correct comparisons for each anchor. Quadra omits input ties from each
+anchor's denominator.
 }
 \seealso{
 \code{\link[=random_pair_distance_emd]{random_pair_distance_emd()}} and

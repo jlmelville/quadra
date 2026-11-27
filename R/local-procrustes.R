@@ -43,7 +43,11 @@
 #'   follows the rows and names of the reference observations.
 #' @references Goldberg, Y., & Ritov, Y. (2009). Local Procrustes for Manifold
 #'   Embedding: A Measure of Embedding Quality and Embedding Algorithms.
-#'   \url{https://arxiv.org/abs/0806.2669}
+#'   <https://arxiv.org/abs/0806.2669>
+#'   Quadra follows their construction by matching the same observations
+#'   in both patches. The fit keeps scale fixed within each patch.
+#'   [ZADU 0.5.4](https://github.com/hj-n/zadu/tree/v0.5.4) selects
+#'   neighbors separately in each space.
 #' @seealso [nn_preservation()], [local_radius_correlation()]
 #' @examples
 #' x <- as.matrix(iris[, -5])

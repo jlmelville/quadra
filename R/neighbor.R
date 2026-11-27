@@ -18,6 +18,9 @@
 #' @param dout Distance matrix to compare with `din`.
 #' @param k Neighborhood size.
 #' @return Per-observation neighborhood overlap in `[0, 1]`.
+#' @references Chen and Buja (2009) count the neighbors shared by two
+#' neighborhoods and divide by the neighborhood size.
+#' \doi{10.1198/jasa.2009.0111}
 #' @seealso [pointwise_rank_preservation()] for rank penalties per observation.
 #' @export
 nbr_pres <- function(din, dout, k) {
@@ -61,6 +64,7 @@ nbr_pres <- function(din, dout, k) {
 #' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
 #' @return Per-observation neighborhood overlap in `[0, 1]`.
+#' @inherit nbr_pres references
 #' @seealso [nn_preservation()] for computing the graphs from coordinates.
 #' @export
 nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
@@ -117,7 +121,7 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' @references
 #' Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
 #' projection methods: An experimental study. In *Artificial Neural Networks -
-#' ICANN 2001* (pp. 485-491).
+#' ICANN 2001* (pp. 485-491). \doi{10.1007/3-540-44668-0_68}
 #' @examples
 #' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' din <- as.matrix(stats::dist(iris[, -5]))
@@ -165,10 +169,9 @@ continuity <- function(din, dout, k) {
 #' @return A named numeric vector. Items are named `rnx<k>`.
 #' @seealso [rnx_auc()] for a weighted summary of the complete curve.
 #' @references
-#' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
-#' Multi-scale similarities in stochastic neighbour embedding: Reducing
-#' dimensionality while preserving both local and global structure.
-#' *Neurocomputing*, *169*, 246-261.
+#' Lee, Renard, Bernard, Dupont and Verleysen (2013) define the RNX curve
+#' by adjusting neighborhood overlap for chance.
+#' \doi{10.1016/j.neucom.2012.12.036}
 #' @examples
 #' iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 #' din <- as.matrix(stats::dist(iris[, -5]))
@@ -203,10 +206,11 @@ rnx_curve <- function(din, dout, k = NULL) {
 #' @return Area under the RNX curve.
 #' @seealso [rnx_curve()] for agreement at individual neighborhood sizes.
 #' @references
-#' Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
-#' Multi-scale similarities in stochastic neighbour embedding: Reducing
-#' dimensionality while preserving both local and global structure.
-#' *Neurocomputing*, *169*, 246-261.
+#' Lee et al. (2013) define the RNX curve. \doi{10.1016/j.neucom.2012.12.036}
+#'
+#' Lee, Peluffo-Ordóñez and Verleysen (2015) summarize the curve across
+#' neighborhood sizes with weights proportional to `1 / k`.
+#' \doi{10.1016/j.neucom.2014.12.095}
 #' @export
 rnx_auc <- function(din, dout) {
   validate_distance_matrix_pair(din, dout)
@@ -506,6 +510,7 @@ distance_matrix <- function(X) {
 #'   follow the input observations and retain the row names of `din`, if
 #'   present. Columns are named `k<value>` in requested order. Column means
 #'   reproduce the corresponding aggregate scores up to numerical precision.
+#' @inherit trustworthiness references
 #' @seealso [trustworthiness()], [continuity()]
 #' @examples
 #' x <- as.matrix(iris[, -5])
@@ -550,6 +555,7 @@ pointwise_rank_preservation <- function(din, dout, k) {
 #'   reference row names if present. The mean of `auc` equals [rnx_auc()].
 #'   The column means of `curve` equal [rnx_curve()] at the requested sizes,
 #'   up to numerical precision.
+#' @inherit rnx_auc references
 #' @seealso [pointwise_rank_preservation()], [rnx_curve()], [rnx_auc()]
 #' @examples
 #' din <- as.matrix(dist(iris[, -5]))

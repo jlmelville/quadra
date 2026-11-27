@@ -30,10 +30,11 @@ time. Set \code{query_rows} to score a sample against all other observations.
 }
 
 \references{
-Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
-Multi-scale similarities in stochastic neighbour embedding: Reducing
-dimensionality while preserving both local and global structure.
-\emph{Neurocomputing}, \emph{169}, 246-261.
+Lee et al. (2013) define the RNX curve. \doi{10.1016/j.neucom.2012.12.036}
+
+Lee, Peluffo-Ordóñez and Verleysen (2015) summarize the curve across
+neighborhood sizes with weights proportional to \code{1 / k}.
+\doi{10.1016/j.neucom.2014.12.095}
 }
 \seealso{
 \code{\link[=rnx_curve]{rnx_curve()}} for agreement at individual neighborhood sizes.

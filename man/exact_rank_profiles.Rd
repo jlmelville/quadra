@@ -76,7 +76,16 @@ spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = queries)
 colMeans(spot$PCA$curve) # 30 queries, 149 candidates per query
 }
 \references{
-Lee, J. A. and Verleysen, M. (2008).
-Quality assessment of nonlinear dimensionality reduction based on K-ary
-neighborhoods. \url{https://proceedings.mlr.press/v4/lee08a.html}
+Venna and Kaski (2001) give the rank penalties for
+trustworthiness and continuity. \doi{10.1007/3-540-44668-0_68}
+
+Lee et al. (2013) define RNX. Lee, Peluffo-Ordóñez and Verleysen (2015)
+summarize the curve with weights proportional to \code{1 / k}.
+\doi{10.1016/j.neucom.2012.12.036} and \doi{10.1016/j.neucom.2014.12.095}
+
+Lee and Verleysen (2008) give the two mean relative rank errors in
+equations 5 and 6. Quadra reports the errors directly, with zero for
+agreement. \url{https://proceedings.mlr.press/v4/lee08a.html}
+\href{https://github.com/hj-n/zadu/tree/v0.5.4}{ZADU 0.5.4} instead reports
+one minus the normalized error.
 }

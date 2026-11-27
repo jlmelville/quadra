@@ -42,9 +42,10 @@
 #' @references Jeon et al. (2022). Measuring and Explaining the Inter-Cluster
 #'   Reliability of Multidimensional Projections.
 #'   \doi{10.1109/TVCG.2021.3114833}
-#'   Weighted shared-neighbor similarities and map weights follow ZADU 0.5.4
-#'   (\url{https://github.com/hj-n/zadu}). The R implementation uses R's
-#'   random draws and the dbscan package's HDBSCAN partition.
+#'   The [authors' code](https://github.com/hj-n/steadiness-cohesiveness)
+#'   accompanies the paper. For shared-neighbor similarities and pointwise
+#'   map weights, Quadra follows [ZADU 0.5.4](https://github.com/hj-n/zadu).
+#'   It uses R's random draws and the dbscan package's HDBSCAN partition.
 #' @examplesIf requireNamespace("dbscan", quietly = TRUE) && requireNamespace("Matrix", quietly = TRUE)
 #' x <- as.matrix(iris[, -5])
 #' set.seed(42)

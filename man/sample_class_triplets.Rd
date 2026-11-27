@@ -28,6 +28,12 @@ and \code{b} endpoint members has weight proportional to \code{a * choose(b, 2)}
 set.seed(42)
 sample_class_triplets(c("A", "A", "A", "B", "B", "C"), 5)
 }
+\references{
+Gunaratne, Kobourov and Miller (2026) define the class
+triplets used by CADI. \url{https://arxiv.org/abs/2605.00637}
+Their \href{https://github.com/KaviruGunaratne/cadi}{implementation} samples
+classes first. Quadra gives each eligible triplet equal probability.
+}
 \seealso{
 \code{\link[=class_angular_distortion_index]{class_angular_distortion_index()}}
 }

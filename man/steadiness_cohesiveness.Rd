@@ -73,7 +73,8 @@ steadiness_cohesiveness(x, prcomp(x)$x[, 1:2], n_iter = 15)
 Jeon et al. (2022). Measuring and Explaining the Inter-Cluster
 Reliability of Multidimensional Projections.
 \doi{10.1109/TVCG.2021.3114833}
-Weighted shared-neighbor similarities and map weights follow ZADU 0.5.4
-(\url{https://github.com/hj-n/zadu}). The R implementation uses R's
-random draws and the dbscan package's HDBSCAN partition.
+The \href{https://github.com/hj-n/steadiness-cohesiveness}{authors' code}
+accompanies the paper. For shared-neighbor similarities and pointwise
+map weights, Quadra follows \href{https://github.com/hj-n/zadu}{ZADU 0.5.4}.
+It uses R's random draws and the dbscan package's HDBSCAN partition.
 }

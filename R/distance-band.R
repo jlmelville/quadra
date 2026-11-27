@@ -41,6 +41,14 @@
 #'   to put them in input-distance units. The multiplier is undefined (NA)
 #'   for an empty band or all-zero output distances. A multiplier larger
 #'   than the floating-point range is returned as `Inf`.
+#' @references Takaeda (2026) compares distance ranks and fitted-scale
+#' stress within a fixed input radius. <https://arxiv.org/abs/2608.21779>
+#' His [benchmark](https://github.com/toorpia/dr-fidelity-benchmark) defines
+#' the band scores. Quadra estimates them from sampled pairs by default.
+#'
+#' Smelser, Miller and Kobourov (2024) fit the scale that minimizes
+#' normalized stress. Takaeda fits it separately for each band.
+#' <https://arxiv.org/abs/2408.07724>
 #' @seealso [sample_pairs()], [random_pair_distance_correlation()],
 #'   [random_pair_distance_stress()]
 #' @examples

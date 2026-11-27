@@ -12,6 +12,10 @@
 #'   ten times the number of observations.
 #' @return An integer matrix with one-based columns `anchor`,
 #'   `endpoint1`, and `endpoint2`.
+#' @references Gunaratne, Kobourov and Miller (2026) define the class
+#' triplets used by CADI. <https://arxiv.org/abs/2605.00637>
+#' Their [implementation](https://github.com/KaviruGunaratne/cadi) samples
+#' classes first. Quadra gives each eligible triplet equal probability.
 #' @seealso [class_angular_distortion_index()]
 #' @examples
 #' set.seed(42)
@@ -86,8 +90,10 @@ sample_class_triplets <- function(labels, n_triplets = NULL) {
 #' @param ret_extra Whether to return the plan, cosines, and directed
 #'   class-pair summaries.
 #' @details The index is the mean squared change in cosine divided by four,
-#'   following the normalization in the authors' implementation. It ranges
-#'   from 0 (agreement) to 1. A zero-length ray gives a cosine of zero.
+#'   as in the [authors' code](https://github.com/KaviruGunaratne/cadi).
+#'   It ranges from 0 (agreement) to 1. A zero-length ray gives a cosine
+#'   of zero. Quadra's sampler gives each eligible triplet equal probability,
+#'   so class frequencies affect their representation in the overall score.
 #'   Reuse a triplet plan for paired comparisons of embeddings.
 #'
 #'   The two directions of a class pair can have different distortions.

@@ -109,6 +109,16 @@ set.seed(42)
 pairs <- sample_pairs(nrow(x), n_pairs = 2000)
 random_pair_distance_band_profile(x, y, bands = c(0.2, 1), pairs = pairs)
 }
+\references{
+Takaeda (2026) compares distance ranks and fitted-scale
+stress within a fixed input radius. \url{https://arxiv.org/abs/2608.21779}
+His \href{https://github.com/toorpia/dr-fidelity-benchmark}{benchmark} defines
+the band scores. Quadra estimates them from sampled pairs by default.
+
+Smelser, Miller and Kobourov (2024) fit the scale that minimizes
+normalized stress. Takaeda fits it separately for each band.
+\url{https://arxiv.org/abs/2408.07724}
+}
 \seealso{
 \code{\link[=sample_pairs]{sample_pairs()}}, \code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}},
 \code{\link[=random_pair_distance_stress]{random_pair_distance_stress()}}

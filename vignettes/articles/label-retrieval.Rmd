@@ -12,6 +12,10 @@ precision among retrieved observations matters.
 observations by distance, and regard matching labels as relevant. These are
 supervised retrieval summaries. Both functions require the
 [PRROC package](https://cran.r-project.org/package=PRROC).
+[Venna and colleagues](https://jmlr.org/papers/v11/venna10a.html) develop the retrieval view of
+dimensionality-reduction evaluation. [Bamber](https://doi.org/10.1016/0022-2496(75)90001-2)
+relates ROC area to ranking probability. For each query, Quadra uses PRROC's
+[Davis–Goadrich PR area](https://doi.org/10.1145/1143844.1143874).
 
 Perfect retrieval has AUC 1 for both measures. Random ROC AUC is 0.5. The random
 PR AUC baseline is the prevalence of relevant observations among the remaining
@@ -143,7 +147,12 @@ than to the other one? A tie counts as half. `label_trustworthiness_continuity()
 fraction in the input and the embedding for each pair of labels. Trustworthiness penalizes a drop.
 Continuity penalizes a rise, since the map can also make the classes look *more* distinct than
 they were. In PCA the 5s and 9s get easier to retrieve even as fewer images lie closer to their own
-centroid. [MNIST example](mnist-pca-umap.html#compare-pairs-of-digits)
+centroid. [Jeon and colleagues](https://arxiv.org/abs/2308.00278) compare class-pair changes using
+distance consistency, introduced by
+[Sips and colleagues](https://doi.org/10.1111/j.1467-8659.2009.01467.x).
+Quadra uses the unrescaled fraction. Jeon and colleagues provide their
+[implementation](https://github.com/hj-n/ltnc).
+[MNIST example](mnist-pca-umap.html#compare-pairs-of-digits)
 
 ## Compare class angular spread
 
@@ -151,6 +160,9 @@ centroid. [MNIST example](mnist-pca-umap.html#compare-pairs-of-digits)
 seen from points in another class. Its detailed results report each direction separately, so
 you can see whether one class's apparent spread changes more than the other's. Use the sampled
 triplet counts to check how much evidence each direction has.
+[Gunaratne, Kobourov and Miller introduce CADI](https://arxiv.org/abs/2605.00637). Quadra follows
+the normalization in their [code](https://github.com/KaviruGunaratne/cadi). Their sampler picks
+classes first. Quadra samples eligible triplets uniformly, so class sizes affect the overall score.
 [MNIST example](mnist-pca-umap.html#compare-angular-spread-from-each-digit)
 
 ## Further Reading

@@ -97,7 +97,11 @@ sample_triplets <- function(n_obs, n_triplets = 5) {
 #' @references Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021).
 #' Understanding how dimension reduction tools work: an empirical approach to
 #' deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
-#' *J Mach. Learn. Res*, *22*, 1-73. <https://jmlr.org/papers/v22/20-1061.html>.
+#' *JMLR*, *22*, 1-73. <https://jmlr.org/papers/v22/20-1061.html>
+#' Wang et al. use random triplet accuracy to compare embeddings.
+#' [drnb](https://github.com/jlmelville/drnb) also reports the fraction of
+#' correct comparisons for each anchor. Quadra omits input ties from each
+#' anchor's denominator.
 #' @seealso [random_pair_distance_emd()] and
 #'   [random_pair_distance_correlation()] for other global preservation
 #'   measures.

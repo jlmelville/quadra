@@ -35,6 +35,11 @@ With \code{k} stored neighbors per observation, each input uses \code{N * k} ind
 Reuse these lists across comparisons to avoid rebuilding neighbor graphs.
 }
 
+\references{
+Chen and Buja (2009) count the neighbors shared by two
+neighborhoods and divide by the neighborhood size.
+\doi{10.1198/jasa.2009.0111}
+}
 \seealso{
 \code{\link[=nn_preservation]{nn_preservation()}} for computing the graphs from coordinates.
 }

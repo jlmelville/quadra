@@ -24,7 +24,8 @@ pca_iris <- stats::prcomp(iris_x, retx = TRUE, rank. = 2)$x
 
 Nearest-neighbor preservation is a useful default: it reports the mean fraction
 of input neighbors retained in the embedding. Pass a vector to `k` to inspect
-more than one neighborhood size.
+more than one neighborhood size. [Chen and Buja](https://doi.org/10.1198/jasa.2009.0111)
+use the fraction of shared neighbors to assess local structure.
 
 ```{r nearest-neighbor-preservation}
 neighbor_k <- c(15, 30)
@@ -95,6 +96,7 @@ metrics for distance matrices. Trustworthiness penalizes observations that
 appear as low-dimensional neighbors even though they are not close in the input
 space. Continuity applies the dual penalty to input-space neighbors that are no
 longer nearby in the embedding.
+[Venna and Kaski introduced both measures](https://doi.org/10.1007/3-540-44668-0_68).
 
 ```{r trustworthiness-continuity}
 din <- as.matrix(stats::dist(iris_x))
@@ -184,7 +186,9 @@ columns when the direction of the comparison reverses.
 ## Local Procrustes Error
 
 Neighbor overlap stays perfect when a neighborhood's members stay together through a shear.
-Local Procrustes aligns the same observations and reports the remaining shape error.
+Local Procrustes aligns the same observations and reports the remaining shape error. The matched
+patches follow [Goldberg and Ritov](https://arxiv.org/abs/0806.2669). Quadra reports a normalized,
+fixed-scale residual for each patch.
 
 ```{r local-procrustes-shear}
 patch <- rbind(c(0, 0), c(1, 0), c(2, 1), c(0.4, 2))
@@ -204,7 +208,10 @@ embedding once and inspect the remaining per-point errors. [Swiss-roll workflow]
 `gap_index()` uses the Delaunay triangles of a 2D embedding to measure changes in the areas
 between observations. Request `ret_extra = TRUE` for triangle indices, relative areas, and
 signed deformations for a map. The index compares area shares, so shear can preserve the
-score while changing shape. [Swiss-roll map](reference-geometry.html#inspect-area-changes-between-observations)
+score while changing shape.
+[Ros, Arleo and Paulovich introduce Gap Index](https://arxiv.org/abs/2607.28324)
+and provide their [implementation](https://codeberg.org/jros/gap-index).
+[Swiss-roll map](reference-geometry.html#inspect-area-changes-between-observations)
 
 ## Local Radius Correlation
 
@@ -212,6 +219,8 @@ Nearest neighbor preservation asks whether the same observations remain nearby.
 `local_radius_correlation()` asks a different local-scale question: do points in
 dense or sparse regions of the input data still have relatively small or large
 nearest-neighbor radii in the embedding?
+[Narayan, Berger and Cho](https://doi.org/10.1038/s41587-020-00801-7) compare local radii when
+assessing density preservation.
 
 ```{r local-radius-correlation}
 radius_scores <- local_radius_correlation(
@@ -287,7 +296,7 @@ directly and should be interpreted alongside neighbor-identity metrics such as
 `mutual_neighbor_correlation()` compares mutual-neighbor count patterns. For
 each observation, the mutual-neighbor count is the number of its first `k`
 nearest neighbors that also include the observation among their first `k`
-nearest neighbors.
+nearest neighbors. The comparison draws on [drnb](https://github.com/jlmelville/drnb).
 
 ```{r mutual-neighbor-correlation}
 mutual_scores <- mutual_neighbor_correlation(
@@ -324,6 +333,9 @@ neighbor-identity metrics such as `nn_preservation()` and scale metrics such as
 Put 16 labeled observations on a ring. The reference graph links each row to the rows one step
 away in either direction. Compare it with two rings that take longer steps between the same
 observations. Every link is reciprocal and both new rings replace every direct neighbor.
+The comparison is
+[Fujiwara and colleagues' Neighbor Dissimilarity, equation 3](https://arxiv.org/abs/2206.13891),
+also implemented in their [FEALM code](https://github.com/takanori-fujiwara/fealm).
 
 ```{r shared-neighbor-rings, eval=requireNamespace("Matrix", quietly = TRUE)}
 ring <- function(step) {
@@ -345,6 +357,8 @@ to 2.83. Each pair can gain or lose shared neighbors even if its two rows never 
 `rnx_auc()` summarizes exact rank-based neighborhood agreement across all
 available neighborhood sizes, weighting smaller neighborhoods more heavily.
 Use `rnx_curve()` when the scale-specific pattern matters.
+[Lee and colleagues describe the RNX curve](https://doi.org/10.1016/j.neucom.2012.12.036)
+and its [weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
 ```{r rnx-agreement}
 rnx_scores <- c(
@@ -411,6 +425,9 @@ the first few positions. [MNIST example](mnist-pca-umap.html#inspect-the-closest
 Place three clouds apart, then move two of their centers together. Steadiness measures how well
 groups sampled in the output hold together in the input. Cohesiveness checks the other direction.
 Swap the input and output coordinates to turn the merge into a split.
+[Jeon and colleagues introduced the measures](https://doi.org/10.1109/TVCG.2021.3114833).
+Their [original code](https://github.com/hj-n/steadiness-cohesiveness) accompanies the paper.
+Quadra follows [ZADU 0.5.4](https://github.com/hj-n/zadu) for shared-neighbor and map weights.
 
 ```{r local-groups, eval=requireNamespace("dbscan", quietly = TRUE) && requireNamespace("Matrix", quietly = TRUE)}
 set.seed(450)

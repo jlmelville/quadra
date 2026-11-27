@@ -35,7 +35,7 @@ means in first-appearance order. Queries without both relevant and irrelevant
 observations are excluded. An empty average is \code{NA_real_}.
 }
 \note{
-Requires the \code{PRROC} package.
+\code{\link[PRROC:roc.curve]{PRROC::roc.curve()}} computes the area for each query.
 }
 \section{Scaling}{
 
@@ -45,6 +45,16 @@ in double precision. When using a subset, report its size and use the same
 rows in each space. Its rows determine both the queries and the candidates.
 }
 
+\references{
+Bamber (1975) relates ROC area to ranking probability.
+\doi{10.1016/0022-2496(75)90001-2}
+
+Venna et al. (2010) describe the retrieval view of
+dimensionality reduction. \url{https://www.jmlr.org/papers/v11/venna10a.html}
+
+Grau, Grosse and Keilwagen (2015) describe the PRROC implementation.
+\doi{10.1093/bioinformatics/btv153}
+}
 \seealso{
 \code{\link[=pr_auc]{pr_auc()}}, \code{\link[=class_pair_auc]{class_pair_auc()}}
 }

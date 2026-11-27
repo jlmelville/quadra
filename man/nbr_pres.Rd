@@ -33,6 +33,11 @@ Supply two dense \code{N} by \code{N} distance matrices. For large datasets, use
 lists. The graph functions use the stored order to resolve boundary ties.
 }
 
+\references{
+Chen and Buja (2009) count the neighbors shared by two
+neighborhoods and divide by the neighborhood size.
+\doi{10.1198/jasa.2009.0111}
+}
 \seealso{
 \code{\link[=pointwise_rank_preservation]{pointwise_rank_preservation()}} for rank penalties per observation.
 }

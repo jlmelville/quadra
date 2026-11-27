@@ -196,6 +196,10 @@ nn_preservation(res$nn_in, iris_pca,
 )
 }
 \references{
+Chen and Buja (2009) measure overlap by the fraction of
+neighbors retained. \doi{10.1198/jasa.2009.0111}
+
+For the approximate search used to find those neighbors, see
 Dong, W., Moses, C., & Li, K. (2011, March).
 Efficient k-nearest neighbor graph construction for generic similarity measures.
 In \emph{Proceedings of the 20th international conference on World Wide Web}

@@ -81,6 +81,12 @@ iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_stress(iris_x, iris_pca2)
 }
+\references{
+The approximate stress calculation in
+\href{https://github.com/jlmelville/drnb}{drnb} inspired this measure.
+Quadra samples pairs and takes a root mean square, scaling each set of
+distances to its own range by default.
+}
 \seealso{
 \code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}},
 \code{\link[=random_pair_distance_emd]{random_pair_distance_emd()}}, and \code{\link[=random_triplet_accuracy]{random_triplet_accuracy()}} for other

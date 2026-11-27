@@ -7,7 +7,15 @@
 #' means in first-appearance order. Queries without both relevant and irrelevant
 #' observations are excluded. An empty average is `NA_real_`.
 #'
-#' @note Requires the `PRROC` package.
+#' @note [PRROC::roc.curve()] computes the area for each query.
+#' @references Bamber (1975) relates ROC area to ranking probability.
+#' \doi{10.1016/0022-2496(75)90001-2}
+#'
+#' Venna et al. (2010) describe the retrieval view of
+#' dimensionality reduction. <https://www.jmlr.org/papers/v11/venna10a.html>
+#'
+#' Grau, Grosse and Keilwagen (2015) describe the PRROC implementation.
+#' \doi{10.1093/bioinformatics/btv153}
 #'
 #' @section Scaling:
 #' Each call takes one dense `N` by `N` distance matrix and ranks candidates
@@ -44,7 +52,7 @@ roc_auc <- function(dm, labels, ret_extra = FALSE) {
 #'
 #' Aggregation and undefined-query handling are the same as for [roc_auc()].
 #'
-#' @note Requires the `PRROC` package.
+#' @note Quadra uses the Davis-Goadrich area returned by [PRROC::pr.curve()].
 #'
 #' @inheritParams roc_auc
 #' @inheritSection roc_auc Scaling
@@ -58,12 +66,15 @@ roc_auc <- function(dm, labels, ret_extra = FALSE) {
 #' @references
 #' Keilwagen, J., Grosse, I., & Grau, J. (2014).
 #' Area under precision-recall curves for weighted and unweighted data.
-#' *PloS One*, *9*(3), e92209.
+#' *PLOS ONE*, *9*(3), e92209. \doi{10.1371/journal.pone.0092209}
 #'
 #' Davis, J., & Goadrich, M. (2006, June).
 #' The relationship between Precision-Recall and ROC curves.
 #' In *Proceedings of the 23rd international conference on Machine learning*
-#' (pp. 233-240). ACM.
+#' (pp. 233-240). ACM. \doi{10.1145/1143844.1143874}
+#'
+#' Grau, Grosse and Keilwagen (2015) describe the PRROC implementation.
+#' \doi{10.1093/bioinformatics/btv153}
 #' @export
 pr_auc <- function(dm, labels, ret_extra = FALSE) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
@@ -290,7 +301,11 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn, ret_extra) {
 #'   mean (`roc` or `pr`) and defined-query count (`n_defined_roc` or
 #'   `n_defined_pr`). Queries from singleton classes are undefined. A pair
 #'   of singletons has count zero and mean `NA_real_`.
-#' @note Requires the `PRROC` package.
+#' @note Quadra applies [roc_auc()] and [pr_auc()] to each two-class subset.
+#' Both use PRROC. The PR score uses Davis and Goadrich's area.
+#' @references Davis and Goadrich (2006). \doi{10.1145/1143844.1143874}
+#'
+#' Grau, Grosse and Keilwagen (2015). PRROC. \doi{10.1093/bioinformatics/btv153}
 #' @examplesIf requireNamespace("PRROC", quietly = TRUE)
 #' class_pair_auc(as.matrix(dist(iris[, -5])), iris$Species)
 #' @export

@@ -38,9 +38,18 @@
 #' embedding. Each score is exact for its query against the full pool. The
 #' column means summarize the sampled queries. Slicing `Xin` and the embeddings
 #' before the call changes the candidate pool and can change the scores.
-#' @references Lee, J. A. and Verleysen, M. (2008).
-#' Quality assessment of nonlinear dimensionality reduction based on K-ary
-#' neighborhoods. <https://proceedings.mlr.press/v4/lee08a.html>
+#' @references Venna and Kaski (2001) give the rank penalties for
+#' trustworthiness and continuity. \doi{10.1007/3-540-44668-0_68}
+#'
+#' Lee et al. (2013) define RNX. Lee, Peluffo-Ordóñez and Verleysen (2015)
+#' summarize the curve with weights proportional to `1 / k`.
+#' \doi{10.1016/j.neucom.2012.12.036} and \doi{10.1016/j.neucom.2014.12.095}
+#'
+#' Lee and Verleysen (2008) give the two mean relative rank errors in
+#' equations 5 and 6. Quadra reports the errors directly, with zero for
+#' agreement. <https://proceedings.mlr.press/v4/lee08a.html>
+#' [ZADU 0.5.4](https://github.com/hj-n/zadu/tree/v0.5.4) instead reports
+#' one minus the normalized error.
 #' @return A list in embedding order, retaining the names of `embeddings`.
 #'   Each entry contains pointwise `trustworthiness` and `continuity`
 #'   matrices, the RNX `auc` vector, and the RNX `curve` matrix at the

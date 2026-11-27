@@ -98,7 +98,9 @@ Color follows arc length from the inner turn (purple) to the outer turn (yellow)
 ## Change the reference and keep the comparisons fixed
 
 Use every unordered pair here. For larger data, use one sample from `sample_pairs()` for both
-references and both embeddings.
+references and both embeddings. For neighbor overlap we use the shared-neighbor fraction described
+by [Chen and Buja](https://doi.org/10.1198/jasa.2009.0111). For Spearman correlation we use the
+pair-distance comparison from [drnb](https://github.com/jlmelville/drnb) with all pairs.
 
 ```{r roll-scores, eval=FALSE}
 references <- list(Ambient = rolled, Intrinsic = flat)
@@ -135,7 +137,8 @@ overlap barely changes for either embedding, and LTSA has the higher overlap und
 Does LTSA's advantage along the surface extend to short distances? In each panel, start with the
 shortest 5% of pairs in that reference and widen the band until it includes all pairs. PCA and
 LTSA are scored on the same pairs within a panel. A pair that's close across a fold might enter
-the ambient panel well before it enters the intrinsic one.
+the ambient panel well before it enters the intrinsic one. The band comparisons follow
+[Takaeda's benchmark](https://arxiv.org/abs/2608.21779), including fitted-scale stress.
 
 ```{r roll-bands, eval=FALSE, fig.width=8, fig.height=4}
 bands <- c(0.05, 0.1, 0.2, 0.5, 1)
@@ -200,6 +203,8 @@ Fifteen neighbors is one view of the roll. Does LTSA still come out ahead if we 
 neighborhood? RNX measures overlap after adjusting for chance. For each point we can compare the
 maps at `k = 15`, then over the whole RNX curve. Its area (RNX AUC) gives more weight to smaller
 neighborhoods. In the table, a win means LTSA scored higher than PCA for that point.
+See [Lee and colleagues](https://doi.org/10.1016/j.neucom.2012.12.036) for RNX and their
+[weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
 ```{r roll-pointwise-rnx, eval=FALSE}
 roll_ranks <- lapply(references, exact_rank_profiles, embeddings = maps, k = k, mrre = TRUE)
@@ -241,9 +246,12 @@ blue favors PCA, and both panels use the same scale centered at zero.
 ## Where did the nearest surface neighbor go?
 
 LTSA leads on RNX, trustworthiness and continuity at 15 neighbors, and on RNX AUC across sizes.
+[Venna and Kaski's trustworthiness and continuity](https://doi.org/10.1007/3-540-44668-0_68)
+penalize new and lost neighbors by their ranks, respectively.
 Now take the points where all four measures favor LTSA on the surface. What happened
 to the very closest surface neighbor? Input mean relative rank error (MRRE) gives the greatest
 weight to a move from first place. We'll look for points where that changes which map we'd choose.
+[Lee and Verleysen describe MRRE](https://proceedings.mlr.press/v4/lee08a.html).
 
 ```{r roll-mrre, eval=FALSE}
 neighbor_order <- function(coords, i) {
@@ -286,7 +294,8 @@ size can coexist with substantial movement of the closest neighbor.
 
 Use one triplet sample for both embeddings and reference geometries. For each anchor, compare
 the order of distances to the same sampled endpoints. Keep 512 comparisons per anchor to
-limit sampling noise in the map.
+limit sampling noise in the map. [Wang and colleagues](https://jmlr.org/papers/v22/20-1061.html)
+use triplet accuracy to evaluate distance ordering in embeddings.
 
 ```{r roll-anchor-triplets, eval=FALSE}
 set.seed(421)
@@ -344,7 +353,8 @@ Red favors LTSA, blue favors PCA, and both use the same scale centered at zero.
 Calibrate each map once using the fitted multiplier from its full intrinsic distance band. For
 each query, measure the distance to the 15th neighbor in each space. A radius ratio of one means
 unchanged local scale. Taking the base-two logarithm gives a halving and a doubling equal weight
-on opposite sides of zero.
+on opposite sides of zero. [Narayan, Berger and Cho](https://doi.org/10.1038/s41587-020-00801-7)
+also compare local radii when assessing density preservation.
 
 ```{r roll-radius, eval=FALSE}
 multipliers <- vapply(band_results$Intrinsic, function(z) z$fitted_scale[z$band == 1], numeric(1))
@@ -399,7 +409,9 @@ both it and the middle strip retain about half their neighbors. PCA's strip medi
 Neighbor overlap counts retained neighbors. To look at their shape, select the 15 nearest
 neighbors of each point in the flat reference and carry the same row IDs into each embedding.
 Calibrate each embedding once using all pair distances, then fit rotation or reflection and
-translation within each patch. This leaves patch-by-patch stretch visible.
+translation within each patch. This leaves patch-by-patch stretch visible. The matched patches
+follow [Goldberg and Ritov's local Procrustes measure](https://arxiv.org/abs/0806.2669). Quadra
+uses a fixed-scale residual.
 
 ```{r roll-shape, eval=FALSE}
 reference_graph <- radii[[1]]$nn_in
@@ -480,7 +492,9 @@ the query. The change is in their placement within its patch.
 
 Use Gap Index to compare the open regions in the LTSA scatterplot under both reference
 geometries. The embedding determines the triangles, so both maps use the same vertices.
-This example requires the `geometry` package.
+This example requires the `geometry` package. The index is due to
+[Ros, Arleo and Paulovich](https://arxiv.org/abs/2607.28324), who provide an
+[implementation](https://codeberg.org/jros/gap-index).
 
 ```{r roll-gap-index, eval=FALSE}
 gap_maps <- lapply(references, function(reference) {

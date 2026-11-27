@@ -33,7 +33,7 @@ imbalanced labels.
 Aggregation and undefined-query handling are the same as for \code{\link[=roc_auc]{roc_auc()}}.
 }
 \note{
-Requires the \code{PRROC} package.
+Quadra uses the Davis-Goadrich area returned by \code{\link[PRROC:pr.curve]{PRROC::pr.curve()}}.
 }
 \section{Scaling}{
 
@@ -46,10 +46,13 @@ rows in each space. Its rows determine both the queries and the candidates.
 \references{
 Keilwagen, J., Grosse, I., & Grau, J. (2014).
 Area under precision-recall curves for weighted and unweighted data.
-\emph{PloS One}, \emph{9}(3), e92209.
+\emph{PLOS ONE}, \emph{9}(3), e92209. \doi{10.1371/journal.pone.0092209}
 
 Davis, J., & Goadrich, M. (2006, June).
 The relationship between Precision-Recall and ROC curves.
 In \emph{Proceedings of the 23rd international conference on Machine learning}
-(pp. 233-240). ACM.
+(pp. 233-240). ACM. \doi{10.1145/1143844.1143874}
+
+Grau, Grosse and Keilwagen (2015) describe the PRROC implementation.
+\doi{10.1093/bioinformatics/btv153}
 }

@@ -48,8 +48,10 @@ rays to two observations from a different class.
 }
 \details{
 The index is the mean squared change in cosine divided by four,
-following the normalization in the authors' implementation. It ranges
-from 0 (agreement) to 1. A zero-length ray gives a cosine of zero.
+as in the \href{https://github.com/KaviruGunaratne/cadi}{authors' code}.
+It ranges from 0 (agreement) to 1. A zero-length ray gives a cosine
+of zero. Quadra's sampler gives each eligible triplet equal probability,
+so class frequencies affect their representation in the overall score.
 Reuse a triplet plan for paired comparisons of embeddings.
 
 The two directions of a class pair can have different distortions.

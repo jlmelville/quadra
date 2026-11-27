@@ -150,6 +150,11 @@ cached <- mutual_neighbor_correlation(
 )
 mutual_neighbor_correlation(cached$nn_in, cached$nn_out, k = c(15, 30))
 }
+\references{
+The \code{soccur} measure in
+\href{https://github.com/jlmelville/drnb}{drnb} counts each point's reciprocal
+neighbors and correlates the two sets of counts.
+}
 \seealso{
 \code{\link[=nn_preservation]{nn_preservation()}} for neighbor-identity preservation and
 \code{\link[=local_radius_correlation]{local_radius_correlation()}} for local scale preservation.

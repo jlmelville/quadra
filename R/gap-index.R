@@ -39,7 +39,8 @@
 #'   signed `deformation`.
 #' @references Ros, J., Arleo, A., & Paulovich, F. (2026).
 #'   Measuring Distortion in the Empty Regions of Dimensionality Reduction
-#'   Scatterplots with the Gap Index. \url{https://arxiv.org/abs/2607.28324}
+#'   Scatterplots with the Gap Index. <https://arxiv.org/abs/2607.28324>
+#'   The authors provide [reference code](https://codeberg.org/jros/gap-index).
 #' @seealso [local_procrustes()], [pointwise_rnx()]
 #' @examplesIf requireNamespace("geometry", quietly = TRUE)
 #' x <- as.matrix(iris[, -5])

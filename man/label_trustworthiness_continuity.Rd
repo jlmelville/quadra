@@ -66,6 +66,10 @@ label_trustworthiness_continuity(x, y, iris$Species, ret_extra = TRUE)
 Jeon, H., Kuo, Y.-H., Aupetit, M., Ma, K.-L., & Seo, J.
 (2024). Classes are not Clusters: Improving Label-based Evaluation
 of Dimensionality Reduction. \doi{10.1109/TVCG.2023.3327187}
+Their \href{https://github.com/hj-n/ltnc}{ltnc package} compares classes in
+pairs. Quadra uses the fraction closer to their own centroid for each
+pair, following the distance consistency criterion of Sips, Neubert,
+Lewis and Hanrahan (2009). \doi{10.1111/j.1467-8659.2009.01467.x}
 }
 \seealso{
 \code{\link[=roc_auc]{roc_auc()}}, \code{\link[=pr_auc]{pr_auc()}}

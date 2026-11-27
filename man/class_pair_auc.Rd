@@ -27,7 +27,8 @@ Restrict both queries and candidates to two classes at a time. Each
 defined query receives equal weight within its class pair.
 }
 \note{
-Requires the \code{PRROC} package.
+Quadra applies \code{\link[=roc_auc]{roc_auc()}} and \code{\link[=pr_auc]{pr_auc()}} to each two-class subset.
+Both use PRROC. The PR score uses Davis and Goadrich's area.
 }
 \section{Scaling}{
 
@@ -41,4 +42,9 @@ classes gives the same pair score as extracting it from the full analysis.
 \dontshow{if (requireNamespace("PRROC", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 class_pair_auc(as.matrix(dist(iris[, -5])), iris$Species)
 \dontshow{\}) # examplesIf}
+}
+\references{
+Davis and Goadrich (2006). \doi{10.1145/1143844.1143874}
+
+Grau, Grosse and Keilwagen (2015). PRROC. \doi{10.1093/bioinformatics/btv153}
 }

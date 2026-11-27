@@ -33,6 +33,9 @@
 #'   (2023). Feature Learning for Nonlinear Dimensionality Reduction toward
 #'   Maximal Extraction of Hidden Patterns, equation 3.
 #'   <https://arxiv.org/abs/2206.13891>
+#'   The authors implement the graph comparison in
+#'   [FEALM](https://github.com/takanori-fujiwara/fealm). Quadra also
+#'   reports which observation pairs gained or lost shared neighbors.
 #' @seealso [mutual_neighbor_correlation()], [nn_preservation()]
 #' @examplesIf requireNamespace("Matrix", quietly = TRUE)
 #' x <- as.matrix(iris[, -5])

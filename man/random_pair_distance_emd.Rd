@@ -84,9 +84,11 @@ random_pair_distance_emd(iris_x, iris_pca2)
 }
 \references{
 Heiser, C. N., & Lau, K. S. (2020).
-A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
-\emph{Cell reports}, \emph{31}(5), 107576.
-\url{https://github.com/KenLauLab/DR-structure-preservation}
+A quantitative framework for evaluating single-cell data structure
+preservation by dimensionality reduction techniques.
+\emph{Cell Reports}, \emph{31}(5), 107576. \doi{10.1016/j.celrep.2020.107576}
+Their \href{https://github.com/KenLauLab/DR-structure-preservation}{code}
+compares distance distributions. Quadra estimates them from sampled pairs.
 }
 \seealso{
 \code{\link[=random_pair_distance_correlation]{random_pair_distance_correlation()}},

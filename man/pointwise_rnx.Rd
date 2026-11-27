@@ -53,6 +53,13 @@ scores <- pointwise_rnx(din, dout, k = c(5, 15, 40))
 head(scores$auc)
 colMeans(scores$curve)
 }
+\references{
+Lee et al. (2013) define the RNX curve. \doi{10.1016/j.neucom.2012.12.036}
+
+Lee, Peluffo-Ordóñez and Verleysen (2015) summarize the curve across
+neighborhood sizes with weights proportional to \code{1 / k}.
+\doi{10.1016/j.neucom.2014.12.095}
+}
 \seealso{
 \code{\link[=pointwise_rank_preservation]{pointwise_rank_preservation()}}, \code{\link[=rnx_curve]{rnx_curve()}}, \code{\link[=rnx_auc]{rnx_auc()}}
 }
