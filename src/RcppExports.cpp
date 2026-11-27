@@ -147,15 +147,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // coordinate_rank_profiles
-List coordinate_rank_profiles(const NumericMatrix& input, const List& embeddings, const IntegerVector& k, bool mrre);
-RcppExport SEXP _quadra_coordinate_rank_profiles(SEXP inputSEXP, SEXP embeddingsSEXP, SEXP kSEXP, SEXP mrreSEXP) {
+List coordinate_rank_profiles(const NumericMatrix& input, const List& embeddings, const IntegerVector& k, bool mrre, const IntegerVector& query_rows);
+RcppExport SEXP _quadra_coordinate_rank_profiles(SEXP inputSEXP, SEXP embeddingsSEXP, SEXP kSEXP, SEXP mrreSEXP, SEXP query_rowsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type input(inputSEXP);
     Rcpp::traits::input_parameter< const List& >::type embeddings(embeddingsSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type k(kSEXP);
     Rcpp::traits::input_parameter< bool >::type mrre(mrreSEXP);
-    rcpp_result_gen = Rcpp::wrap(coordinate_rank_profiles(input, embeddings, k, mrre));
+    Rcpp::traits::input_parameter< const IntegerVector& >::type query_rows(query_rowsSEXP);
+    rcpp_result_gen = Rcpp::wrap(coordinate_rank_profiles(input, embeddings, k, mrre, query_rows));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -221,7 +222,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_quadra_continuity_exact_multi", (DL_FUNC) &_quadra_continuity_exact_multi, 3},
     {"_quadra_pointwise_rank_preservation_exact", (DL_FUNC) &_quadra_pointwise_rank_preservation_exact, 3},
     {"_quadra_pointwise_rnx_exact", (DL_FUNC) &_quadra_pointwise_rnx_exact, 3},
-    {"_quadra_coordinate_rank_profiles", (DL_FUNC) &_quadra_coordinate_rank_profiles, 4},
+    {"_quadra_coordinate_rank_profiles", (DL_FUNC) &_quadra_coordinate_rank_profiles, 5},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {"_quadra_triplet_plan_sample", (DL_FUNC) &_quadra_triplet_plan_sample, 8},
     {"_quadra_random_triplet_sample", (DL_FUNC) &_quadra_random_triplet_sample, 8},

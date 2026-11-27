@@ -319,17 +319,15 @@ penalty_normalizers(std::size_t n_obs,
 void set_row_penalties(const std::vector<std::size_t> &ranks_in,
                        const std::vector<std::size_t> &ranks_out,
                        const std::vector<std::size_t> &rank_ks,
-                       const std::vector<double> &normalizers, std::size_t i,
-                       NumericMatrix &trustworthiness,
+                       const std::vector<double> &normalizers,
+                       std::size_t result_row, NumericMatrix &trustworthiness,
                        NumericMatrix &continuity) {
   for (std::size_t col = 0; col < rank_ks.size(); ++col) {
     const auto rank_k = rank_ks[col];
     double false_penalty = 0;
     double missing_penalty = 0;
     for (std::size_t j = 0; j < ranks_in.size(); ++j) {
-      if (j == i) {
-        continue;
-      }
+      // Self has rank zero in both spaces and incurs neither penalty.
       const auto ri = ranks_in[j];
       const auto ro = ranks_out[j];
       if (ro <= rank_k && ri > rank_k) {
@@ -338,8 +336,10 @@ void set_row_penalties(const std::vector<std::size_t> &ranks_in,
         missing_penalty += static_cast<double>(ro - rank_k);
       }
     }
-    trustworthiness(i, col) = 1.0 - 2.0 * false_penalty / normalizers[col];
-    continuity(i, col) = 1.0 - 2.0 * missing_penalty / normalizers[col];
+    trustworthiness(result_row, col) =
+        1.0 - 2.0 * false_penalty / normalizers[col];
+    continuity(result_row, col) =
+        1.0 - 2.0 * missing_penalty / normalizers[col];
   }
 }
 
@@ -455,7 +455,7 @@ struct CoordinateRankProfile {
 // [[Rcpp::export(rng = false)]]
 List coordinate_rank_profiles(const NumericMatrix &input,
                               const List &embeddings, const IntegerVector &k,
-                              bool mrre) {
+                              bool mrre, const IntegerVector &query_rows) {
   const int n = input.nrow();
   if (n < 3 || input.ncol() < 1 || embeddings.size() < 1) {
     stop("Expected reference coordinates and at least one embedding");
@@ -475,28 +475,32 @@ List coordinate_rank_profiles(const NumericMatrix &input,
       stop("Each embedding must have the same rows as the reference");
     }
     maps.push_back(map);
-    profiles.emplace_back(n, sizes.size(), mrre);
+    profiles.emplace_back(query_rows.size(), sizes.size(), mrre);
   }
   std::vector<double> distances(n), histogram(n), row_curve(n);
-  for (int i = 0; i < n; ++i) {
+  for (R_xlen_t q = 0; q < query_rows.size(); ++q) {
+    if (query_rows[q] < 1 || query_rows[q] > n) {
+      stop("query_rows contains a position outside the reference");
+    }
+    const int anchor = query_rows[q] - 1;
     checkUserInterrupt();
-    const auto reference = euclidean_row_ranks(input, i, distances);
+    const auto reference = euclidean_row_ranks(input, anchor, distances);
     for (std::size_t m = 0; m < maps.size(); ++m) {
-      const auto embedded = euclidean_row_ranks(maps[m], i, distances);
+      const auto embedded = euclidean_row_ranks(maps[m], anchor, distances);
       auto &p = profiles[m];
-      set_row_penalties(reference, embedded, sizes, normalizers, i,
+      set_row_penalties(reference, embedded, sizes, normalizers, q,
                         p.trustworthiness, p.continuity);
       if (mrre) {
         set_relative_rank_errors(reference, embedded, sizes, mrre_normalizers,
-                                 errors, i, p.mrre_input);
+                                 errors, q, p.mrre_input);
         set_relative_rank_errors(embedded, reference, sizes, mrre_normalizers,
-                                 errors, i, p.mrre_output);
+                                 errors, q, p.mrre_output);
       }
       std::fill(histogram.begin(), histogram.end(), 0.0);
-      accumulate_max_ranks(reference, embedded, i, histogram);
-      p.auc[i] = rnx_auc_from_max_rank_histogram(histogram, 1, &row_curve);
+      accumulate_max_ranks(reference, embedded, anchor, histogram);
+      p.auc[q] = rnx_auc_from_max_rank_histogram(histogram, 1, &row_curve);
       for (std::size_t col = 0; col < sizes.size(); ++col) {
-        p.curve(i, col) = row_curve[sizes[col]];
+        p.curve(q, col) = row_curve[sizes[col]];
       }
     }
   }

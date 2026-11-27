@@ -13,13 +13,17 @@
 #'   number of observations. This range supports both rank penalties.
 #' @param mrre Logical. Include mean relative rank errors (MRRE) for input
 #'   neighbors and output neighbors? Defaults to `FALSE`.
+#' @param query_rows Optional vector of unique, one-based row positions in
+#'   `Xin` to score, in the requested order. The default (`NULL`) scores all
+#'   rows. Each query still ranks all other observations, including rows
+#'   outside the selection.
 #' @details Each row's candidate pool contains all other observations.
 #'   Tied Euclidean distances follow observation order, as with
 #'   [pointwise_rank_preservation()] and [pointwise_rnx()] on matrices from
 #'   [stats::dist()]. RNX AUC uses every size from one through `n - 2`.
-#'   The method evaluates all query-candidate distances. Distance and rank
+#'   Only the selected queries incur distance and ranking work. Temporary
 #'   workspace grows linearly with the number of observations. Returned
-#'   profiles use space proportional to observations, requested sizes, and
+#'   profiles use space proportional to scored queries, requested sizes, and
 #'   embeddings.
 #'
 #' For MRRE, select the first `k` neighbors in one space. For each of these
@@ -33,8 +37,8 @@
 #' @return A list in embedding order, retaining the names of `embeddings`.
 #'   Each entry contains pointwise `trustworthiness` and `continuity`
 #'   matrices, the RNX `auc` vector, and the RNX `curve` matrix at the
-#'   requested sizes. Rows retain the reference row names. Average over
-#'   rows for the corresponding aggregate scores. With `mrre = TRUE`, each
+#'   requested sizes. Rows retain the selected reference row names. Column
+#'   means summarize the selected queries. With `mrre = TRUE`, each
 #'   entry also contains `mrre_input` and `mrre_output` matrices at the
 #'   requested sizes. Smaller errors indicate better rank preservation.
 #' @examples
@@ -42,8 +46,16 @@
 #' y <- prcomp(x)$x[, 1:2]
 #' profile <- exact_rank_profiles(x, list(PCA = y), k = c(5, 15), mrre = TRUE)
 #' colMeans(profile$PCA$mrre_input)
+#' spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = c(80, 3))
+#' spot$PCA$curve
 #' @export
-exact_rank_profiles <- function(Xin, embeddings, k, mrre = FALSE) {
+exact_rank_profiles <- function(
+  Xin,
+  embeddings,
+  k,
+  mrre = FALSE,
+  query_rows = NULL
+) {
   Xin <- prepare_input_matrix(Xin, name = "Xin", require_finite = TRUE)
   if (
     !is.list(embeddings) || is.data.frame(embeddings) || !length(embeddings)
@@ -55,15 +67,26 @@ exact_rank_profiles <- function(Xin, embeddings, k, mrre = FALSE) {
   }
   mrre <- validate_scalar_logical(mrre, "mrre")
   k <- validate_rank_penalty_k(k, nrow(Xin))
+  if (is.null(query_rows)) {
+    query_rows <- seq_len(nrow(Xin))
+  } else {
+    if (!is.null(dim(query_rows))) {
+      stop("query_rows must be a vector of row positions", call. = FALSE)
+    }
+    query_rows <- validate_positive_integer_vector(query_rows, "query_rows")
+    if (any(query_rows > nrow(Xin))) {
+      stop("query_rows contains a position outside Xin", call. = FALSE)
+    }
+  }
   embeddings <- lapply(
     embeddings,
     prepare_input_matrix,
     name = "embedding",
     require_finite = TRUE
   )
-  result <- coordinate_rank_profiles(Xin, embeddings, k, mrre)
+  result <- coordinate_rank_profiles(Xin, embeddings, k, mrre, query_rows)
   names(result) <- names(embeddings)
-  rows <- rownames(Xin)
+  rows <- rownames(Xin)[query_rows]
   lapply(result, function(profile) {
     dimnames(profile$trustworthiness) <- dimnames(profile$continuity) <- list(
       rows,

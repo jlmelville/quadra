@@ -88,3 +88,45 @@ test_that("MRRE uses reverse-order normalization without clipping", {
   expect_equal(p$reversed$mrre_output[[1]], 1)
   expect_gt(p$moved$mrre_input[1, 1], 1)
 })
+
+test_that("selected queries reproduce full-pool profiles in requested order", {
+  x <- cbind(c(0, 0, 1, 3, 4, 6, 9, 10, 8))
+  rownames(x) <- letters[seq_len(nrow(x))]
+  maps <- list(
+    permuted = x[c(6, 2, 3, 5, 7, 1, 8, 4, 9), , drop = FALSE],
+    identity = x
+  )
+  for (mrre in c(FALSE, TRUE)) {
+    full <- exact_rank_profiles(x, maps, c(4, 1), mrre)
+    for (rows in list(9L, c(7L, 2L, 1L))) {
+      spot <- exact_rank_profiles(x, maps, c(4, 1), mrre, query_rows = rows)
+      expected <- lapply(full, function(p) {
+        lapply(p, function(score) {
+          if (is.matrix(score)) score[rows, , drop = FALSE] else score[rows]
+        })
+      })
+      expect_identical(spot, expected)
+    }
+  }
+})
+
+test_that("query rows must be unique positions within the reference", {
+  x <- cbind(1:9)
+  for (rows in list(
+    0,
+    -1,
+    1.5,
+    NA_integer_,
+    integer(),
+    10,
+    c(1, 1),
+    TRUE,
+    "1",
+    cbind(1, 2)
+  )) {
+    expect_error(
+      exact_rank_profiles(x, list(x), 1, query_rows = rows),
+      "query_rows"
+    )
+  }
+})

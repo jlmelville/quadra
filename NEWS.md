@@ -2,7 +2,8 @@
 
 * Add `exact_rank_profiles()` for exact Euclidean rank comparisons across embeddings using
   one query's distance and rank workspace at a time. Set `mrre = TRUE` for directional mean
-  relative rank errors among each query's closest input and output neighbors.
+  relative rank errors among each query's closest input and output neighbors. Use `query_rows`
+  to score selected observations against the full candidate pool.
 * Add `steadiness_cohesiveness()` to assess label-free groups and map group distortion.
 * Return per-band fitted scale multipliers with detailed distance-band profiles.
 * Add `class_pair_auc()` for pair-restricted ROC and PR AUC and their defined-query counts.

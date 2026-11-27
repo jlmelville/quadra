@@ -4,7 +4,7 @@
 \alias{exact_rank_profiles}
 \title{Exact Rank Profiles from Euclidean Coordinates}
 \usage{
-exact_rank_profiles(Xin, embeddings, k, mrre = FALSE)
+exact_rank_profiles(Xin, embeddings, k, mrre = FALSE, query_rows = NULL)
 }
 \arguments{
 \item{Xin}{Dense reference coordinates with observations in rows.}
@@ -19,13 +19,18 @@ number of observations. This range supports both rank penalties.}
 
 \item{mrre}{Logical. Include mean relative rank errors (MRRE) for input
 neighbors and output neighbors? Defaults to \code{FALSE}.}
+
+\item{query_rows}{Optional vector of unique, one-based row positions in
+\code{Xin} to score, in the requested order. The default (\code{NULL}) scores all
+rows. Each query still ranks all other observations, including rows
+outside the selection.}
 }
 \value{
 A list in embedding order, retaining the names of \code{embeddings}.
 Each entry contains pointwise \code{trustworthiness} and \code{continuity}
 matrices, the RNX \code{auc} vector, and the RNX \code{curve} matrix at the
-requested sizes. Rows retain the reference row names. Average over
-rows for the corresponding aggregate scores. With \code{mrre = TRUE}, each
+requested sizes. Rows retain the selected reference row names. Column
+means summarize the selected queries. With \code{mrre = TRUE}, each
 entry also contains \code{mrre_input} and \code{mrre_output} matrices at the
 requested sizes. Smaller errors indicate better rank preservation.
 }
@@ -39,9 +44,9 @@ Each row's candidate pool contains all other observations.
 Tied Euclidean distances follow observation order, as with
 \code{\link[=pointwise_rank_preservation]{pointwise_rank_preservation()}} and \code{\link[=pointwise_rnx]{pointwise_rnx()}} on matrices from
 \code{\link[stats:dist]{stats::dist()}}. RNX AUC uses every size from one through \code{n - 2}.
-The method evaluates all query-candidate distances. Distance and rank
+Only the selected queries incur distance and ranking work. Temporary
 workspace grows linearly with the number of observations. Returned
-profiles use space proportional to observations, requested sizes, and
+profiles use space proportional to scored queries, requested sizes, and
 embeddings.
 
 For MRRE, select the first \code{k} neighbors in one space. For each of these
@@ -55,6 +60,8 @@ x <- as.matrix(iris[, -5])
 y <- prcomp(x)$x[, 1:2]
 profile <- exact_rank_profiles(x, list(PCA = y), k = c(5, 15), mrre = TRUE)
 colMeans(profile$PCA$mrre_input)
+spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = c(80, 3))
+spot$PCA$curve
 }
 \references{
 Lee, J. A. and Verleysen, M. (2008).

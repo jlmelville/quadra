@@ -366,6 +366,52 @@ of squares. `radius_ratio` compares the 15th-neighbor distances after calibratio
 Both worst patches retain over half their neighbors and have a local radius close to the
 reference. The matched coordinates still differ substantially after alignment.
 
+Rows 484 and 487 are both among row 486's 15 nearest neighbors in each space. Use the same 16
+points in both panels, with the LTSA coordinates calibrated as above. Center each patch and rotate
+or reflect LTSA into the reference frame. The gray lines join adjacent grid positions from the
+original roll. Following the same lines in both panels makes the change in shape visible.
+
+```{r roll-shape-patch, eval=FALSE, fig.width=7, fig.height=4.1}
+anchor <- 486L
+ids <- c(anchor, reference_graph$idx[anchor, ])
+a <- scale(flat[ids, ], scale = FALSE)
+b <- scale(maps$LTSA[ids, ] * multipliers["LTSA"], scale = FALSE)
+fit <- svd(crossprod(b, a))
+aligned <- b %*% fit$u %*% t(fit$v)
+patches <- list("Flat reference" = a, "Aligned LTSA" = aligned)
+
+lattice <- cbind(match(grid$s, unique(grid$s)), match(grid$h, unique(grid$h)))
+steps <- as.matrix(dist(lattice[ids, ], method = "manhattan"))
+edges <- which(steps == 1 & lower.tri(steps), arr.ind = TRUE)
+focus <- match(c(484, 487), ids)
+ink <- c("#A54810", "#165D85")
+xlim <- extendrange(c(a[, 1], aligned[, 1]), f = 0.18)
+ylim <- extendrange(c(a[, 2], aligned[, 2]), f = 0.08)
+par(mfrow = c(1, 2), mar = c(2.2, 1.3, 2.1, 0.4))
+for (name in names(patches)) {
+  xy <- patches[[name]]
+  vizier::embed_plot(xy, colors = "grey40", title = name, xlim = xlim, ylim = ylim,
+                     show_axes = FALSE, fixed_aspect = TRUE)
+  from <- edges[, 1]
+  to <- edges[, 2]
+  segments(xy[from, 1], xy[from, 2], xy[to, 1], xy[to, 2], col = "grey75")
+  points(xy, pch = 16, col = "grey40", cex = 0.75)
+  points(xy[1, , drop = FALSE], pch = 4, lwd = 2, cex = 1.2)
+  points(xy[focus, ], pch = c(15, 17), col = ink, cex = 1.15)
+  text(xy[focus, ], labels = ids[focus], col = ink, font = 2,
+       pos = if (name == "Flat reference") c(2, 4) else c(4, 2))
+  mtext(sprintf("Marked points are %.2f units apart", dist(xy[focus, ])), side = 1, line = 0.4)
+}
+```
+
+```{r show-roll-shape-patch, echo=FALSE, out.width="100%", fig.alt="The same grid patch is wide in the flat reference and stretches into a thin vertical strip in LTSA. The marked rows 484 and 487 move close together."}
+knitr::include_graphics("figures/roll-shape-patch.png")
+```
+
+The cross marks query 486. Its 15th-neighbor radius changes by less than 5%, but rows 484 and 487
+move from 7.74 units apart on the surface to 0.59 in calibrated LTSA. Both remain neighbors of
+the query. The change is in their placement within its patch.
+
 ## Inspect area changes between observations
 
 Use Gap Index to compare the open regions in the LTSA scatterplot under both reference
