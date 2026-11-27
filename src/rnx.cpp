@@ -399,12 +399,12 @@ List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
 template <typename Vector>
 void fill_euclidean_distances(const NumericMatrix &x, std::size_t row,
                               Vector &distances) {
+  const auto n_obs = static_cast<std::size_t>(x.nrow());
   std::fill(distances.begin(), distances.end(), 0.0);
   for (int dim = 0; dim < x.ncol(); ++dim) {
-    const double *column =
-        x.begin() + static_cast<std::size_t>(dim) * distances.size();
+    const double *column = x.begin() + static_cast<std::size_t>(dim) * n_obs;
     const double anchor = column[row];
-    for (std::size_t j = 0; j < distances.size(); ++j) {
+    for (std::size_t j = 0; j < n_obs; ++j) {
       const double delta = anchor - column[j];
       distances[j] += delta * delta;
     }
