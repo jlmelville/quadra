@@ -5,20 +5,33 @@ description: "Compare neighborhood, distance, and label preservation on the same
 
 ## Which embedding would you use?
 
-PCA and UMAP were fitted to the same 5,000 handwritten digits. The choice depends on what you
-want to read from the map.
+PCA and UMAP were fitted to the same 5,000 handwritten digits. Which map you would use depends on
+what you want to read from it.
 
-- **Find similar images.** UMAP retains 34% of the 15 closest pixel neighbors on average, compared
-  with 6% for PCA. On the balanced 1,000-image audit, UMAP also gives higher mean PR AUC for
-  every digit. [See the per-digit retrieval plot](#digit-retrieval-plot).
-- **Compare distances between arbitrary images.** PCA preserves more sampled triplet orderings
-  (67% versus 62%) and has lower fitted-scale stress in every distance band shown.
-  [See how fidelity changes with distance](#distance-band-plot).
-- **Interpret separation between digits.** UMAP makes 3s and 5s easier to retrieve, yet the spread
-  of 5s seen from a 3 changes much more than the spread of 3s seen from a 5.
-  [See both directions in the angle plot](#class-angle-plot).
+- **Can I trust the nearest images?** UMAP keeps 34% of the 15 closest pixel neighbors on average,
+  compared with 6% for PCA. For one handwritten 7, though, UMAP's nearest image ranks 3,331st in
+  pixel space. [Inspect the two nearest images](#inspect-the-closest-neighbors-within-the-first-15).
+- **Would an exact search or a larger candidate pool change the answer?** UMAP keeps its lead on
+  the [exact-search spot check](#spot-check-the-pixel-neighbor-search). In UMAP, 0s keep more of
+  their pixel neighbors at small neighborhood sizes, while 7s keep more at larger sizes.
+  [Compare the same queries in both candidate pools](#expand-the-candidate-pool-to-all-5000-images).
+- **Can I compare distances between arbitrary images?** PCA preserves more sampled triplet
+  orderings (67% versus 62%) and has lower fitted-scale stress in every distance band shown.
+  [Compare distance bands](#distance-band-plot) or
+  [check distance ordering for individual images](#check-distance-ordering-from-each-anchor).
+- **Are the digits easier to tell apart?** On the 1,000-image audit, UMAP gives higher mean PR AUC
+  than PCA for every digit. UMAP also makes 3s and 5s easier to retrieve than in pixel space, yet
+  angles from 3s to pairs of 5s change more than in the reverse direction.
+  [Compare retrieval by digit](#digit-retrieval-plot) and
+  [inspect the angles in both directions](#class-angle-plot).
+- **Does a UMAP island hold together in pixel space?** The island with the best neighborhood
+  agreement scores highly on Steadiness, yet some pixel-space groups involving its images disperse
+  in UMAP. [Trace the groups in both directions](#check-groups-without-digit-labels) or
+  [see which image pairs acquire shared neighbors](#which-images-acquire-shared-neighbors).
 
-## Load the digits
+To run the recipes, start with the data and fits below. Later sections reuse those objects.
+
+## How were the maps made? {#load-the-digits}
 
 Use `quadra` from this checkout. The following packages supply the data, embedding, plotting,
 and optional audit methods.
@@ -44,7 +57,7 @@ names(label) <- id
 rm(digits)
 ```
 
-## Fit and plot two embeddings
+### Fit and plot two embeddings
 
 The 5,000 training images are balanced by digit. Both fits use the same pixels on a 0–1 scale,
 with no per-pixel standardization.
@@ -76,10 +89,10 @@ for (method in names(maps)) {
 knitr::include_graphics("figures/mnist-embeddings.png")
 ```
 
-## Compare neighbors and distances on all 5,000 rows
+## Which map preserves neighbors and distances? {#compare-neighbors-and-distances-on-all-5000-rows}
 
-Reuse the original-space neighbor graph, pair sample, and triplet sample across both embeddings.
-Look at several neighborhood sizes, including UMAP’s fitting scale of 15.
+Use all 5,000 images. Reuse the pixel neighbor graph, pair sample, and triplet sample across both
+embeddings. Look at several neighborhood sizes, including UMAP’s fitting scale of 15.
 
 ```{r mnist-full, eval=FALSE}
 set.seed(415)
@@ -129,7 +142,7 @@ knitr::include_graphics("figures/mnist-overlap.png")
 Each point is colored by its fraction of retained neighbors at `k = 15`. Both panels use a
 0–1 scale from purple to yellow.
 
-## Spot-check the pixel neighbor search
+### Spot-check the pixel neighbor search
 
 The first calculation used neighbor descent in pixel space and brute-force search in each
 embedding. Sample 100 queries per digit. Each query can still choose from all 4,999 other images.
@@ -200,7 +213,7 @@ queries for PCA and eleven for UMAP. A missed pixel neighbor affects overlap onl
 it for its replacement changes the number shared with the embedding. UMAP's advantage holds in
 both searches on this sample.
 
-## Do the new neighbors point back?
+### Do the new neighbors point back?
 
 When a query loses all 15 pixel neighbors, its overlap score is zero. Its replacement neighbors
 can still differ in how many list the query among their own 15 neighbors. Count the change in
@@ -227,7 +240,7 @@ UMAP          100                  69                 2         -6         15
 Of the 100 UMAP queries that lose every pixel neighbor, 69 gain at least five reciprocal links.
 A high reciprocal count can describe a tightly connected set of entirely new neighbors.
 
-## Compare short and long distances
+### Compare short and long distances
 
 Use the same pair sample to ask whether each method preserves short distances better than the
 dataset-wide score suggests. The input-pair fractions are cumulative.
@@ -262,7 +275,7 @@ knitr::include_graphics("figures/mnist-bands.png")
 PCA has lower fitted-scale stress at each displayed band. It also has higher full-band
 Spearman correlation, while UMAP retains more of the actual nearest neighbors.
 
-## Audit ranks and labels on a fixed subset
+## What changes with the query or the candidate pool? {#audit-ranks-and-labels-on-a-fixed-subset}
 
 One dense double distance matrix for 5,000 observations uses about 191 MiB before temporaries.
 Use 100 observations per digit here, so each matrix uses about 7.6 MiB. All dense diagnostics
@@ -334,7 +347,7 @@ The dotted lines mark random retrieval. Each query has 99 same-label candidates 
 PR AUC in the embedding means same-label images become easier to retrieve. Compare that gain
 with fidelity to the original pixels before interpreting visually separated digits.
 
-## Compare neighborhood sizes for each point
+### Compare neighborhood sizes for each point
 
 At a fixed size, pointwise RNX is overlap adjusted for chance. Use several sizes to see
 whether agreement holds as each point's neighborhood grows. The AUC averages the complete
@@ -386,7 +399,7 @@ those sizes also appeared on audit subsets drawn with seeds 418 and 419. Their A
 enough for the ordering to vary across the three subsets, so the curves show the difference
 more clearly.
 
-## Expand the candidate pool to all 5,000 images
+### Expand the candidate pool to all 5,000 images
 
 Keep both embeddings fixed and let each query rank all 4,999 other images. With Euclidean
 coordinates, `exact_rank_profiles()` computes one query's distances and shares its pixel-space
@@ -465,7 +478,7 @@ when neighborhood size tracks the fraction of candidates. Across all 5,000 queri
 RNX difference (0s minus 7s) is +0.083 at 100 neighbors and −0.080 at 500. With the full pool,
 7s also lead in mean RNX AUC on each matched query set, by 0.009–0.020.
 
-## Inspect the closest neighbors within the first 15
+### Inspect the closest neighbors within the first 15
 
 Input MRRE asks where each of the 15 closest pixel neighbors ended up. Output MRRE starts with the
 15 closest neighbors in the embedding and looks up their pixel ranks. Both give the closest
@@ -526,7 +539,7 @@ assigns first place to a 7 ranked 3,331st by pixel distance. PCA assigns first p
 ranked 67th. That first position carries enough weight to raise UMAP's output error to 0.212,
 compared with 0.053 for PCA. The digit labels and the pixel distances answer different questions.
 
-## Check distance ordering from each anchor
+### Check distance ordering from each anchor
 
 Use the same 1,000 audit rows and the same 512 sampled comparisons per anchor for both
 embeddings. For each anchor, ask whether the closer of two sampled observations stays closer.
@@ -579,7 +592,7 @@ favors PCA. Many 1s show this tradeoff. On this audit subset it persists when th
 are redrawn with seeds 422 and 423. Keeping these anchors fixed and expanding only the RNX candidate
 pool raises the fraction favoring UMAP by RNX AUC from 89.4% to 95.3%.
 
-## Compare pairs of digits
+## How does separation change for a pair of digits? {#compare-pairs-of-digits}
 
 Recompute ROC and PR AUC with candidates restricted to each pair of digits. Use the same audit
 rows in all three spaces. Then compare distance consistency, the fraction of observations
@@ -653,7 +666,7 @@ increases relative to the input, including cases where the embedding makes a pai
 more separated around their centroids. Use the per-pair changes to inspect what drives each score.
 [Label retrieval guide](label-retrieval.html#compare-centroid-separation)
 
-## Compare angular spread from each digit
+### Compare angular spread from each digit
 
 Class Angular Distortion Index (CADI) compares the angle from one observation to two observations
 of another class. For each triplet, it squares the change in cosine and divides by four. Use one
@@ -730,7 +743,9 @@ Across audit seeds 417–419, 3-to-5 is UMAP's highest-distortion direction amon
 directed digit pairs. It scores 0.118–0.132, versus 0.040–0.051 for 5-to-3. UMAP has lower
 overall CADI than PCA in each audit.
 
-## Inspect the gaps between digits
+## What do UMAP's gaps and islands represent?
+
+### Inspect the gaps between digits
 
 Gap Index colors each empty triangle in the embedding by how much its share of the total
 triangle area changes. This comparison uses the same 1,000 audit rows and requires the
@@ -789,7 +804,7 @@ much space opens between them. Red means expansion and blue means compression.
 The triangles fill the convex hull. Their areas describe this sampled scatterplot, including
 its boundary. [Gap Index paper](https://arxiv.org/abs/2607.28324)
 
-## Check groups without digit labels
+### Check groups without digit labels
 
 Steadiness grows groups in the embedding and checks them in pixel space. Cohesiveness grows
 groups in pixel space and checks them in the embedding. Both use shared-neighbor similarities.
@@ -878,7 +893,7 @@ The first two panels outline the same island. The last enlarges it and circles t
 with labels other than 1. Purple indicates low scores and yellow high scores in all three panels.
 [Steadiness and Cohesiveness](https://arxiv.org/abs/2107.07859)
 
-## Which images acquire shared neighbors?
+### Which images acquire shared neighbors?
 
 Compare PCA and UMAP on the same 5,000 pixel-graph rows. Neighbor Dissimilarity (ND) measures
 changes in the fraction of neighbors shared by each *pair* of images. The score takes the larger

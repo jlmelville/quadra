@@ -3,13 +3,25 @@ title: "Which distances should a Swiss roll preserve?"
 description: "Evaluate PCA and LTSA against rolled and intrinsic geometry."
 ---
 
-Score the same two embeddings against two references. The rolled coordinates define ambient
-straight-line distances. Arc length and height define distances along the surface.
+## Which distances answer the question?
+
+Two points on neighboring turns of the Swiss roll can be close across the gap and far apart along
+the sheet. The choice of reference changes which embedding best preserves the ordering of distances.
+
+- **How close are the points in 3D?** Use straight-line distances between the rolled coordinates
+  (the ambient reference). PCA preserves their ordering better than LTSA.
+- **How well does the map unroll the sheet?** Use distances in the flat arc-length and height
+  coordinates (the intrinsic reference). LTSA preserves their ordering better than PCA.
+
+The [all-pairs comparison](#change-the-reference-and-keep-the-comparisons-fixed) uses the same
+embeddings and point pairs for both references. Even against the flat reference, LTSA retains
+only 46% of the 15 nearest neighbors on average.
+[See how a patch changes shape while keeping eight neighbors](#compare-local-shape-after-alignment).
+
+## Make the roll and its flat reference
 
 Install `quadra` from this checkout for the band profile, and install `flotsam` and `vizier`
 for the fit and figures.
-
-## Make the roll and its flat reference
 
 ```{r roll-install, eval=FALSE}
 # Run once if the packages are missing:
@@ -115,9 +127,8 @@ results
 4 Intrinsic   LTSA         0.590            0.459
 ```
 
-PCA has the higher pair-distance correlation for the rolled coordinates. LTSA has the higher
-correlation after switching to the flat reference. Both embeddings retain fewer than half
-the neighbors at this `k`.
+Switching references reverses the ordering by pair-distance correlation. At 15 neighbors the
+overlap barely changes for either embedding, and LTSA has the higher overlap under both references.
 
 ## Compare short and long distances
 
@@ -511,11 +522,5 @@ knitr::include_graphics("figures/roll-gap-index.png")
 The outlined triangle opens into the central gap. Its intrinsic deformation is 0.94, and
 its vertices have higher mean RNX AUC than the embedding as a whole. Switching from ambient
 to intrinsic geometry also changes the direction of deformation on 16% of plotted area
-from compression to expansion. Both panels use the same scale, with red for expansion and blue for compression.
-
-## Which distances answer the question?
-
-For straight-line distances through the rolled cloud, PCA better preserves the order of pairs.
-For distances along the surface, the same comparison favors LTSA. Choose the flat arc-length and
-height reference when the purpose is to unroll the surface. Even then, LTSA retains only 46% of
-the 15 nearest neighbors on average, so local comparisons still warrant a look at the patches.
+from compression to expansion. Both panels use the same scale, with red for expansion and blue for
+compression.
