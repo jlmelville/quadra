@@ -55,7 +55,9 @@ or [label retrieval](https://jlmelville.github.io/quadra/articles/label-retrieva
 For a worked example, pick the question closest to yours.
 
 - Can you trust the digit next to yours in a UMAP plot?
-  [Compare PCA and UMAP on MNIST](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html).
+  [Compare PCA, UMAP and t-SNE on MNIST](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html).
+- What happens to the scores when two digits set the scale of a map?
+  [Compare two LTSA fits](https://jlmelville.github.io/quadra/articles/ltsa-map-spread.html).
 - Should a map preserve distances across a fold or along the sheet?
   [Unroll a Swiss roll](https://jlmelville.github.io/quadra/articles/reference-geometry.html).
 - How can two clouds merge while their short distances still look perfect?

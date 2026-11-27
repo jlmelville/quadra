@@ -23,6 +23,7 @@ articles:
 - title: Workflows
   contents:
   - articles/mnist-pca-umap
+  - articles/ltsa-map-spread
   - articles/reference-geometry
   - articles/distance-band-fidelity
 
