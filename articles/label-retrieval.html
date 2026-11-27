@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,11 @@ rare and precision among retrieved observations matters.</p>
 <p><code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> treat each
 observation as a query, rank the remaining observations by distance, and
 regard matching labels as relevant. These are supervised retrieval
-summaries. Both functions require the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC package</a>.</p>
+summaries. Both functions require the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC package</a>. <a href="https://jmlr.org/papers/v11/venna10a.html" class="external-link">Venna and
+colleagues</a> develop the retrieval view of dimensionality-reduction
+evaluation. <a href="https://doi.org/10.1016/0022-2496(75)90001-2" class="external-link">Bamber</a> relates
+ROC area to ranking probability. For each query, Quadra uses PRROC’s <a href="https://doi.org/10.1145/1143844.1143874" class="external-link">Davis–Goadrich PR
+area</a>.</p>
 <p>Perfect retrieval has AUC 1 for both measures. Random ROC AUC is 0.5.
 The random PR AUC baseline is the prevalence of relevant observations
 among the remaining candidates, so it changes with label imbalance.</p>
@@ -128,10 +132,117 @@ count.</p>
 relevant and irrelevant candidates are <code>NA_real_</code> and
 excluded from the overall and per-label means. If no query is defined,
 the overall average is <code>NA_real_</code>.</p>
-<p>Both functions require a finite square distance matrix and one
-nonmissing label per observation. The query itself is excluded from its
-ranking. Labels without a defined query remain <code>NA_real_</code> in
-<code>label_av</code>.</p>
+<p>If all you have are the map coordinates, pass them to
+<code>coords</code>. You can pick a few query flowers and still rank
+each against the other 149 by Euclidean distance. Here each query has 49
+flowers of its own species to retrieve. A species with no defined query
+has mean <code>NA_real_</code> in <code>label_av</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">51L</span>, <span class="fl">101L</span><span class="op">)</span></span>
+<span><span class="va">selected</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roc_auc.html">roc_auc</a></span><span class="op">(</span></span>
+<span>  coords <span class="op">=</span> <span class="va">pca_iris</span>,</span>
+<span>  labels <span class="op">=</span> <span class="va">iris</span><span class="op">$</span><span class="va">Species</span>,</span>
+<span>  query_rows <span class="op">=</span> <span class="va">rows</span>,</span>
+<span>  ret_extra <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>row <span class="op">=</span> <span class="va">selected</span><span class="op">$</span><span class="va">query_rows</span>, ROC <span class="op">=</span> <span class="va">selected</span><span class="op">$</span><span class="va">query_auc</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   row       ROC</span></span>
+<span><span class="co">## 1   1 1.0000000</span></span>
+<span><span class="co">## 2  51 0.7512245</span></span>
+<span><span class="co">## 3 101 0.9763265</span></span></code></pre>
+</div>
+<div class="section level2">
+<h2 id="find-which-class-pairs-changed">Find which class pairs changed<a class="anchor" aria-label="anchor" href="#find-which-class-pairs-changed"></a>
+</h2>
+<p>Per-label AUC can tell you that retrieval got worse. Restrict the
+candidates to two classes to see which labels became harder to tell
+apart.</p>
+<p>Start with four separated copies of a small grid. In one output, move
+the grids in each column onto one another. In the other, do the same
+within each row.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.125</span>, <span class="fl">0</span>, <span class="fl">0.125</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.125</span>, <span class="fl">0</span>, <span class="fl">0.125</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">label</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">tile</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">make_distances</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">cx</span>, <span class="va">cy</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">xy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span></span>
+<span>    <span class="va">rbind</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">cx</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">tile</span>, <span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">cx</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cy</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span>, <span class="st">"+"</span><span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">xy</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">din</span> <span class="op">&lt;-</span> <span class="fu">make_distances</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span>, <span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">merge_columns</span> <span class="op">&lt;-</span> <span class="fu">make_distances</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">merge_rows</span> <span class="op">&lt;-</span> <span class="fu">make_distances</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span>, <span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pr_by_label</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="../reference/pr_auc.html">pr_auc</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">label</span><span class="op">)</span><span class="op">$</span><span class="va">label_av</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="fu">pr_by_label</span><span class="op">(</span><span class="va">merge_columns</span><span class="op">)</span>, rows <span class="op">=</span> <span class="fu">pr_by_label</span><span class="op">(</span><span class="va">merge_rows</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fl">3</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##             A     B     C     D</span></span>
+<span><span class="co">## columns 0.403 0.403 0.403 0.403</span></span>
+<span><span class="co">## rows    0.403 0.403 0.403 0.403</span></span></code></pre>
+<p>Both outputs give the same PR AUC for each label. Now compare
+two-class ROC AUC in the input and in each output, using the same query
+and candidate IDs for each pair.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/class_pair_auc.html">class_pair_auc</a></span><span class="op">(</span><span class="va">din</span>, <span class="va">label</span>, metrics <span class="op">=</span> <span class="st">"roc"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  <span class="va">reference</span>,</span>
+<span>  column_merge_change <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/class_pair_auc.html">class_pair_auc</a></span><span class="op">(</span><span class="va">merge_columns</span>, <span class="va">label</span>, <span class="st">"roc"</span><span class="op">)</span><span class="op">$</span><span class="va">roc</span> <span class="op">-</span> <span class="va">reference</span><span class="op">$</span><span class="va">roc</span>,</span>
+<span>    <span class="fl">3</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  row_merge_change <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/class_pair_auc.html">class_pair_auc</a></span><span class="op">(</span><span class="va">merge_rows</span>, <span class="va">label</span>, <span class="st">"roc"</span><span class="op">)</span><span class="op">$</span><span class="va">roc</span> <span class="op">-</span> <span class="va">reference</span><span class="op">$</span><span class="va">roc</span>,</span>
+<span>    <span class="fl">3</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   label_a label_b roc n_defined_roc column_merge_change row_merge_change</span></span>
+<span><span class="co">## 1       A       B   1            18              -0.556            0.000</span></span>
+<span><span class="co">## 2       A       C   1            18               0.000           -0.556</span></span>
+<span><span class="co">## 3       A       D   1            18               0.000            0.000</span></span>
+<span><span class="co">## 4       B       C   1            18               0.000            0.000</span></span>
+<span><span class="co">## 5       B       D   1            18               0.000           -0.556</span></span>
+<span><span class="co">## 6       C       D   1            18              -0.556            0.000</span></span></code></pre>
+<p>The negative rows identify the pairs that were merged. Positive
+changes in other comparisons mean retrieval became easier between those
+labels. That can help flag separation exaggerated by an embedding. <a href="https://arxiv.org/abs/2308.00278" class="external-link">Jeon et al. on class-pair
+distortion</a></p>
+</div>
+<div class="section level2">
+<h2 id="compare-centroid-separation">Which centroid is closer?<a class="anchor" aria-label="anchor" href="#compare-centroid-separation"></a>
+</h2>
+<p>Take just the 5s and 9s. What fraction of these images are closer to
+their own digit’s centroid than to the other one? A tie counts as half.
+<code><a href="../reference/label_trustworthiness_continuity.html">label_trustworthiness_continuity()</a></code> compares that fraction
+in the input and the embedding for each pair of labels. Trustworthiness
+penalizes a drop. Continuity penalizes a rise, since the map can also
+make the classes look <em>more</em> distinct than they were. In PCA the
+5s and 9s get easier to retrieve even as fewer images lie closer to
+their own centroid. <a href="https://arxiv.org/abs/2308.00278" class="external-link">Jeon and
+colleagues</a> compare class-pair changes using distance consistency,
+introduced by <a href="https://doi.org/10.1111/j.1467-8659.2009.01467.x" class="external-link">Sips and
+colleagues</a>. Quadra uses the unrescaled fraction. Jeon and colleagues
+provide their <a href="https://github.com/hj-n/ltnc" class="external-link">implementation</a>.
+<a href="mnist-pca-umap.html#compare-pairs-of-digits">MNIST
+example</a></p>
+</div>
+<div class="section level2">
+<h2 id="compare-class-angular-spread">Compare class angular spread<a class="anchor" aria-label="anchor" href="#compare-class-angular-spread"></a>
+</h2>
+<p><code><a href="../reference/class_angular_distortion_index.html">class_angular_distortion_index()</a></code> compares the angles
+between pairs of points from one class as seen from points in another
+class. Its detailed results report each direction separately, so you can
+see whether one class’s apparent spread changes more than the other’s.
+Use the sampled triplet counts to check how much evidence each direction
+has. <a href="https://arxiv.org/abs/2605.00637" class="external-link">Gunaratne, Kobourov and
+Miller introduce CADI</a>. Quadra follows the normalization in their <a href="https://github.com/KaviruGunaratne/cadi" class="external-link">code</a>. Their sampler
+picks classes first. Quadra samples eligible triplets uniformly, so
+class sizes affect the overall score. <a href="mnist-pca-umap.html#compare-angular-spread-from-each-digit">MNIST
+example</a></p>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>

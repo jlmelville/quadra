@@ -63,7 +63,9 @@ scaled and unscaled PCA.
 ## Random Triplet Accuracy
 
 Random triplet accuracy is the proportion of sampled anchored triplets
-whose input-space distance ordering is retained in the embedding.
+whose input-space distance ordering is retained in the embedding. [Wang
+and colleagues](https://jmlr.org/papers/v22/20-1061.html) use it to
+compare embeddings.
 
 Triplets with tied input-space distances are excluded from the
 denominator because they do not define a relative ordering. If no
@@ -73,11 +75,51 @@ Detailed results contain the evaluated triplets and a row-aligned
 agreement vector; input-distance ties are `NA`. Reset the R seed and
 keep `n_threads` fixed to repeat implicit sampling.
 
+Use `by_anchor = TRUE` to see which observations retain their distance
+ordering. The summary includes sampled, defined, and agreeing comparison
+counts for every input row. Recover the overall accuracy by dividing
+total agreements by total defined comparisons.
+
+``` r
+
+set.seed(43)
+triplet_summary <- random_triplet_accuracy(
+  iris_x,
+  pca_unscaled,
+  n_triplets = 64,
+  by_anchor = TRUE
+)
+head(triplet_summary$by_anchor)
+```
+
+    ##   anchor n_sampled n_defined n_agree accuracy
+    ## 1      1        64        64      63 0.984375
+    ## 2      2        64        64      63 0.984375
+    ## 3      3        64        64      64 1.000000
+    ## 4      4        64        64      64 1.000000
+    ## 5      5        64        64      64 1.000000
+    ## 6      6        64        64      63 0.984375
+
+``` r
+
+with(triplet_summary$by_anchor, sum(n_agree) / sum(n_defined))
+```
+
+    ## [1] 0.9791515
+
+For an anchor map, increase the number of comparisons and check whether
+the pattern holds with another sample. Reuse the same triplets across
+embeddings so each comparison uses the same endpoints. [MNIST
+example](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html#check-distance-ordering-from-each-anchor)
+
 ## Random Pair Distance Correlation
 
 [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md)
 measures Pearson correlation between matched input and output distances
-by default. Set `method = "spearman"` to compare their ranks.
+by default. Set `method = "spearman"` to compare their ranks. [Becht and
+colleagues](https://doi.org/10.1038/nbt.4314) compared distances when
+evaluating UMAP. The sampled Spearman comparison draws on
+[drnb](https://github.com/jlmelville/drnb).
 
 Euclidean and squared Euclidean have the same ordering, so their
 Spearman interpretation is equivalent. Squaring changes magnitudes and
@@ -87,7 +129,12 @@ can change the default Pearson result.
 
 [`random_pair_distance_emd()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_emd.md)
 compares the empirical input and output distance distributions using
-Earth Mover’s Distance (1D Wasserstein).
+Earth Mover’s Distance (1D Wasserstein). [Heiser and
+Lau](https://doi.org/10.1016/j.celrep.2020.107576) compared distance
+distributions in their evaluation of single-cell embeddings. Quadra
+estimates them from sampled pairs. Their
+[implementation](https://github.com/KenLauLab/DR-structure-preservation)
+is available.
 
 EMD compares marginal distributions rather than pairwise correspondence.
 
@@ -100,12 +147,100 @@ sampled distance vector is range-scaled.
 [`random_pair_distance_stress()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_stress.md)
 compares the matched sampled distances with a root mean squared
 difference, after scaling each distance vector to `[0, 1]` by default.
+This sampled RMSE draws on [drnb](https://github.com/jlmelville/drnb),
+though the scaling conventions differ.
 
 RNX is sometimes described as spanning local and global scales, but it
 measures rank-based neighborhood agreement rather than sampled global
 distances. See the [local
 preservation](https://jlmelville.github.io/quadra/articles/local-preservation.html#multi-scale-rnx-agreement)
 guide for its AUC, scale-specific curve, and interpretation.
+
+## Identical Scatterplots, Different Point Identities
+
+Swap the positions of two observations and leave their row IDs fixed.
+Both point clouds occupy the same positions, so the distribution over
+all six unordered distances stays identical.
+
+``` r
+
+x <- cbind(c(0, 1, 4, 10))
+y <- x[c(1, 4, 3, 2), , drop = FALSE]
+pairs <- t(combn(nrow(x), 2))
+c(
+  emd = random_pair_distance_emd(
+    x,
+    y,
+    pairs = pairs,
+    metric_in = "euclidean",
+    metric_out = "euclidean",
+    range_scale = FALSE
+  ),
+  stress = random_pair_distance_stress(
+    x,
+    y,
+    pairs = pairs,
+    metric_in = "euclidean",
+    metric_out = "euclidean",
+    range_scale = FALSE
+  ),
+  neighbor_overlap = mean(nbr_pres(
+    as.matrix(dist(x)),
+    as.matrix(dist(y)),
+    k = 1
+  ))
+)
+```
+
+    ##              emd           stress neighbor_overlap 
+    ##         0.000000         5.477226         0.000000
+
+EMD is zero. Matched distances change, giving an RMSE of about 5.48, and
+every observation loses its original nearest neighbor. With a random
+subset of pairs, the two sets of distances may differ even though the
+complete distributions agree.
+
+## Stress After Fitting One Scale
+
+What happens if we let the embedding choose its units? [Smelser, Miller
+and Kobourov](https://arxiv.org/abs/2408.07724) fit one multiplier to
+the output distances. [Takaeda’s
+benchmark](https://github.com/toorpia/dr-fidelity-benchmark) fits it
+separately for each input-distance band. Let’s try the full band on a
+small example. The three distances from the first point change from
+`1, 2, 3` to `2, 3, 4`.
+
+``` r
+
+x <- cbind(0:3)
+y <- cbind(c(0, 2, 3, 4))
+pairs <- cbind(1L, 2:4)
+c(
+  range_scaled_rmse = random_pair_distance_stress(
+    x,
+    y,
+    pairs = pairs,
+    metric_in = "euclidean",
+    metric_out = "euclidean"
+  ),
+  fitted_scale_stress = random_pair_distance_band_profile(
+    x,
+    y,
+    pairs = pairs,
+    bands = 1
+  )$normalized_stress
+)
+```
+
+    ##   range_scaled_rmse fitted_scale_stress 
+    ##           0.0000000           0.1215661
+
+Range scaling takes both sets of distances to `0, 0.5, 1`, giving zero
+error. Now try to do the same with a single multiplier. Halving the
+output distances fixes the first pair, but it sends the third distance
+to 2 when we wanted 3. Even the best multiplier leaves a fitted-scale
+stress of about 0.122. [Try the same comparison on short
+distances](https://jlmelville.github.io/quadra/articles/distance-band-fidelity.md).
 
 ## Check Output Scale Alongside Scores
 

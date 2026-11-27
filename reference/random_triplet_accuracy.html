@@ -11,7 +11,7 @@ result is NA_real_ if no triplet defines an ordering."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,8 @@ result is <code>NA_real_</code> if no triplet defines an ordering.</p>
 <span>  is_transposed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n_threads <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  triplets <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  ret_extra <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  ret_extra <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  by_anchor <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -117,19 +118,41 @@ numeric <code>n_triplets</code> is ignored.</p></dd>
 <dd><p>Whether to return the triplets and their row-aligned
 agreement outcomes.</p></dd>
 
+
+<dt id="arg-by-anchor">by_anchor<a class="anchor" aria-label="anchor" href="#arg-by-anchor"></a></dt>
+<dd><p>Whether to return sampled, defined, and agreeing
+comparison counts and accuracy for each anchor.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Triplet accuracy in <code>[0, 1]</code>, or <code>NA_real_</code> if every input comparison
 is tied. With <code>ret_extra = TRUE</code>, returns a list with <code>accuracy</code>,
 <code>triplets</code>, and <code>agreement</code>. Agreement is <code>NA</code> for input-distance ties,
-<code>TRUE</code> for matching strict orderings, and <code>FALSE</code> otherwise.</p>
+<code>TRUE</code> for matching strict orderings, and <code>FALSE</code> otherwise.
+With <code>by_anchor = TRUE</code>, returns a list with <code>accuracy</code> and a
+<code>by_anchor</code> data frame, plus the triplet details if requested. The data
+frame has one row per observation, in input order, with columns
+<code>anchor</code> (one-based), <code>n_sampled</code>, <code>n_defined</code>, <code>n_agree</code>, and
+<code>accuracy</code>. Anchors without defined comparisons have <code>NA_real_</code>
+accuracy. To recover the overall score, weight the defined anchor
+accuracies by <code>n_defined</code>. Increase the sample per anchor when a map
+needs more stable scores than the default five comparisons provide.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>Xin</code> and <code>metric_in</code> define the reference geometry. Supply <code>triplets</code> to
 reuse exact comparisons, or reset the R seed and keep <code>n_threads</code> fixed. A
 matrix-valued <code>n_triplets</code> uses its documented zero-based column layout.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>Evaluate the full coordinates with a fixed number of sampled comparisons
+per anchor. A numeric <code>n_triplets</code> gives <code>N * n_triplets</code> comparisons in
+total. Each uses only its three observations. Reuse a triplet plan across
+embeddings and request <code>by_anchor = TRUE</code> for counts and accuracy per row.</p>
     </div>
     <div class="section level2">
     <h2 id="numerical-failures">Numerical failures<a class="anchor" aria-label="anchor" href="#numerical-failures"></a></h2>
@@ -143,7 +166,11 @@ Finite distances alone do not guarantee accuracy at extreme coordinate scales.</
     <p>Wang, Y., Huang, H., Rudin, C., &amp; Shaposhnik, Y. (2021).
 Understanding how dimension reduction tools work: an empirical approach to
 deciphering t-SNE, UMAP, TriMAP, and PaCMAP for data visualization.
-<em>J Mach. Learn. Res</em>, <em>22</em>, 1-73. <a href="https://jmlr.org/papers/v22/20-1061.html" class="external-link">https://jmlr.org/papers/v22/20-1061.html</a>.</p>
+<em>JMLR</em>, <em>22</em>, 1-73. <a href="https://jmlr.org/papers/v22/20-1061.html" class="external-link">https://jmlr.org/papers/v22/20-1061.html</a>
+Wang et al. use random triplet accuracy to compare embeddings.
+<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> also reports the fraction of
+correct comparisons for each anchor. Quadra omits input ties from each
+anchor's denominator.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -157,7 +184,7 @@ measures.</p></div>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">iris_pca2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span><span class="fu">random_triplet_accuracy</span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">iris_pca2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.976</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.98</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

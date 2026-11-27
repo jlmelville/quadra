@@ -1,6 +1,81 @@
 # Changelog
 
-## quadra 0.2.1.9000
+## quadra 0.3.0
+
+### New features and requirements
+
+- Require rnndescent 0.3.0 or later. Its compiled cosine and correlation
+  distances preserve the expected values when otherwise ordinary
+  coordinates are multiplied by `1e100`.
+- Use `coords` and `query_rows` in
+  [`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md)
+  or
+  [`roc_auc()`](https://jlmelville.github.io/quadra/reference/roc_auc.md)
+  to score selected observations against the full candidate pool without
+  building a square distance matrix.
+- Read the number of shared neighbors at each requested size from the
+  `retained` matrix in each embedding’s
+  [`exact_rank_profiles()`](https://jlmelville.github.io/quadra/reference/exact_rank_profiles.md)
+  result.
+- Add
+  [`neighbor_dissimilarity()`](https://jlmelville.github.io/quadra/reference/neighbor_dissimilarity.md)
+  to compare shared neighbors in two graphs and identify the observation
+  pairs that gain or lose them.
+- Add
+  [`exact_rank_profiles()`](https://jlmelville.github.io/quadra/reference/exact_rank_profiles.md)
+  to compare Euclidean neighborhood ranks across embeddings without
+  storing a full distance matrix. Use `query_rows` to check selected
+  observations against the full candidate pool. Use `mrre = TRUE` to see
+  how far the closest neighbors move in either direction.
+- Add
+  [`steadiness_cohesiveness()`](https://jlmelville.github.io/quadra/reference/steadiness_cohesiveness.md)
+  to check whether groups on the map hold together in the input and
+  whether input groups hold together on the map. Neither check needs
+  class labels.
+- Return per-band fitted scale multipliers with detailed distance-band
+  profiles.
+- Add
+  [`class_pair_auc()`](https://jlmelville.github.io/quadra/reference/class_pair_auc.md)
+  to see which pairs of classes became easier or harder to retrieve. It
+  reports ROC and PR AUC and the number of queries that contribute to
+  each score.
+- Add
+  [`class_angular_distortion_index()`](https://jlmelville.github.io/quadra/reference/class_angular_distortion_index.md)
+  for directed class-pair angular distortion.
+- Add
+  [`gap_index()`](https://jlmelville.github.io/quadra/reference/gap_index.md)
+  for regional area distortion in two-dimensional embeddings.
+- Add per-anchor counts and accuracy with
+  `random_triplet_accuracy(..., by_anchor = TRUE)`.
+- Add
+  [`pointwise_rnx()`](https://jlmelville.github.io/quadra/reference/pointwise_rnx.md)
+  for observation-level RNX AUC and selected neighborhood sizes.
+- Add
+  [`label_trustworthiness_continuity()`](https://jlmelville.github.io/quadra/reference/label_trustworthiness_continuity.md)
+  to compare the fraction of points closer to their own centroid for
+  each pair of classes in the input and the embedding.
+- Add
+  [`random_pair_distance_band_profile()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_band_profile.md)
+  for Spearman correlation and fitted-scale stress across input-distance
+  bands, with reusable pair samples.
+- Add
+  [`pointwise_rank_preservation()`](https://jlmelville.github.io/quadra/reference/pointwise_rank_preservation.md)
+  for observation-level trustworthiness and continuity.
+- Add
+  [`local_procrustes()`](https://jlmelville.github.io/quadra/reference/local_procrustes.md)
+  for fixed-scale shape error on matched reference neighborhoods.
+
+### Worked examples
+
+- Compare PCA, UMAP and t-SNE on the same MNIST images. See which pixel
+  neighbors each map keeps and how many of its first few neighbors show
+  the same digit as the query.
+- Compare two LTSA maps whose neighbor overlap is nearly identical even
+  though two images dominate the spread of one map. The Swiss-roll
+  example shows how the choice of reference geometry changes which
+  embedding best preserves distances.
+
+### Bug fixes and other improvements
 
 - Make random-triplet result construction safe during garbage
   collection, without changing sampled comparisons or random-number

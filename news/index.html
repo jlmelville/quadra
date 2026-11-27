@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,33 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.1.9000" id="quadra-0219000">quadra 0.2.1.9000<a class="anchor" aria-label="anchor" href="#quadra-0219000"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="quadra-030">quadra 0.3.0<a class="anchor" aria-label="anchor" href="#quadra-030"></a></h2>
+<div class="section level3">
+<h3 id="new-features-and-requirements-0-3-0">New features and requirements<a class="anchor" aria-label="anchor" href="#new-features-and-requirements-0-3-0"></a></h3>
+<ul><li>Require rnndescent 0.3.0 or later. Its compiled cosine and correlation distances preserve the expected values when otherwise ordinary coordinates are multiplied by <code>1e100</code>.</li>
+<li>Use <code>coords</code> and <code>query_rows</code> in <code><a href="../reference/pr_auc.html">pr_auc()</a></code> or <code><a href="../reference/roc_auc.html">roc_auc()</a></code> to score selected observations against the full candidate pool without building a square distance matrix.</li>
+<li>Read the number of shared neighbors at each requested size from the <code>retained</code> matrix in each embedding’s <code><a href="../reference/exact_rank_profiles.html">exact_rank_profiles()</a></code> result.</li>
+<li>Add <code><a href="../reference/neighbor_dissimilarity.html">neighbor_dissimilarity()</a></code> to compare shared neighbors in two graphs and identify the observation pairs that gain or lose them.</li>
+<li>Add <code><a href="../reference/exact_rank_profiles.html">exact_rank_profiles()</a></code> to compare Euclidean neighborhood ranks across embeddings without storing a full distance matrix. Use <code>query_rows</code> to check selected observations against the full candidate pool. Use <code>mrre = TRUE</code> to see how far the closest neighbors move in either direction.</li>
+<li>Add <code><a href="../reference/steadiness_cohesiveness.html">steadiness_cohesiveness()</a></code> to check whether groups on the map hold together in the input and whether input groups hold together on the map. Neither check needs class labels.</li>
+<li>Return per-band fitted scale multipliers with detailed distance-band profiles.</li>
+<li>Add <code><a href="../reference/class_pair_auc.html">class_pair_auc()</a></code> to see which pairs of classes became easier or harder to retrieve. It reports ROC and PR AUC and the number of queries that contribute to each score.</li>
+<li>Add <code><a href="../reference/class_angular_distortion_index.html">class_angular_distortion_index()</a></code> for directed class-pair angular distortion.</li>
+<li>Add <code><a href="../reference/gap_index.html">gap_index()</a></code> for regional area distortion in two-dimensional embeddings.</li>
+<li>Add per-anchor counts and accuracy with <code>random_triplet_accuracy(..., by_anchor = TRUE)</code>.</li>
+<li>Add <code><a href="../reference/pointwise_rnx.html">pointwise_rnx()</a></code> for observation-level RNX AUC and selected neighborhood sizes.</li>
+<li>Add <code><a href="../reference/label_trustworthiness_continuity.html">label_trustworthiness_continuity()</a></code> to compare the fraction of points closer to their own centroid for each pair of classes in the input and the embedding.</li>
+<li>Add <code><a href="../reference/random_pair_distance_band_profile.html">random_pair_distance_band_profile()</a></code> for Spearman correlation and fitted-scale stress across input-distance bands, with reusable pair samples.</li>
+<li>Add <code><a href="../reference/pointwise_rank_preservation.html">pointwise_rank_preservation()</a></code> for observation-level trustworthiness and continuity.</li>
+<li>Add <code><a href="../reference/local_procrustes.html">local_procrustes()</a></code> for fixed-scale shape error on matched reference neighborhoods.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="worked-examples-0-3-0">Worked examples<a class="anchor" aria-label="anchor" href="#worked-examples-0-3-0"></a></h3>
+<ul><li>Compare PCA, UMAP and t-SNE on the same MNIST images. See which pixel neighbors each map keeps and how many of its first few neighbors show the same digit as the query.</li>
+<li>Compare two LTSA maps whose neighbor overlap is nearly identical even though two images dominate the spread of one map. The Swiss-roll example shows how the choice of reference geometry changes which embedding best preserves distances.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-and-other-improvements-0-3-0">Bug fixes and other improvements<a class="anchor" aria-label="anchor" href="#bug-fixes-and-other-improvements-0-3-0"></a></h3>
 <ul><li>Make random-triplet result construction safe during garbage collection, without changing sampled comparisons or random-number sequences.</li>
 <li>Neighbor-overlap calculations no longer create <code>.Random.seed</code> when it is absent.</li>
 <li>Sampled pair and triplet metrics now report nonfinite computed distances as numerical failures.</li>
@@ -51,6 +77,7 @@
 <code><a href="../reference/mutual_neighbor_correlation.html">mutual_neighbor_correlation()</a></code> is faster.</li>
 <li>The global and local preservation guides now show how to detect collapsed embeddings whose scores appear perfect.</li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="quadra-021">quadra 0.2.1<a class="anchor" aria-label="anchor" href="#quadra-021"></a></h2>
 <div class="section level3">

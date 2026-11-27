@@ -2,7 +2,8 @@
 
 Quantifies dimensionality-reduction embeddings with global
 distance-preservation metrics, local nearest-neighbor preservation
-metrics, co-ranking metrics, and label-based retrieval AUC metrics.
+metrics, co-ranking metrics, label-based metrics, and group preservation
+metrics.
 
 ## See also
 

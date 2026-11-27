@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,66 +71,204 @@
 
     
     
-<p>This package provides several ways to evaluate the performance of an
-embedding. They fall into four broad families.</p>
+<p>An embedding can put the right digit next to yours and still put two
+whole groups much too far apart. Which of those would matter for the way
+you intend to use the map?</p>
 <div class="section level2">
 <h2 id="choosing-a-starting-metric">Choosing a Starting Metric<a class="anchor" aria-label="anchor" href="#choosing-a-starting-metric"></a>
 </h2>
 <table class="table">
 <colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
+<col width="50%">
+<col width="50%">
 </colgroup>
 <thead><tr class="header">
-<th>User question</th>
-<th>Reasonable starting metric</th>
-<th>Decision supported by the result</th>
+<th>What do you want to know?</th>
+<th>Where to start</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Are the same nearby observations retained?</td>
-<td><code><a href="../reference/nn_preservation.html">nn_preservation()</a></code></td>
-<td>Whether local-neighborhood identity is preserved well enough for the
-intended use.</td>
+<td>Who stayed nearby?</td>
+<td>
+<code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> counts how many of the original
+neighbors each point keeps.</td>
 </tr>
 <tr class="even">
-<td>Do dense and sparse regions keep their relative local scale?</td>
-<td><code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code></td>
-<td>Whether scale distortion needs attention even when neighbor
-identities look acceptable.</td>
+<td>Do dense regions stay dense?</td>
+<td>
+<code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code> checks whether points with
+small neighborhood radii in the input still have small radii on the
+map.</td>
 </tr>
 <tr class="odd">
-<td>Are broad distance orderings retained?</td>
-<td><code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code></td>
-<td>Whether the embedding preserves enough global ordering for the
-intended use.</td>
+<td>Do distances keep their order?</td>
+<td>
+<code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code> takes a point and two others.
+How often does the closer one stay closer?</td>
 </tr>
 <tr class="even">
-<td>Do known labels remain retrievable?</td>
+<td>Can I retrieve a label?</td>
 <td>
-<code><a href="../reference/roc_auc.html">roc_auc()</a></code> or <code><a href="../reference/pr_auc.html">pr_auc()</a></code>
-</td>
-<td>Whether same-label observations rank ahead of other labels in the
-embedding.</td>
+<code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> tell you how well
+images of the same digit, for example, rank ahead of the other
+digits.</td>
+</tr>
+<tr class="odd">
+<td>Did a patch change shape?</td>
+<td>
+<code><a href="../reference/local_procrustes.html">local_procrustes()</a></code> aligns the same points in both
+spaces. See what happened to <a href="reference-geometry.html#compare-local-shape-after-alignment">one
+patch of the Swiss roll</a>.</td>
+</tr>
+<tr class="even">
+<td>Can a few points dominate the map?</td>
+<td>Compare coordinate spread with fitted-scale stress. See <a href="ltsa-map-spread.html">the two digits that set the scale of an LTSA
+map</a>.</td>
+</tr>
+<tr class="odd">
+<td>Did a gap open up?</td>
+<td>
+<code><a href="../reference/gap_index.html">gap_index()</a></code> compares triangle areas. See the <a href="mnist-pca-umap.html#inspect-the-gaps-between-digits">gap between
+three digits</a>.</td>
+</tr>
+<tr class="even">
+<td>Can I trust an island?</td>
+<td>
+<code><a href="../reference/steadiness_cohesiveness.html">steadiness_cohesiveness()</a></code> checks groups <a href="mnist-pca-umap.html#check-groups-without-digit-labels">in both
+directions</a>, without using the digit labels.</td>
+</tr>
+<tr class="odd">
+<td>Did two classes become easier to tell apart?</td>
+<td>Compare <code><a href="../reference/class_pair_auc.html">class_pair_auc()</a></code> with the fraction of points
+closer to their own class centroid. To check angular spread, look at <a href="mnist-pca-umap.html#compare-angular-spread-from-each-digit">the 5s
+as seen from the 3s</a>.</td>
 </tr>
 </tbody>
 </table>
-<p>Choose metrics to match the relationships an embedding should
-preserve. The table gives starting points.</p>
+</div>
+<div class="section level2">
+<h2 id="which-metrics-work-on-large-datasets">Which metrics work on large datasets?<a class="anchor" aria-label="anchor" href="#which-metrics-work-on-large-datasets"></a>
+</h2>
+<p>Around <strong>5,000 observations</strong>, check the memory budget
+before constructing a distance matrix. One dense <code>N</code> by
+<code>N</code> double matrix takes <code>8 * N^2</code> bytes for its
+entries. At 5,000 rows, budget 191 MiB for one space, 381.5 MiB for a
+reference and one embedding, or 572 MiB for a reference and two
+embeddings. A single matrix grows from 7.6 MiB at 1,000 rows to 763 MiB
+at 10,000 and 26.8 GiB at 60,000. Allow additional memory for
+coordinates, copies and working storage. The practical limit depends on
+which metric you run and how much memory is available.</p>
+<ul>
+<li>
+<strong>Distances and their ordering.</strong> Use the full
+coordinates and reuse a sample of pairs across embeddings for
+correlation, EMD, stress or a distance-band profile. Check how many
+pairs reach the narrowest band. For
+<code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code>, the sample size is <em>per
+observation</em>. <a href="#global-distance-preservation">Global
+distance metrics</a>
+</li>
+<li>
+<strong>Neighbors.</strong> A graph with <code>k</code> neighbors
+per row stores <code>N * k</code> indices. Keep the graphs from
+<code>nn_preservation(..., ret_extra = TRUE)</code> for overlap, local
+radii (which also need distances) and reciprocal neighbors. Brute-force
+search still compares every pair. For approximate search, <a href="mnist-pca-umap.html#spot-check-the-pixel-neighbor-search">spot-check
+a few queries</a>.</li>
+<li>
+<strong>Exact ranks.</strong> With Euclidean coordinates,
+<code><a href="../reference/exact_rank_profiles.html">exact_rank_profiles()</a></code> can score a sample of queries against
+every candidate. It needs only one query’s ranks at a time, but scoring
+<em>all</em> queries still requires quadratic distance work. <a href="#sample-queries-when-the-full-neighbor-pool-matters">Try a query
+sample</a>.</li>
+<li>
+<strong>Label retrieval.</strong> Give <code><a href="../reference/roc_auc.html">roc_auc()</a></code> or
+<code><a href="../reference/pr_auc.html">pr_auc()</a></code> the map coordinates in <code>coords</code> and a
+sample of <code>query_rows</code>. Every other observation stays in the
+ranking. Use the same queries in each map. <a href="mnist-pca-umap.html#umap-versus-tsne">Compare UMAP and t-SNE on
+the same digits</a>.</li>
+<li>
+<strong>Class geometry.</strong>
+<code><a href="../reference/label_trustworthiness_continuity.html">label_trustworthiness_continuity()</a></code> checks nearest-centroid
+consistency for every pair of classes.
+<code><a href="../reference/class_angular_distortion_index.html">class_angular_distortion_index()</a></code> estimates angular
+distortion from sampled triplets. Here <code>n_triplets</code> is the
+<em>total</em> number to draw. Both work on coordinates.</li>
+<li>
+<strong>Patches and gaps.</strong> Reuse a reference graph for
+<code><a href="../reference/local_procrustes.html">local_procrustes()</a></code> and fit one small alignment per point.
+For <code><a href="../reference/gap_index.html">gap_index()</a></code>, only the edges of the 2D triangulation
+need distances.</li>
+<li>
+<strong>Shared neighbors.</strong>
+<code><a href="../reference/neighbor_dissimilarity.html">neighbor_dissimilarity()</a></code> starts with sparse graphs. One
+popular neighbor can occur in many lists, and every pair of those lists
+shares that neighbor. Even the scalar score can then require space for
+nearly every pair of observations.</li>
+</ul>
+<p><strong>When to use a smaller dataset.</strong>
+<code><a href="../reference/nbr_pres.html">nbr_pres()</a></code>, <code><a href="../reference/trustworthiness.html">trustworthiness()</a></code>,
+<code><a href="../reference/trustworthiness.html">continuity()</a></code>, <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code>,
+<code><a href="../reference/rnx_curve.html">rnx_curve()</a></code>, <code><a href="../reference/pointwise_rank_preservation.html">pointwise_rank_preservation()</a></code> and
+<code><a href="../reference/pointwise_rnx.html">pointwise_rnx()</a></code> each take <strong>two dense distance
+matrices</strong>. <code><a href="../reference/class_pair_auc.html">class_pair_auc()</a></code> takes <strong>one per
+space</strong>. If you need class-pair AUC for just two classes, select
+those classes before computing distances. If the full matrices exceed
+your budget, use the same representative subset in every space and
+report the candidate pool size.</p>
+<p>For <code><a href="../reference/steadiness_cohesiveness.html">steadiness_cohesiveness()</a></code>, start with a
+representative subset. It takes coordinates, then builds dense distance
+and similarity matrices and repeatedly clusters sampled groups. <a href="https://doi.org/10.1109/TVCG.2021.3114833" class="external-link">Jeon and colleagues
+introduced the measures</a>. Quadra follows <a href="https://github.com/hj-n/zadu" class="external-link">ZADU 0.5.4</a> for shared-neighbor
+and map weights. Asking for pointwise scores adds more square matrices.
+Fewer iterations save CPU while the dense allocations remain. The MNIST
+workflow ran exact coordinate ranks for all 5,000 images and used 1,000
+for the group comparison. <a href="mnist-pca-umap.html#check-groups-without-digit-labels">MNIST group
+audit</a></p>
+<div class="section level3">
+<h3 id="sample-queries-when-the-full-neighbor-pool-matters">Sample queries when the full neighbor pool matters<a class="anchor" aria-label="anchor" href="#sample-queries-when-the-full-neighbor-pool-matters"></a>
+</h3>
+<p>To estimate rank preservation for the full dataset, sample the
+<strong>queries</strong> and keep every row of the reference and
+embeddings. With <code>x</code> and <code>maps</code> from the MNIST
+workflow, these 500 queries each rank the other 4,999 images. The mean
+gives each sampled query equal weight.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">queries</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample.int</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fl">500</span><span class="op">)</span></span>
+<span><span class="va">profiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exact_rank_profiles.html">exact_rank_profiles</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">maps</span>, k <span class="op">=</span> <span class="fl">15</span>, query_rows <span class="op">=</span> <span class="va">queries</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">profiles</span>, <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">p</span><span class="op">$</span><span class="va">trustworthiness</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Subsetting the coordinate matrices also removes candidates and
+changes what the ranks mean. On the same MNIST queries at
+<code>k = 100</code>, 7s retained neighbors better than 0s in the
+1,000-image pool, while 0s did better in the 5,000-image pool. At
+<code>k = 500</code> in the larger pool, 7s led again. Report the number
+of queries, the size of the candidate pool and <code>k</code>. <a href="mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images">Full-pool
+MNIST comparison</a></p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="local-neighborhood-preservation">Local Neighborhood Preservation<a class="anchor" aria-label="anchor" href="#local-neighborhood-preservation"></a>
 </h2>
 <p><code><a href="../reference/nbr_pres.html">nbr_pres()</a></code> compares neighborhoods from exact distance
 matrices. <code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> and <code><a href="../reference/nbr_pres_knn.html">nbr_pres_knn()</a></code>
-work with nearest-neighbor graphs and scale to larger datasets.</p>
-<p><code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> are also
-local-neighborhood metrics, but they use rank penalties rather than only
-counting shared neighbors. They are exact distance-matrix functions for
-small datasets. <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes rank-based
-neighborhood agreement over many neighborhood sizes, while
-<code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> retains the individual scales.</p>
+compare nearest-neighbor graphs. All three count the fraction of
+neighbors retained, as in <a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">Chen and Buja</a>.</p>
+<p><code><a href="../reference/trustworthiness.html">trustworthiness()</a></code> and <code><a href="../reference/trustworthiness.html">continuity()</a></code> score
+misplaced neighbors by their ranks. <code><a href="../reference/rnx_auc.html">rnx_auc()</a></code> summarizes
+rank-based neighborhood agreement over many neighborhood sizes, while
+<code><a href="../reference/rnx_curve.html">rnx_curve()</a></code> retains the individual scales.
+<code><a href="../reference/pointwise_rnx.html">pointwise_rnx()</a></code> gives the comparison per observation. The
+rank penalties are from <a href="https://doi.org/10.1007/3-540-44668-0_68" class="external-link">Venna and Kaski</a>. <a href="https://doi.org/10.1016/j.neucom.2012.12.036" class="external-link">Lee and
+colleagues</a> describe the RNX curve and its <a href="https://doi.org/10.1016/j.neucom.2014.12.095" class="external-link">weighted
+summary</a>.</p>
+<p>To see how far the closest neighbors move in the ranking, use
+<code><a href="../reference/exact_rank_profiles.html">exact_rank_profiles()</a></code> with <code>mrre = TRUE</code>. A
+first neighbor that slips to fifth counts more than a tenth neighbor
+that slips to fourteenth. You can follow the input neighbors into the
+embedding or trace the embedding’s neighbors back to the input. <a href="https://proceedings.mlr.press/v4/lee08a.html" class="external-link">Lee and Verleysen’s
+rank errors</a> <a href="local-preservation.html#can-the-same-neighbors-come-back-in-a-different-order">Worked
+example</a></p>
 <p>See the <a href="local-preservation.html">local preservation</a>
 article for examples and related local diagnostics.</p>
 </div>
@@ -141,7 +279,27 @@ article for examples and related local diagnostics.</p>
 their relative scale. <code><a href="../reference/local_radius_correlation.html">local_radius_correlation()</a></code> compares
 the local radius around each observation in the input data and output
 embedding, using either the distance to the <code>k</code>th neighbor or
-the mean distance to the first <code>k</code> neighbors.</p>
+the mean distance to the first <code>k</code> neighbors. <a href="https://doi.org/10.1038/s41587-020-00801-7" class="external-link">Narayan, Berger and
+Cho</a> use local radii to assess density preservation in den-SNE and
+densMAP.</p>
+</div>
+<div class="section level2">
+<h2 id="local-shape-preservation">Local Shape Preservation<a class="anchor" aria-label="anchor" href="#local-shape-preservation"></a>
+</h2>
+<p><code><a href="../reference/local_procrustes.html">local_procrustes()</a></code> checks how much the same reference
+neighborhood changes shape after rigid alignment. It can find
+distortions even when all members stay together. The matched patches
+follow <a href="https://arxiv.org/abs/0806.2669" class="external-link">Goldberg and Ritov</a>.
+Quadra uses a fixed-scale residual.</p>
+</div>
+<div class="section level2">
+<h2 id="regional-area-distortion">Regional Area Distortion<a class="anchor" aria-label="anchor" href="#regional-area-distortion"></a>
+</h2>
+<p><code><a href="../reference/gap_index.html">gap_index()</a></code> locates expansion and compression in the
+empty triangles of a 2D embedding. <a href="https://arxiv.org/abs/2607.28324" class="external-link">Ros, Arleo and Paulovich
+introduced the index</a>. Their <a href="https://codeberg.org/jros/gap-index" class="external-link">implementation</a> is
+available. <a href="mnist-pca-umap.html#inspect-the-gaps-between-digits">MNIST
+example</a></p>
 </div>
 <div class="section level2">
 <h2 id="local-graph-diagnostics">Local Graph Diagnostics<a class="anchor" aria-label="anchor" href="#local-graph-diagnostics"></a>
@@ -150,7 +308,11 @@ the mean distance to the first <code>k</code> neighbors.</p>
 mutual-neighbor count pattern in the input and output nearest-neighbor
 graphs. It asks whether points with many or few reciprocal
 nearest-neighbor relationships in the input graph have similar counts in
-the output graph.</p>
+the output graph. The comparison draws on <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>.</p>
+<p>Use <code><a href="../reference/neighbor_dissimilarity.html">neighbor_dissimilarity()</a></code> when the question is which
+pairs of observations gain or lose shared neighbors. <a href="https://arxiv.org/abs/2206.13891" class="external-link">Fujiwara and colleagues</a>
+define the measure. <a href="local-preservation.html#which-pairs-share-the-same-neighbors">Graph
+comparison</a></p>
 </div>
 <div class="section level2">
 <h2 id="global-distance-preservation">Global Distance Preservation<a class="anchor" aria-label="anchor" href="#global-distance-preservation"></a>
@@ -160,21 +322,29 @@ distance methods for global structure preservation:</p>
 <ul>
 <li>
 <code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code> checks whether sampled
-distance orderings are preserved.</li>
+distance orderings are preserved, as in <a href="https://jmlr.org/papers/v22/20-1061.html" class="external-link">Wang and
+colleagues</a>.</li>
 <li>
 <code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code> measures Pearson or
-Spearman correlation between sampled input and output distances.</li>
+Spearman correlation between sampled input and output distances. See <a href="https://doi.org/10.1038/nbt.4314" class="external-link">Becht and colleagues</a> and <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>.</li>
 <li>
 <code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code> compares sampled distance
-distributions using Earth Mover’s Distance.</li>
+distributions using Earth Mover’s Distance, following <a href="https://doi.org/10.1016/j.celrep.2020.107576" class="external-link">Heiser and Lau</a>
+and their <a href="https://github.com/KenLauLab/DR-structure-preservation" class="external-link">code</a>.</li>
 <li>
 <code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares matched sampled
-distances with a root mean squared difference.</li>
+distances with a root mean squared difference. This comparison draws on
+<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>.</li>
 </ul>
 <p>For these metrics, <code>Xin</code> and <code>metric_in</code> define
 the reference geometry.</p>
-<p>See the <a href="global-preservation.html">global preservation</a>
-article for those metrics.</p>
+<p>The <a href="global-preservation.html#identical-scatterplots-different-point-identities">identity-permutation
+example</a> shows which metrics notice when the same plotted positions
+belong to different observations. Use <a href="distance-band-fidelity.html">distance bands</a> to compare
+ordering and fitted-scale stress from nearby input pairs through the
+entire pair sample. The rank and fitted-scale stress comparisons follow
+<a href="https://arxiv.org/abs/2608.21779" class="external-link">Takaeda’s benchmark</a>.
+Quadra samples pairs by default.</p>
 </div>
 <div class="section level2">
 <h2 id="input-and-ordering-conventions">Input and Ordering Conventions<a class="anchor" aria-label="anchor" href="#input-and-ordering-conventions"></a>
@@ -196,6 +366,16 @@ Spearman ordering.</p>
 <p><code><a href="../reference/roc_auc.html">roc_auc()</a></code> and <code><a href="../reference/pr_auc.html">pr_auc()</a></code> rank other
 observations by distance from each query and treat matching labels as
 relevant. They require the <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC package</a>.</p>
+<p>For each class pair, <code><a href="../reference/label_trustworthiness_continuity.html">label_trustworthiness_continuity()</a></code>
+asks how many observations fall closer to their own class centroid and
+how that fraction changes in the embedding.
+<code><a href="../reference/class_angular_distortion_index.html">class_angular_distortion_index()</a></code> measures changes in the
+angles that one class subtends from points in another. These measures
+come from <a href="https://arxiv.org/abs/2308.00278" class="external-link">Jeon and
+colleagues</a> and <a href="https://arxiv.org/abs/2605.00637" class="external-link">Gunaratne,
+Kobourov and Miller</a>, respectively. For the former, Quadra uses the
+unrescaled distance consistency of <a href="https://doi.org/10.1111/j.1467-8659.2009.01467.x" class="external-link">Sips and
+colleagues</a>.</p>
 <p>See the <a href="label-retrieval.html">label retrieval</a> article
 for examples and return value details.</p>
 </div>

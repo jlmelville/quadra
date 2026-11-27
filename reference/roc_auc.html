@@ -9,7 +9,7 @@ labels as relevant."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ labels as relevant.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">roc_auc</span><span class="op">(</span><span class="va">dm</span>, <span class="va">labels</span>, ret_extra <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">roc_auc</span><span class="op">(</span>dm <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">labels</span>, ret_extra <span class="op">=</span> <span class="cn">FALSE</span>, coords <span class="op">=</span> <span class="cn">NULL</span>, query_rows <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -57,17 +57,29 @@ labels as relevant.</p>
 
 
 <dl><dt id="arg-dm">dm<a class="anchor" aria-label="anchor" href="#arg-dm"></a></dt>
-<dd><p>Finite square numeric distance matrix. The query itself is excluded.</p></dd>
+<dd><p>Finite square numeric distance matrix. Supply exactly one of <code>dm</code>
+and <code>coords</code>.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
 <dd><p>A label vector without missing values, with one label per row
-of <code>dm</code>.</p></dd>
+of the supplied data.</p></dd>
 
 
 <dt id="arg-ret-extra">ret_extra<a class="anchor" aria-label="anchor" href="#arg-ret-extra"></a></dt>
-<dd><p>Whether to append row-aligned query AUCs and the number of
-defined queries.</p></dd>
+<dd><p>Whether to return query AUCs in the requested row order
+and the number of defined queries.</p></dd>
+
+
+<dt id="arg-coords">coords<a class="anchor" aria-label="anchor" href="#arg-coords"></a></dt>
+<dd><p>Dense Euclidean coordinates, one observation per row.
+Numeric columns are used for data frames.</p></dd>
+
+
+<dt id="arg-query-rows">query_rows<a class="anchor" aria-label="anchor" href="#arg-query-rows"></a></dt>
+<dd><p>Unique one-based row positions to score, in the order
+requested. The default scores every row. Only the query itself is
+excluded from its candidate pool.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -75,7 +87,9 @@ defined queries.</p></dd>
     <p>A list whose first components are:</p><ul><li><p><code>av_auc</code>: the mean AUC over defined queries.</p></li>
 <li><p><code>label_av</code>: a named list of per-label means in first-appearance order.</p></li>
 </ul><p>With <code>ret_extra = TRUE</code>, the list also contains <code>query_auc</code>, with
-<code>NA_real_</code> for undefined queries, and the integer <code>n_defined</code>.</p>
+<code>NA_real_</code> for undefined queries, and the integer <code>n_defined</code>. When
+supplied, <code>query_rows</code> identifies the returned queries. Means use the
+selected queries. Labels without a defined query have mean <code>NA_real_</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -85,9 +99,53 @@ observations are excluded. An empty average is <code>NA_real_</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
-    <p>Requires the <code>PRROC</code> package.</p>
+    <p><code><a href="https://rdrr.io/pkg/PRROC/man/roc.curve.html" class="external-link">PRROC::roc.curve()</a></code> computes the area for each query.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>For large datasets, pass <code>coords</code> and sample <code>query_rows</code>. Each query
+computes one row of Euclidean distances and ranks all other observations.
+The distance workspace grows linearly with the candidate pool. Scoring all
+queries still takes quadratic distance work. If you already have <code>dm</code>,
+you can sample the same queries from it. Subsetting the coordinates or
+the matrix before the call also changes the candidates.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Bamber (1975) relates ROC area to ranking probability.
+<a href="https://doi.org/10.1016/0022-2496%2875%2990001-2" class="external-link">doi:10.1016/0022-2496(75)90001-2</a></p>
+<p>Venna et al. (2010) describe the retrieval view of
+dimensionality reduction. <a href="https://www.jmlr.org/papers/v11/venna10a.html" class="external-link">https://www.jmlr.org/papers/v11/venna10a.html</a></p>
+<p>Grau, Grosse and Keilwagen (2015) describe the PRROC implementation.
+<a href="https://doi.org/10.1093/bioinformatics/btv153" class="external-link">doi:10.1093/bioinformatics/btv153</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="pr_auc.html">pr_auc()</a></code>, <code><a href="class_pair_auc.html">class_pair_auc()</a></code></p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">roc_auc</span><span class="op">(</span>coords <span class="op">=</span> <span class="va">x</span>, labels <span class="op">=</span> <span class="va">iris</span><span class="op">$</span><span class="va">Species</span>, query_rows <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">51</span>, <span class="fl">101</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $av_auc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9172109</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $label_av</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $label_av$setosa</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $label_av$versicolor</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.7717347</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $label_av$virginica</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.979898</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

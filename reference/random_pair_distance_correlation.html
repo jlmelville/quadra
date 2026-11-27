@@ -11,7 +11,7 @@ measures rank association."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,6 +129,15 @@ in each row must differ. If supplied, <code>n_pairs</code> is ignored.</p></dd>
 exact comparisons, or reset the R seed and keep <code>n_threads</code> fixed.</p>
     </div>
     <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>For large datasets, use the full coordinates and set <code>n_pairs</code> to a total
+sample size. Distance calculations and stored distances scale with the
+number of sampled pairs. Reuse <code>pairs</code> across embeddings. Supplying every
+unordered pair makes both the pair count and distance work quadratic.</p>
+    </div>
+    <div class="section level2">
     <h2 id="numerical-failures">Numerical failures<a class="anchor" aria-label="anchor" href="#numerical-failures"></a></h2>
 
 
@@ -140,7 +149,11 @@ Finite distances alone do not guarantee accuracy at extreme coordinate scales.</
     <p>Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W.,
 Ng, L. G., ... &amp; Newell, E. W. (2019).
 Dimensionality reduction for visualizing single-cell data using UMAP.
-<em>Nature biotechnology</em>, <em>37</em>(1), 38-44.</p>
+<em>Nature Biotechnology</em>, <em>37</em>(1), 38-44. <a href="https://doi.org/10.1038/nbt.4314" class="external-link">doi:10.1038/nbt.4314</a>
+
+Becht et al. compare corresponding distances. The Spearman option was
+inspired by the random-pair comparisons in
+<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -153,7 +166,7 @@ Dimensionality reduction for visualizing single-cell data using UMAP.
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">iris_pca2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span><span class="fu">random_pair_distance_correlation</span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">iris_pca2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9997105</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9997387</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

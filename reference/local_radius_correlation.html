@@ -13,7 +13,7 @@ distance to the first k nearest non-self neighbors."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -206,6 +206,24 @@ magnitudes used by this metric, so its result can differ from Euclidean.</p>
 the corresponding result is <code>NA_real_</code>. If <code>log = TRUE</code>, all selected local
 radius values must be positive, so duplicate points that produce zero local
 radii should be handled before requesting a log-scale comparison.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing <code>k</code> neighbors per observation has <code>N * k</code> entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider <code>"nnd"</code> for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Narayan, Berger and Cho (2021) compare local radii to assess
+density preservation in den-SNE and densMAP. Quadra uses the distance
+to the kth neighbor or the mean of the first k neighbor distances.
+<a href="https://doi.org/10.1038/s41587-020-00801-7" class="external-link">doi:10.1038/s41587-020-00801-7</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -12,8 +12,8 @@
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
 <meta property="og:title" content="QUality Assessment of Dimensionality Reduction Algorithms">
-<meta name="description" content="Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, and label-based retrieval AUC metrics.">
-<meta property="og:description" content="Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, and label-based retrieval AUC metrics.">
+<meta name="description" content="Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, label-based metrics, and group preservation metrics.">
+<meta property="og:description" content="Quantifies dimensionality-reduction embeddings with global distance-preservation metrics, local nearest-neighbor preservation metrics, co-ranking metrics, label-based metrics, and group preservation metrics.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,7 @@
 <p>Install the development version from GitHub with <a href="https://pak.r-lib.org/" class="external-link">pak</a>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"jlmelville/quadra"</span><span class="op">)</span></span></code></pre></div>
+<p>Quadra requires rnndescent 0.3.0 or later. If you are upgrading a source installation, rebuild Quadra after updating rnndescent so its compiled code uses the new distance functions.</p>
 <p>Quadra contains C++ code, so installing from source requires the appropriate build tools. On Windows, install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a>. On macOS, see the <a href="https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Installation-of-source-packages" class="external-link">R for macOS FAQ</a> if compilation or linking fails.</p>
 </div>
 <div class="section level2">
@@ -77,15 +78,37 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jlmelville.github.io/quadra/">quadra</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">iris_pca</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, retx <span class="op">=</span> <span class="cn">TRUE</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
+<span><span class="va">iris_pca</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">iris_pca</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span><span class="op">)</span>, nn_method_in <span class="op">=</span> <span class="st">"brute"</span><span class="op">)</span></span></code></pre></div>
-<p>The result contains one score for each <code>k</code>. A score of 1 means every requested neighbor was preserved; for unrelated neighborhoods, the expected score is approximately <code>k / (n - 1)</code>.</p>
+<span><span class="fu"><a href="reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span></span>
+<span>  <span class="va">iris_x</span>, <span class="va">iris_pca</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">15</span><span class="op">)</span>,</span>
+<span>  nn_method_in <span class="op">=</span> <span class="st">"brute"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Here <code>nnp5</code> is 0.64. On average, the PCA plot keeps just over three of each flower’s five nearest neighbors. Five neighbors chosen at random from the other 149 flowers would give an expected score of about 0.034. Widen the neighborhood to 15 flowers and the fraction retained rises to about 0.80.</p>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<p>Start with the <a href="https://jlmelville.github.io/quadra/articles/metrics-overview.html">metric overview</a>, then use the focused guides for <a href="https://jlmelville.github.io/quadra/articles/local-preservation.html">local preservation</a>, <a href="https://jlmelville.github.io/quadra/articles/global-preservation.html">global preservation</a>, or <a href="https://jlmelville.github.io/quadra/articles/label-retrieval.html">label retrieval</a>.</p>
+<p>The <a href="https://jlmelville.github.io/quadra/articles/metrics-overview.html">metric overview</a> helps you choose a measure and decide whether to score the whole dataset or a sample. For individual metrics, see the guides to <a href="https://jlmelville.github.io/quadra/articles/local-preservation.html">local preservation</a>, <a href="https://jlmelville.github.io/quadra/articles/global-preservation.html">global preservation</a>, or <a href="https://jlmelville.github.io/quadra/articles/label-retrieval.html">label retrieval</a>.</p>
+<p>For a worked example, pick the question closest to yours.</p>
+<ul>
+<li>Can you trust the digit next to yours in a UMAP plot? <a href="https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html">Compare PCA, UMAP and t-SNE on MNIST</a>.</li>
+<li>What happens to the scores when two digits set the scale of a map? <a href="https://jlmelville.github.io/quadra/articles/ltsa-map-spread.html">Compare two LTSA fits</a>.</li>
+<li>Should a map preserve distances across a fold or along the sheet? <a href="https://jlmelville.github.io/quadra/articles/reference-geometry.html">Unroll a Swiss roll</a>.</li>
+<li>How can two clouds merge while their short distances still look perfect? <a href="https://jlmelville.github.io/quadra/articles/distance-band-fidelity.html">Compare the bands</a>.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="acknowledgments">Acknowledgments<a class="anchor" aria-label="anchor" href="#acknowledgments"></a>
+</h2>
+<p><a href="https://github.com/hj-n/zadu" class="external-link">ZADU</a>, the Python library by Hyeon Jeon and colleagues, pointed us to several measures, including the <a href="https://arxiv.org/abs/2607.28324" class="external-link">Gap Index</a> of Ros, Arleo and Paulovich. For Steadiness and Cohesiveness, Quadra follows ZADU 0.5.4 in how it weights shared neighbors and how it combines losses in the pointwise maps.</p>
+<ul>
+<li>
+<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> inspired three comparisons in Quadra. We compare the distance ranks of sampled pairs, estimate stress from sampled pairs, and compare counts of reciprocal neighbors between spaces.</li>
+<li>The distance-band profile comes from <a href="https://github.com/toorpia/dr-fidelity-benchmark" class="external-link">Yoshio Takaeda’s benchmark</a>. It asks how well distances are preserved among pairs that fall within a given radius in the input.</li>
+<li>For the Class Angular Distortion Index, Quadra follows <a href="https://github.com/KaviruGunaratne/cadi" class="external-link">Gunaratne, Kobourov and Miller’s code</a>. The cosine of an angle can change by at most two, so dividing the mean squared change by four puts the score on a scale from zero to one.</li>
+<li>The idea of comparing distance distributions with Earth Mover’s Distance comes from <a href="https://github.com/KenLauLab/DR-structure-preservation" class="external-link">Heiser and Lau’s work on single-cell data</a>. Quadra estimates those distributions by sampling pairs of observations.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>

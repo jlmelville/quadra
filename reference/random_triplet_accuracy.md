@@ -16,7 +16,8 @@ random_triplet_accuracy(
   is_transposed = FALSE,
   n_threads = 0,
   triplets = NULL,
-  ret_extra = FALSE
+  ret_extra = FALSE,
+  by_anchor = FALSE
 )
 ```
 
@@ -68,12 +69,25 @@ random_triplet_accuracy(
   Whether to return the triplets and their row-aligned agreement
   outcomes.
 
+- by_anchor:
+
+  Whether to return sampled, defined, and agreeing comparison counts and
+  accuracy for each anchor.
+
 ## Value
 
 Triplet accuracy in `[0, 1]`, or `NA_real_` if every input comparison is
 tied. With `ret_extra = TRUE`, returns a list with `accuracy`,
 `triplets`, and `agreement`. Agreement is `NA` for input-distance ties,
-`TRUE` for matching strict orderings, and `FALSE` otherwise.
+`TRUE` for matching strict orderings, and `FALSE` otherwise. With
+`by_anchor = TRUE`, returns a list with `accuracy` and a `by_anchor`
+data frame, plus the triplet details if requested. The data frame has
+one row per observation, in input order, with columns `anchor`
+(one-based), `n_sampled`, `n_defined`, `n_agree`, and `accuracy`.
+Anchors without defined comparisons have `NA_real_` accuracy. To recover
+the overall score, weight the defined anchor accuracies by `n_defined`.
+Increase the sample per anchor when a map needs more stable scores than
+the default five comparisons provide.
 
 ## Details
 
@@ -81,6 +95,14 @@ tied. With `ret_extra = TRUE`, returns a list with `accuracy`,
 to reuse exact comparisons, or reset the R seed and keep `n_threads`
 fixed. A matrix-valued `n_triplets` uses its documented zero-based
 column layout.
+
+## Scaling
+
+Evaluate the full coordinates with a fixed number of sampled comparisons
+per anchor. A numeric `n_triplets` gives `N * n_triplets` comparisons in
+total. Each uses only its three observations. Reuse a triplet plan
+across embeddings and request `by_anchor = TRUE` for counts and accuracy
+per row.
 
 ## Numerical failures
 
@@ -92,8 +114,12 @@ coordinate scales.
 
 Wang, Y., Huang, H., Rudin, C., & Shaposhnik, Y. (2021). Understanding
 how dimension reduction tools work: an empirical approach to deciphering
-t-SNE, UMAP, TriMAP, and PaCMAP for data visualization. *J Mach. Learn.
-Res*, *22*, 1-73. <https://jmlr.org/papers/v22/20-1061.html>.
+t-SNE, UMAP, TriMAP, and PaCMAP for data visualization. *JMLR*, *22*,
+1-73. <https://jmlr.org/papers/v22/20-1061.html> Wang et al. use random
+triplet accuracy to compare embeddings.
+[drnb](https://github.com/jlmelville/drnb) also reports the fraction of
+correct comparisons for each anchor. Quadra omits input ties from each
+anchor's denominator.
 
 ## See also
 
@@ -108,5 +134,5 @@ for other global preservation measures.
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
 random_triplet_accuracy(iris_x, iris_pca2)
-#> [1] 0.976
+#> [1] 0.98
 ```

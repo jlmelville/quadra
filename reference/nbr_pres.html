@@ -9,7 +9,7 @@ matrices, separately for each observation."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,24 @@ matrices, separately for each observation.</p>
 the <code>k</code>th distance are included, with each score capped at 1.
 A collapsed output can therefore score 1. Inspect output-distance magnitudes
 or coordinate spread alongside neighborhood scores when distances are tied.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>Supply two dense <code>N</code> by <code>N</code> distance matrices. For large datasets, use
+<code><a href="nn_preservation.html">nn_preservation()</a></code> or <code><a href="nbr_pres_knn.html">nbr_pres_knn()</a></code> to score overlap from neighbor
+lists. The graph functions use the stored order to resolve boundary ties.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Chen and Buja (2009) count the neighbors shared by two
+neighborhoods and divide by the neighborhood size.
+<a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">doi:10.1198/jasa.2009.0111</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="pointwise_rank_preservation.html">pointwise_rank_preservation()</a></code> for rank penalties per observation.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

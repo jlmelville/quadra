@@ -37,3 +37,20 @@ Per-observation neighborhood overlap in `[0, 1]`.
 Rows contain distinct one-based indices in nearest-first order.
 Self-indices are removed, so self-inclusive matrices need at least
 `k + 1` columns. Supplied order resolves ties.
+
+## Scaling
+
+With `k` stored neighbors per observation, each input uses `N * k`
+indices. Reuse these lists across comparisons to avoid rebuilding
+neighbor graphs.
+
+## References
+
+Chen and Buja (2009) count the neighbors shared by two neighborhoods and
+divide by the neighborhood size.
+[doi:10.1198/jasa.2009.0111](https://doi.org/10.1198/jasa.2009.0111)
+
+## See also
+
+[`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+for computing the graphs from coordinates.

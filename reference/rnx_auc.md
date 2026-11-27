@@ -26,12 +26,23 @@ rnx_auc(din, dout)
 
 Area under the RNX curve.
 
+## Scaling
+
+Supply two dense `N` by `N` distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working
+storage. For Euclidean coordinates,
+[`exact_rank_profiles()`](https://jlmelville.github.io/quadra/reference/exact_rank_profiles.md)
+ranks one query at a time. Set `query_rows` to score a sample against
+all other observations.
+
 ## References
 
-Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015). Multi-scale
-similarities in stochastic neighbour embedding: Reducing dimensionality
-while preserving both local and global structure. *Neurocomputing*,
-*169*, 246-261.
+Lee et al. (2013) define the RNX curve.
+[doi:10.1016/j.neucom.2012.12.036](https://doi.org/10.1016/j.neucom.2012.12.036)
+
+Lee, Peluffo-Ordóñez and Verleysen (2015) summarize the curve across
+neighborhood sizes with weights proportional to `1 / k`.
+[doi:10.1016/j.neucom.2014.12.095](https://doi.org/10.1016/j.neucom.2014.12.095)
 
 ## See also
 

@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -158,7 +158,8 @@ scaled and unscaled PCA.</p>
 </h2>
 <p>Random triplet accuracy is the proportion of sampled anchored
 triplets whose input-space distance ordering is retained in the
-embedding.</p>
+embedding. <a href="https://jmlr.org/papers/v22/20-1061.html" class="external-link">Wang and
+colleagues</a> use it to compare embeddings.</p>
 <p>Triplets with tied input-space distances are excluded from the
 denominator because they do not define a relative ordering. If no
 sampled input triplets define an ordering, the result is
@@ -167,13 +168,42 @@ sampled input triplets define an ordering, the result is
 agreement vector; input-distance ties are <code>NA</code>. Reset the R
 seed and keep <code>n_threads</code> fixed to repeat implicit
 sampling.</p>
+<p>Use <code>by_anchor = TRUE</code> to see which observations retain
+their distance ordering. The summary includes sampled, defined, and
+agreeing comparison counts for every input row. Recover the overall
+accuracy by dividing total agreements by total defined comparisons.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">43</span><span class="op">)</span></span>
+<span><span class="va">triplet_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy</a></span><span class="op">(</span></span>
+<span>  <span class="va">iris_x</span>,</span>
+<span>  <span class="va">pca_unscaled</span>,</span>
+<span>  n_triplets <span class="op">=</span> <span class="fl">64</span>,</span>
+<span>  by_anchor <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">triplet_summary</span><span class="op">$</span><span class="va">by_anchor</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   anchor n_sampled n_defined n_agree accuracy</span></span>
+<span><span class="co">## 1      1        64        64      63 0.984375</span></span>
+<span><span class="co">## 2      2        64        64      63 0.984375</span></span>
+<span><span class="co">## 3      3        64        64      64 1.000000</span></span>
+<span><span class="co">## 4      4        64        64      64 1.000000</span></span>
+<span><span class="co">## 5      5        64        64      64 1.000000</span></span>
+<span><span class="co">## 6      6        64        64      63 0.984375</span></span></code></pre>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">triplet_summary</span><span class="op">$</span><span class="va">by_anchor</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n_agree</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n_defined</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 0.9791515</span></span></code></pre>
+<p>For an anchor map, increase the number of comparisons and check
+whether the pattern holds with another sample. Reuse the same triplets
+across embeddings so each comparison uses the same endpoints. <a href="mnist-pca-umap.html#check-distance-ordering-from-each-anchor">MNIST
+example</a></p>
 </div>
 <div class="section level2">
 <h2 id="random-pair-distance-correlation">Random Pair Distance Correlation<a class="anchor" aria-label="anchor" href="#random-pair-distance-correlation"></a>
 </h2>
 <p><code><a href="../reference/random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code> measures Pearson
 correlation between matched input and output distances by default. Set
-<code>method = "spearman"</code> to compare their ranks.</p>
+<code>method = "spearman"</code> to compare their ranks. <a href="https://doi.org/10.1038/nbt.4314" class="external-link">Becht and colleagues</a>
+compared distances when evaluating UMAP. The sampled Spearman comparison
+draws on <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>.</p>
 <p>Euclidean and squared Euclidean have the same ordering, so their
 Spearman interpretation is equivalent. Squaring changes magnitudes and
 can change the default Pearson result.</p>
@@ -183,7 +213,10 @@ can change the default Pearson result.</p>
 </h2>
 <p><code><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd()</a></code> compares the empirical input
 and output distance distributions using Earth Mover’s Distance (1D
-Wasserstein).</p>
+Wasserstein). <a href="https://doi.org/10.1016/j.celrep.2020.107576" class="external-link">Heiser and Lau</a>
+compared distance distributions in their evaluation of single-cell
+embeddings. Quadra estimates them from sampled pairs. Their <a href="https://github.com/KenLauLab/DR-structure-preservation" class="external-link">implementation</a>
+is available.</p>
 <p>EMD compares marginal distributions rather than pairwise
 correspondence.</p>
 <p>EMD and stress below are magnitude statistics. Squared Euclidean can
@@ -195,12 +228,90 @@ sampled distance vector is range-scaled.</p>
 </h2>
 <p><code><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress()</a></code> compares the matched
 sampled distances with a root mean squared difference, after scaling
-each distance vector to <code>[0, 1]</code> by default.</p>
+each distance vector to <code>[0, 1]</code> by default. This sampled
+RMSE draws on <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>,
+though the scaling conventions differ.</p>
 <p>RNX is sometimes described as spanning local and global scales, but
 it measures rank-based neighborhood agreement rather than sampled global
 distances. See the <a href="local-preservation.html#multi-scale-rnx-agreement">local
 preservation</a> guide for its AUC, scale-specific curve, and
 interpretation.</p>
+</div>
+<div class="section level2">
+<h2 id="identical-scatterplots-different-point-identities">Identical Scatterplots, Different Point Identities<a class="anchor" aria-label="anchor" href="#identical-scatterplots-different-point-identities"></a>
+</h2>
+<p>Swap the positions of two observations and leave their row IDs fixed.
+Both point clouds occupy the same positions, so the distribution over
+all six unordered distances stays identical.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">x</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/combn.html" class="external-link">combn</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  emd <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_emd.html">random_pair_distance_emd</a></span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    <span class="va">y</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">pairs</span>,</span>
+<span>    metric_in <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>    metric_out <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>    range_scale <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  stress <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress</a></span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    <span class="va">y</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">pairs</span>,</span>
+<span>    metric_in <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>    metric_out <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>    range_scale <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  neighbor_overlap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="../reference/nbr_pres.html">nbr_pres</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    k <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##              emd           stress neighbor_overlap </span></span>
+<span><span class="co">##         0.000000         5.477226         0.000000</span></span></code></pre>
+<p>EMD is zero. Matched distances change, giving an RMSE of about 5.48,
+and every observation loses its original nearest neighbor. With a random
+subset of pairs, the two sets of distances may differ even though the
+complete distributions agree.</p>
+</div>
+<div class="section level2">
+<h2 id="stress-after-fitting-one-scale">Stress After Fitting One Scale<a class="anchor" aria-label="anchor" href="#stress-after-fitting-one-scale"></a>
+</h2>
+<p>What happens if we let the embedding choose its units? <a href="https://arxiv.org/abs/2408.07724" class="external-link">Smelser, Miller and Kobourov</a>
+fit one multiplier to the output distances. <a href="https://github.com/toorpia/dr-fidelity-benchmark" class="external-link">Takaeda’s
+benchmark</a> fits it separately for each input-distance band. Let’s try
+the full band on a small example. The three distances from the first
+point change from <code>1, 2, 3</code> to <code>2, 3, 4</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  range_scaled_rmse <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_stress.html">random_pair_distance_stress</a></span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    <span class="va">y</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">pairs</span>,</span>
+<span>    metric_in <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>    metric_out <span class="op">=</span> <span class="st">"euclidean"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  fitted_scale_stress <span class="op">=</span> <span class="fu"><a href="../reference/random_pair_distance_band_profile.html">random_pair_distance_band_profile</a></span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    <span class="va">y</span>,</span>
+<span>    pairs <span class="op">=</span> <span class="va">pairs</span>,</span>
+<span>    bands <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span><span class="op">$</span><span class="va">normalized_stress</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   range_scaled_rmse fitted_scale_stress </span></span>
+<span><span class="co">##           0.0000000           0.1215661</span></span></code></pre>
+<p>Range scaling takes both sets of distances to <code>0, 0.5, 1</code>,
+giving zero error. Now try to do the same with a single multiplier.
+Halving the output distances fixes the first pair, but it sends the
+third distance to 2 when we wanted 3. Even the best multiplier leaves a
+fitted-scale stress of about 0.122. <a href="distance-band-fidelity.html">Try the same comparison on short
+distances</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="check-output-scale-alongside-scores">Check Output Scale Alongside Scores<a class="anchor" aria-label="anchor" href="#check-output-scale-alongside-scores"></a>
@@ -213,7 +324,7 @@ scale information and maps constant vectors to zero. If the sampled
 input distances are also constant, the scaled input and output distances
 match. This example compares three equidistant observations with a
 collapsed embedding:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">equidistant</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, nrow <span class="op">=</span> <span class="fl">3</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">collapse_pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">3L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span></span>
@@ -233,7 +344,7 @@ collapsed embedding:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## scaled_stress    scaled_emd </span></span>
 <span><span class="co">##             0             0</span></span></code></pre>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  input_distance <span class="op">=</span> <span class="va">collapse_stress</span><span class="op">$</span><span class="va">distance_in</span>,</span>
 <span>  output_distance <span class="op">=</span> <span class="va">collapse_stress</span><span class="op">$</span><span class="va">distance_out</span></span>

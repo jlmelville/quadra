@@ -41,11 +41,21 @@ Unlike
 [`nbr_pres()`](https://jlmelville.github.io/quadra/reference/nbr_pres.md),
 the penalty reflects how far a misplaced neighbor falls beyond `k`.
 
+## Scaling
+
+Supply two dense `N` by `N` distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working
+storage. For Euclidean coordinates,
+[`exact_rank_profiles()`](https://jlmelville.github.io/quadra/reference/exact_rank_profiles.md)
+ranks one query at a time. Set `query_rows` to score a sample against
+all other observations.
+
 ## References
 
 Venna, J., & Kaski, S. (2001). Neighborhood preservation in nonlinear
 projection methods: An experimental study. In *Artificial Neural
 Networks - ICANN 2001* (pp. 485-491).
+[doi:10.1007/3-540-44668-0_68](https://doi.org/10.1007/3-540-44668-0_68)
 
 ## Examples
 

@@ -88,6 +88,21 @@ A nonfinite computed distance causes an error, even with finite
 coordinates. Finite distances alone do not guarantee accuracy at extreme
 coordinate scales.
 
+## Scaling
+
+For large datasets, use the full coordinates and set `n_pairs` to a
+total sample size. Distance calculations and stored distances scale with
+the number of sampled pairs. Reuse `pairs` across embeddings. Supplying
+every unordered pair makes both the pair count and distance work
+quadratic.
+
+## References
+
+The approximate stress calculation in
+[drnb](https://github.com/jlmelville/drnb) inspired this measure. Quadra
+samples pairs and takes a root mean square, scaling each set of
+distances to its own range by default.
+
 ## See also
 
 [`random_pair_distance_correlation()`](https://jlmelville.github.io/quadra/reference/random_pair_distance_correlation.md),
@@ -102,5 +117,5 @@ for other measures of global structure preservation.
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_stress(iris_x, iris_pca2)
-#> [1] 0.005397666
+#> [1] 0.006662279
 ```

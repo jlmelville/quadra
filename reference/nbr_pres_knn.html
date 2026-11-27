@@ -9,7 +9,7 @@ matrices, separately for each observation."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,23 @@ serially.</p></dd>
     <p>Rows contain distinct one-based indices in nearest-first order. Self-indices
 are removed, so self-inclusive matrices need at least <code>k + 1</code> columns.
 Supplied order resolves ties.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>With <code>k</code> stored neighbors per observation, each input uses <code>N * k</code> indices.
+Reuse these lists across comparisons to avoid rebuilding neighbor graphs.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Chen and Buja (2009) count the neighbors shared by two
+neighborhoods and divide by the neighborhood size.
+<a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">doi:10.1198/jasa.2009.0111</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="nn_preservation.html">nn_preservation()</a></code> for computing the graphs from coordinates.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

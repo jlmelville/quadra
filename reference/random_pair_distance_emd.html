@@ -11,7 +11,7 @@ default."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,11 +139,23 @@ comparisons, or reset the R seed and keep <code>n_threads</code> fixed.</p>
 Finite distances alone do not guarantee accuracy at extreme coordinate scales.</p>
     </div>
     <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>For large datasets, use the full coordinates and set <code>n_pairs</code> to a total
+sample size. Distance calculations and stored distances scale with the
+number of sampled pairs. Reuse <code>pairs</code> across embeddings. Supplying every
+unordered pair makes both the pair count and distance work quadratic.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Heiser, C. N., &amp; Lau, K. S. (2020).
-A quantitative framework for evaluating single-cell data structure preservation by dimensionality reduction techniques.
-<em>Cell reports</em>, <em>31</em>(5), 107576.
-<a href="https://github.com/KenLauLab/DR-structure-preservation" class="external-link">https://github.com/KenLauLab/DR-structure-preservation</a></p>
+A quantitative framework for evaluating single-cell data structure
+preservation by dimensionality reduction techniques.
+<em>Cell Reports</em>, <em>31</em>(5), 107576. <a href="https://doi.org/10.1016/j.celrep.2020.107576" class="external-link">doi:10.1016/j.celrep.2020.107576</a>
+
+Their <a href="https://github.com/KenLauLab/DR-structure-preservation" class="external-link">code</a>
+compares distance distributions. Quadra estimates them from sampled pairs.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -157,7 +169,7 @@ global preservation measures.</p></div>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">iris_pca2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span><span class="fu">random_pair_distance_emd</span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">iris_pca2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.003741</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.003169315</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

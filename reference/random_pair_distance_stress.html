@@ -9,7 +9,7 @@ output distances. Each distance vector is scaled to [0, 1] by default."></head><
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,6 +136,22 @@ is a concern.</p>
 Finite distances alone do not guarantee accuracy at extreme coordinate scales.</p>
     </div>
     <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>For large datasets, use the full coordinates and set <code>n_pairs</code> to a total
+sample size. Distance calculations and stored distances scale with the
+number of sampled pairs. Reuse <code>pairs</code> across embeddings. Supplying every
+unordered pair makes both the pair count and distance work quadratic.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>The approximate stress calculation in
+<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> inspired this measure.
+Quadra samples pairs and takes a root mean square, scaling each set of
+distances to its own range by default.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="random_pair_distance_correlation.html">random_pair_distance_correlation()</a></code>,
 <code><a href="random_pair_distance_emd.html">random_pair_distance_emd()</a></code>, and <code><a href="random_triplet_accuracy.html">random_triplet_accuracy()</a></code> for other
@@ -147,7 +163,7 @@ measures of global structure preservation.</p></div>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">iris_x</span> <span class="op">&lt;-</span> <span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">iris_pca2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">iris_x</span>, rank. <span class="op">=</span> <span class="fl">2</span>, scale <span class="op">=</span> <span class="cn">FALSE</span>, retx <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span><span class="fu">random_pair_distance_stress</span><span class="op">(</span><span class="va">iris_x</span>, <span class="va">iris_pca2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.005397666</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.006662279</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

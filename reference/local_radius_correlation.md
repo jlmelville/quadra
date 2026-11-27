@@ -170,6 +170,22 @@ selected local radius values must be positive, so duplicate points that
 produce zero local radii should be handled before requesting a log-scale
 comparison.
 
+## Scaling
+
+For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing `k` neighbors per observation has `N * k` entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider `"nnd"` for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.
+
+## References
+
+Narayan, Berger and Cho (2021) compare local radii to assess density
+preservation in den-SNE and densMAP. Quadra uses the distance to the kth
+neighbor or the mean of the first k neighbor distances.
+[doi:10.1038/s41587-020-00801-7](https://doi.org/10.1038/s41587-020-00801-7)
+
 ## See also
 
 [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)

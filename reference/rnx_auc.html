@@ -15,7 +15,7 @@ order."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,11 +78,20 @@ order.</p>
     <p>Area under the RNX curve.</p>
     </div>
     <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>Supply two dense <code>N</code> by <code>N</code> distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working storage.
+For Euclidean coordinates, <code><a href="exact_rank_profiles.html">exact_rank_profiles()</a></code> ranks one query at a
+time. Set <code>query_rows</code> to score a sample against all other observations.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Lee, J. A., Peluffo-Ordo'nez, D. H., &amp; Verleysen, M. (2015).
-Multi-scale similarities in stochastic neighbour embedding: Reducing
-dimensionality while preserving both local and global structure.
-<em>Neurocomputing</em>, <em>169</em>, 246-261.</p>
+    <p>Lee et al. (2013) define the RNX curve. <a href="https://doi.org/10.1016/j.neucom.2012.12.036" class="external-link">doi:10.1016/j.neucom.2012.12.036</a></p>
+<p>Lee, Peluffo-Ordóñez and Verleysen (2015) summarize the curve across
+neighborhood sizes with weights proportional to <code>1 / k</code>.
+<a href="https://doi.org/10.1016/j.neucom.2014.12.095" class="external-link">doi:10.1016/j.neucom.2014.12.095</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

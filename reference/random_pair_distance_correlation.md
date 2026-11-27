@@ -78,6 +78,14 @@ and `distance_out` when `ret_extra = TRUE`.
 `Xin` and `metric_in` define the reference geometry. Supply `pairs` to
 reuse exact comparisons, or reset the R seed and keep `n_threads` fixed.
 
+## Scaling
+
+For large datasets, use the full coordinates and set `n_pairs` to a
+total sample size. Distance calculations and stored distances scale with
+the number of sampled pairs. Reuse `pairs` across embeddings. Supplying
+every unordered pair makes both the pair count and distance work
+quadratic.
+
 ## Numerical failures
 
 A nonfinite computed distance causes an error, even with finite
@@ -88,7 +96,10 @@ coordinate scales.
 
 Becht, E., McInnes, L., Healy, J., Dutertre, C. A., Kwok, I. W., Ng, L.
 G., ... & Newell, E. W. (2019). Dimensionality reduction for visualizing
-single-cell data using UMAP. *Nature biotechnology*, *37*(1), 38-44.
+single-cell data using UMAP. *Nature Biotechnology*, *37*(1), 38-44.
+[doi:10.1038/nbt.4314](https://doi.org/10.1038/nbt.4314) Becht et al.
+compare corresponding distances. The Spearman option was inspired by the
+random-pair comparisons in [drnb](https://github.com/jlmelville/drnb).
 
 ## See also
 
@@ -104,5 +115,5 @@ for other global preservation measures.
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_correlation(iris_x, iris_pca2)
-#> [1] 0.9997105
+#> [1] 0.9997387
 ```

@@ -11,7 +11,12 @@ and
 treat each observation as a query, rank the remaining observations by
 distance, and regard matching labels as relevant. These are supervised
 retrieval summaries. Both functions require the [PRROC
-package](https://cran.r-project.org/package=PRROC).
+package](https://cran.r-project.org/package=PRROC). [Venna and
+colleagues](https://jmlr.org/papers/v11/venna10a.html) develop the
+retrieval view of dimensionality-reduction evaluation.
+[Bamber](https://doi.org/10.1016/0022-2496(75)90001-2) relates ROC area
+to ranking probability. For each query, Quadra uses PRROC’s
+[Davis–Goadrich PR area](https://doi.org/10.1145/1143844.1143874).
 
 Perfect retrieval has AUC 1 for both measures. Random ROC AUC is 0.5.
 The random PR AUC baseline is the prevalence of relevant observations
@@ -78,9 +83,130 @@ relevant and irrelevant candidates are `NA_real_` and excluded from the
 overall and per-label means. If no query is defined, the overall average
 is `NA_real_`.
 
-Both functions require a finite square distance matrix and one
-nonmissing label per observation. The query itself is excluded from its
-ranking. Labels without a defined query remain `NA_real_` in `label_av`.
+If all you have are the map coordinates, pass them to `coords`. You can
+pick a few query flowers and still rank each against the other 149 by
+Euclidean distance. Here each query has 49 flowers of its own species to
+retrieve. A species with no defined query has mean `NA_real_` in
+`label_av`.
+
+``` r
+
+rows <- c(1L, 51L, 101L)
+selected <- roc_auc(
+  coords = pca_iris,
+  labels = iris$Species,
+  query_rows = rows,
+  ret_extra = TRUE
+)
+data.frame(row = selected$query_rows, ROC = selected$query_auc)
+```
+
+    ##   row       ROC
+    ## 1   1 1.0000000
+    ## 2  51 0.7512245
+    ## 3 101 0.9763265
+
+## Find which class pairs changed
+
+Per-label AUC can tell you that retrieval got worse. Restrict the
+candidates to two classes to see which labels became harder to tell
+apart.
+
+Start with four separated copies of a small grid. In one output, move
+the grids in each column onto one another. In the other, do the same
+within each row.
+
+``` r
+
+tile <- as.matrix(expand.grid(x = c(-0.125, 0, 0.125), y = c(-0.125, 0, 0.125)))
+label <- rep(LETTERS[1:4], each = nrow(tile))
+make_distances <- function(cx, cy) {
+  xy <- do.call(
+    rbind,
+    lapply(seq_along(cx), function(i) {
+      sweep(tile, 2, c(cx[i], cy[i]), "+")
+    })
+  )
+  as.matrix(dist(xy))
+}
+din <- make_distances(c(0, 0, 4, 4), c(0, 4, 0, 4))
+merge_columns <- make_distances(c(0, 0, 4, 4), c(0, 0, 0, 0))
+merge_rows <- make_distances(c(0, 0, 0, 0), c(0, 4, 0, 4))
+
+pr_by_label <- function(d) unlist(pr_auc(d, label)$label_av)
+round(
+  rbind(columns = pr_by_label(merge_columns), rows = pr_by_label(merge_rows)),
+  3
+)
+```
+
+    ##             A     B     C     D
+    ## columns 0.403 0.403 0.403 0.403
+    ## rows    0.403 0.403 0.403 0.403
+
+Both outputs give the same PR AUC for each label. Now compare two-class
+ROC AUC in the input and in each output, using the same query and
+candidate IDs for each pair.
+
+``` r
+
+reference <- class_pair_auc(din, label, metrics = "roc")
+data.frame(
+  reference,
+  column_merge_change = round(
+    class_pair_auc(merge_columns, label, "roc")$roc - reference$roc,
+    3
+  ),
+  row_merge_change = round(
+    class_pair_auc(merge_rows, label, "roc")$roc - reference$roc,
+    3
+  )
+)
+```
+
+    ##   label_a label_b roc n_defined_roc column_merge_change row_merge_change
+    ## 1       A       B   1            18              -0.556            0.000
+    ## 2       A       C   1            18               0.000           -0.556
+    ## 3       A       D   1            18               0.000            0.000
+    ## 4       B       C   1            18               0.000            0.000
+    ## 5       B       D   1            18               0.000           -0.556
+    ## 6       C       D   1            18              -0.556            0.000
+
+The negative rows identify the pairs that were merged. Positive changes
+in other comparisons mean retrieval became easier between those labels.
+That can help flag separation exaggerated by an embedding. [Jeon et
+al. on class-pair distortion](https://arxiv.org/abs/2308.00278)
+
+## Which centroid is closer?
+
+Take just the 5s and 9s. What fraction of these images are closer to
+their own digit’s centroid than to the other one? A tie counts as half.
+[`label_trustworthiness_continuity()`](https://jlmelville.github.io/quadra/reference/label_trustworthiness_continuity.md)
+compares that fraction in the input and the embedding for each pair of
+labels. Trustworthiness penalizes a drop. Continuity penalizes a rise,
+since the map can also make the classes look *more* distinct than they
+were. In PCA the 5s and 9s get easier to retrieve even as fewer images
+lie closer to their own centroid. [Jeon and
+colleagues](https://arxiv.org/abs/2308.00278) compare class-pair changes
+using distance consistency, introduced by [Sips and
+colleagues](https://doi.org/10.1111/j.1467-8659.2009.01467.x). Quadra
+uses the unrescaled fraction. Jeon and colleagues provide their
+[implementation](https://github.com/hj-n/ltnc). [MNIST
+example](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html#compare-pairs-of-digits)
+
+## Compare class angular spread
+
+[`class_angular_distortion_index()`](https://jlmelville.github.io/quadra/reference/class_angular_distortion_index.md)
+compares the angles between pairs of points from one class as seen from
+points in another class. Its detailed results report each direction
+separately, so you can see whether one class’s apparent spread changes
+more than the other’s. Use the sampled triplet counts to check how much
+evidence each direction has. [Gunaratne, Kobourov and Miller introduce
+CADI](https://arxiv.org/abs/2605.00637). Quadra follows the
+normalization in their [code](https://github.com/KaviruGunaratne/cadi).
+Their sampler picks classes first. Quadra samples eligible triplets
+uniformly, so class sizes affect the overall score. [MNIST
+example](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html#compare-angular-spread-from-each-digit)
 
 ## Further Reading
 

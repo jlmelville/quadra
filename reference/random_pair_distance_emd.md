@@ -88,12 +88,23 @@ A nonfinite computed distance causes an error, even with finite
 coordinates. Finite distances alone do not guarantee accuracy at extreme
 coordinate scales.
 
+## Scaling
+
+For large datasets, use the full coordinates and set `n_pairs` to a
+total sample size. Distance calculations and stored distances scale with
+the number of sampled pairs. Reuse `pairs` across embeddings. Supplying
+every unordered pair makes both the pair count and distance work
+quadratic.
+
 ## References
 
 Heiser, C. N., & Lau, K. S. (2020). A quantitative framework for
 evaluating single-cell data structure preservation by dimensionality
-reduction techniques. *Cell reports*, *31*(5), 107576.
-<https://github.com/KenLauLab/DR-structure-preservation>
+reduction techniques. *Cell Reports*, *31*(5), 107576.
+[doi:10.1016/j.celrep.2020.107576](https://doi.org/10.1016/j.celrep.2020.107576)
+Their [code](https://github.com/KenLauLab/DR-structure-preservation)
+compares distance distributions. Quadra estimates them from sampled
+pairs.
 
 ## See also
 
@@ -109,5 +120,5 @@ for other global preservation measures.
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x
 random_pair_distance_emd(iris_x, iris_pca2)
-#> [1] 0.003741
+#> [1] 0.003169315
 ```

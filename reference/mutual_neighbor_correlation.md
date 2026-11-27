@@ -156,6 +156,21 @@ order equivalent, subject to ties and approximation.
 If either mutual-neighbor count vector is constant, the correlation is
 undefined and the corresponding result is `NA_real_`.
 
+## Scaling
+
+For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing `k` neighbors per observation has `N * k` entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider `"nnd"` for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.
+
+## References
+
+The `soccur` measure in [drnb](https://github.com/jlmelville/drnb)
+counts each point's reciprocal neighbors and correlates the two sets of
+counts.
+
 ## See also
 
 [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)

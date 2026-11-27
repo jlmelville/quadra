@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">quadra</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.2.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -198,6 +198,17 @@ reduction methods have been used, or parameters such as output dimensionality
 or random number seed have been been modified.</p>
     </div>
     <div class="section level2">
+    <h2 id="scaling">Scaling<a class="anchor" aria-label="anchor" href="#scaling"></a></h2>
+
+
+<p>For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing <code>k</code> neighbors per observation has <code>N * k</code> entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider <code>"nnd"</code> for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.</p>
+    </div>
+    <div class="section level2">
     <h2 id="nearest-neighbor-graph-format">Nearest Neighbor Graph Format<a class="anchor" aria-label="anchor" href="#nearest-neighbor-graph-format"></a></h2>
 
 
@@ -226,7 +237,10 @@ passed to <code>rnndescent</code> without densification.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Dong, W., Moses, C., &amp; Li, K. (2011, March).
+    <p>Chen and Buja (2009) measure overlap by the fraction of
+neighbors retained. <a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">doi:10.1198/jasa.2009.0111</a></p>
+<p>For the approximate search used to find those neighbors, see
+Dong, W., Moses, C., &amp; Li, K. (2011, March).
 Efficient k-nearest neighbor graph construction for generic similarity measures.
 In <em>Proceedings of the 20th international conference on World Wide Web</em>
 (pp. 577-586).
@@ -250,7 +264,7 @@ functions.</p></div>
 <span class="r-in"><span><span class="co"># Calculate for multiple values of k</span></span></span>
 <span class="r-in"><span><span class="fu">nn_preservation</span><span class="op">(</span><span class="va">iris</span>, <span class="va">iris_pca</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     nnp15     nnp30 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 0.8004444 0.9160000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.8013333 0.9160000 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Return the nearest neighbor graphs and per-observation preservation</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">nn_preservation</span><span class="op">(</span><span class="va">iris</span>, <span class="va">iris_pca</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>, ret_extra <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
@@ -264,17 +278,17 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nn_in</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nn_in$idx</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1,]   18    5   29   40   28    8   41   50   38    22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1,]   18    5   29   28   40    8   41   50   38    22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [2,]   13   46   35   10   26   31   36    3   50     4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [3,]   48    4    7   46   13   43   30    2   35    36</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [4,]   48   30   31    3   13   46    9   39   43    35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [5,]    1   38   18   41    8   28   40   20   22    29</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [6,]   19   11   49   45   47   20   17   22   33    34</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [7,]   48    3   12   43   30    4   38   41    8    50</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [8,]   40   50    1   18   28   29   12    5   27    41</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [9,]   39    4   43   14   48   13   46    3   30    31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [10,]   35   13   31    2   26   46   50   30    4     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [11,]   49   28   37   20   47   17    6   32   21    22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [8,]   40   50    1   18   28   12    5   29   27    41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [9,]   39    4   43   14   48   46   13    3   30    31</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [10,]   35   13    2   31   26   46   50   30    4     3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [11,]   49   28   37   47   20    6   17   32   21    22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [12,]    8   30   27   50   25   31    7   40   38    35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [13,]    2   10   35   46   31    3    4   26   48    30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [14,]   39   43    9   48    3    4   13    7   46    30</span>
@@ -289,31 +303,31 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [23,]    7    3   38   41   43   48    5   36   50     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [24,]   27   44   40    8   32   18   28   50   21    12</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [25,]   12   30   27   31    8   24   40   35   10    45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [26,]   35   10   31    2   13   46   50   30    8     4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [26,]   35   10   31    2   13   46   50   30    8    40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [27,]   24   44    8   40   18   12   50   28    1    22</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [28,]   40    1   29   18    8   49    5   11   41    50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [28,]   40   29    1   18    8   49    5   11   50    41</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [29,]    1   28   40   18    8   50   41    5   32    49</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [30,]   31    4   48   12   35   10    3    7   13    46</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [31,]   35   30   10   26    4    2   46   13   12    48</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [32,]   21   28   29   37   18   11   40   49    1    24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [33,]   47   34   20   49   11   17    6   22    5    38</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [34,]   33   16   17   15    6   11   49   19   20    47</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [35,]   10    2   31   26   46   13   50   30    4     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [36,]   50    2    3   41   35   29   10   46   13     8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [35,]   10   31    2   26   46   13   50   30    4     3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [36,]   50    2    3   41   35   29   10   13   46     8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [37,]   11   32   29   49   28    1   21   18   17    40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [38,]    5    1    8   41   18   40   12   50   28    20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [39,]    9   43   14    4   48    3   13   46   30     7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [39,]    9   43   14    4   48    3   46   13   30     7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [40,]    8   28    1   29   18   50    5   27   41    12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [41,]   18    5    1    8   50   29   40   38   28    22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [41,]   18    1    5    8   50   29   40   38   28    22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [42,]    9   39   46   14   13    2    4   31   43    26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43,]   39   48    3    4    7   14    9   30   13    46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [43,]   39   48    3    4    7   14    9   30   46    13</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [44,]   27   24   22   18    8   41   40   20   12    28</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [45,]   47    6   22   20   44   49   27   25   28    24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [46,]    2   35   13   31   10    3    4   26   48    30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [47,]   20   22   49    5   28   11   33   38   45     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [48,]    3    4   43   30    7   39   13   46   31    35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [49,]   11   28   20   47   22    1   18   29    5    37</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [50,]    8   40   36   29    1   18   35   41   10    28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [50,]    8   40   29   36    1   18   35   41   10    28</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [51,]   53   87   66   77   59   76   78   52   55    57</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [52,]   57   76   66   87   92   75   59   55   98    86</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [53,]   51   87   78   77   59   66   55   76   52    57</span>
@@ -322,7 +336,7 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [56,]   67   91   97   95   96   79  100   85   74    89</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [57,]   52   86   92   87  128   71  139   64   79    76</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [58,]   94   99   61   82   81   60   80   70   65    90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [59,]   76   55   66   87   77   75   52   98   53    92</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [59,]   76   55   66   87   77   75   52   98   53    64</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [60,]   90   95   54   81   70   89   65  100   82    97</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [61,]   94   58   82   81   99   54   70   90   80    60</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [62,]   97   79   96  100   89   98   72   67   92    56</span>
@@ -330,9 +344,9 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [64,]   92   74   79   98  139  127   55  128   56   134</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [65,]   83   80   89  100   70   60   93   90   81    82</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [66,]   76   87   59   52   75   55   51   77   53    98</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67,]   85   56   97   79   62   96   89   95  100    91</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [67,]   85   56   97   79   62   96   89   95  100    92</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [68,]   93   83  100   70   95   97   96   72   89    90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [69,]   88   73  120   55   74  147  124   79   63   127</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [69,]   88   73  120   55   74  147  124   79  127    63</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [70,]   81   90   82   93   83   54   68   95  100    80</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [71,]  139  128  150   86   57  127   92   79   64   122</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [72,]   98   83   93   62  100   75   68   97   96    95</span>
@@ -347,14 +361,14 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [81,]   82   70   90   54   80   93   83   68   60    95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [82,]   81   70   80   90   54   93   83   68   65    63</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [83,]   93  100   68   70   72   95   97   90   89    65</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [84,]  134  102  143  150  124  127  128   73  139   147</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [84,]  134  143  102  150  124  127  128   73  139   147</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [85,]   67   56   97   89   95   96   91  100   62    79</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [86,]   57   71   52   92   79   62  139   67   64   128</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [87,]   53   66   59   51   76   77   52   55   78    57</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [88,]   69   73   63   55   75   98   74   72   59   120</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [89,]   96   97  100   95   62   83   67   56   68    93</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [89,]   97   96  100   95   62   83   67   56   68    93</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [90,]   54   70   95   81   93  100   83   60   91    82</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91,]   95   56  100   90   97   68   96   93   54    67</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [91,]   95   56  100   90   97   68   96   93   54    85</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [92,]   64   79   74   98   52   57   75   62  139    55</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [93,]   83   68  100   70   95   90   72   97   81    54</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [94,]   58   61   99   82   81   80   60   70   54    90</span>
@@ -367,23 +381,23 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [101,]  137  145  105  144  141  125  149  121  133   116</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [102,]  143  114  122  150   84  139  128  115  127   124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [103,]  126  121  144  131  113  130  125  140  108   141</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [104,]  138  117  129  112  133  148  105  135  134   109</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [104,]  117  138  129  112  133  148  105  135  134   109</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [105,]  133  129  141  125  144  113  121  145  104   117</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [106,]  123  108  136  119  131  126  118  103  132   110</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [107,]   85   60   91   90   67   95   54  122   56   114</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [108,]  131  126  106  103  130  123  136  144  109   119</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [109,]  129  104  133  117  112  113  105  103  138   130</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [110,]  144  121  145  103  136  126  125  118  141   132</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [111,]  148  116  146   78  138  117  142  140  128   113</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [111,]  148  116   78  146  138  117  142  140  128   113</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [112,]  148  129  147  104  117  124  133  138  134    84</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [113,]  140  141  121  125  146  117  148  105  129   142</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [114,]  143  102  122  115   84  150  147  127  139   120</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [115,]  122  143  102  114  150  139  128  116  147   127</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [116,]  149  146  111  137  148  141  133  113  129   145</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [116,]  149  146  111  137  148  141  133  113  129   125</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [117,]  138  104  148  112  129  113  133  111  105   125</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [118,]  132  106  110  136  123  126  108  119  131   103</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [119,]  123  106  136  108  131  118  103  126  132   110</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [120,]   73   84   69  147  114  124  102  143  134    88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [120,]   73   84   69  147  114  124  143  102  134    88</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [121,]  144  141  145  125  113  140  103  105  146   142</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [122,]  102  143  114  150  115  139   71  128   84   127</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [123,]  106  119  108  131  136  126  118  103  132   130</span>
@@ -402,18 +416,18 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [136,]  131  106  103  108  123  126  110  119  130   121</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [137,]  149  116  101  145  141  125  105  144  133   121</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [138,]  117  104  148  129  112  111  125  133  113   105</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [139,]  128   71  127  150   64  124   79   92   84   143</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [139,]  128   71  127  150   64   79  124   92   84   143</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [140,]  113  142  146  121  125  141  148  117  111   103</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [141,]  145  121  113  144  105  125  140  146  116   133</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [142,]  146  140  113  111  148  116  141  121   78   125</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [143,]  102  114  122  150   84  139  128  115  127   124</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [144,]  121  125  145  141  105  103  113  101  140   137</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [142,]  146  140  113  111  148  141  116  121   78   125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [143,]  102  114  122  150   84  128  139  115  127   124</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [144,]  121  145  125  141  105  103  113  101  140   137</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [145,]  141  121  144  125  137  105  101  116  113   140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [146,]  142  148  140  116  113  111  141  133  129   121</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [147,]  124  112  127   73   84  134  102  143  128   148</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [147,]  124  112  127   73   84  134  143  102  128   148</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [148,]  111  112  146  117  116  138   78  113  129   140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [149,]  137  116  111  148  125  145  141  138  101   105</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [150,]  128  139  143  102   71   84  122  127  124   134</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [149,]  137  116  111  148  145  125  141  138  101   105</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [150,]  128  139  102  143   71   84  122  127  124   134</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nn_in$dist</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               [,1]       [,2]       [,3]       [,4]       [,5]       [,6]</span>
@@ -1180,19 +1194,19 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      nnp2      nnp5     nnp10 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 0.4566667 0.6400000 0.7346667 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  nnp2  nnp5 nnp10 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.460 0.640 0.734 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnpv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnpv$nnp2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 1.0 0.5 0.5 0.0 0.5 1.0 0.5 1.0 0.5 0.5 0.5 0.0 0.0 1.0 0.5 1.0 0.5 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] 1.0 0.5 0.5 0.5 0.5 0.5 0.0 0.5 0.5 0.0 0.5 0.5 1.0 0.5 0.0 0.0 0.5 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] 0.0 0.5 1.0 0.5 0.5 1.0 1.0 1.0 0.0 0.5 1.0 0.5 0.5 0.5 1.0 0.5 0.5 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] 1.0 0.5 0.5 0.5 0.5 0.5 0.0 0.5 0.5 0.5 0.5 0.5 1.0 0.5 0.0 0.0 0.5 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] 0.0 0.5 1.0 0.5 0.0 1.0 1.0 1.0 0.0 0.5 1.0 0.5 0.5 0.5 1.0 0.5 0.5 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [55] 0.5 0.5 0.5 1.0 0.0 0.0 1.0 0.0 0.5 1.0 1.0 0.5 1.0 0.0 0.5 0.5 0.5 0.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [73] 0.0 0.5 0.5 0.5 0.0 0.0 0.5 0.5 0.5 0.5 0.0 0.0 1.0 0.0 0.0 0.0 0.0 1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [91] 0.5 1.0 0.5 1.0 0.0 1.0 1.0 0.5 1.0 0.0 0.0 0.5 0.5 0.0 0.0 0.5 0.0 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [109] 0.5 0.0 0.5 0.0 0.5 0.5 0.5 0.5 0.5 1.0 1.0 0.0 0.0 0.5 1.0 0.0 0.0 1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [127] 0.5 1.0 0.5 0.0 1.0 0.5 0.5 0.0 0.0 0.5 0.0 0.5 0.5 0.5 0.0 1.0 0.5 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [127] 0.5 1.0 0.5 0.0 1.0 0.5 0.5 0.0 0.0 0.5 0.0 0.5 0.5 0.5 0.0 1.0 0.5 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [145] 0.5 0.0 0.0 0.0 0.5 0.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnpv$nnp5</span>
@@ -1210,7 +1224,7 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 1.0 0.7 0.9 0.7 0.9 0.7 0.4 0.9 0.8 0.7 0.9 0.7 0.9 0.9 1.0 0.9 1.0 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [19] 0.7 0.7 0.4 0.6 1.0 0.7 0.8 0.7 0.8 0.6 0.7 0.8 1.0 0.5 0.8 0.9 0.8 0.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [37] 0.6 0.8 0.9 0.9 0.9 0.8 0.9 0.6 0.7 0.9 0.6 0.8 0.7 0.7 0.9 0.9 0.7 0.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55] 0.5 0.7 0.6 0.9 0.7 0.6 1.0 0.9 0.5 0.7 0.9 0.8 0.7 0.9 0.5 0.8 0.6 0.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [55] 0.5 0.7 0.6 0.9 0.6 0.6 1.0 0.9 0.5 0.7 0.9 0.8 0.7 0.9 0.5 0.8 0.6 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [73] 0.5 0.5 0.8 0.8 0.6 0.5 0.7 0.8 0.8 0.9 0.8 0.8 0.6 0.4 1.0 0.2 0.8 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [91] 0.8 0.7 0.7 0.9 0.8 0.8 0.8 0.7 1.0 0.7 0.8 0.7 0.8 0.7 0.7 1.0 0.6 0.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [109] 0.7 0.5 0.7 0.7 0.6 0.8 0.5 0.6 0.6 1.0 0.9 0.7 0.7 0.6 0.9 0.7 0.7 0.8</span>
@@ -1228,17 +1242,17 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nn_in</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nn_in$idx</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1,]   18    5   29   40   28    8   41   50   38    22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1,]   18    5   29   28   40    8   41   50   38    22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [2,]   13   46   35   10   26   31   36    3   50     4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [3,]   48    4    7   46   13   43   30    2   35    36</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [4,]   48   30   31    3   13   46    9   39   43    35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [5,]    1   38   18   41    8   28   40   20   22    29</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [6,]   19   11   49   45   47   20   17   22   33    34</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [7,]   48    3   12   43   30    4   38   41    8    50</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [8,]   40   50    1   18   28   29   12    5   27    41</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [9,]   39    4   43   14   48   13   46    3   30    31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [10,]   35   13   31    2   26   46   50   30    4     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [11,]   49   28   37   20   47   17    6   32   21    22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [8,]   40   50    1   18   28   12    5   29   27    41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [9,]   39    4   43   14   48   46   13    3   30    31</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [10,]   35   13    2   31   26   46   50   30    4     3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [11,]   49   28   37   47   20    6   17   32   21    22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [12,]    8   30   27   50   25   31    7   40   38    35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [13,]    2   10   35   46   31    3    4   26   48    30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [14,]   39   43    9   48    3    4   13    7   46    30</span>
@@ -1253,31 +1267,31 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [23,]    7    3   38   41   43   48    5   36   50     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [24,]   27   44   40    8   32   18   28   50   21    12</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [25,]   12   30   27   31    8   24   40   35   10    45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [26,]   35   10   31    2   13   46   50   30    8     4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [26,]   35   10   31    2   13   46   50   30    8    40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [27,]   24   44    8   40   18   12   50   28    1    22</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [28,]   40    1   29   18    8   49    5   11   41    50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [28,]   40   29    1   18    8   49    5   11   50    41</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [29,]    1   28   40   18    8   50   41    5   32    49</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [30,]   31    4   48   12   35   10    3    7   13    46</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [31,]   35   30   10   26    4    2   46   13   12    48</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [32,]   21   28   29   37   18   11   40   49    1    24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [33,]   47   34   20   49   11   17    6   22    5    38</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [34,]   33   16   17   15    6   11   49   19   20    47</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [35,]   10    2   31   26   46   13   50   30    4     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [36,]   50    2    3   41   35   29   10   46   13     8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [35,]   10   31    2   26   46   13   50   30    4     3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [36,]   50    2    3   41   35   29   10   13   46     8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [37,]   11   32   29   49   28    1   21   18   17    40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [38,]    5    1    8   41   18   40   12   50   28    20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [39,]    9   43   14    4   48    3   13   46   30     7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [39,]    9   43   14    4   48    3   46   13   30     7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [40,]    8   28    1   29   18   50    5   27   41    12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [41,]   18    5    1    8   50   29   40   38   28    22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [41,]   18    1    5    8   50   29   40   38   28    22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [42,]    9   39   46   14   13    2    4   31   43    26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43,]   39   48    3    4    7   14    9   30   13    46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [43,]   39   48    3    4    7   14    9   30   46    13</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [44,]   27   24   22   18    8   41   40   20   12    28</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [45,]   47    6   22   20   44   49   27   25   28    24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [46,]    2   35   13   31   10    3    4   26   48    30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [47,]   20   22   49    5   28   11   33   38   45     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [48,]    3    4   43   30    7   39   13   46   31    35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [49,]   11   28   20   47   22    1   18   29    5    37</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [50,]    8   40   36   29    1   18   35   41   10    28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [50,]    8   40   29   36    1   18   35   41   10    28</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [51,]   53   87   66   77   59   76   78   52   55    57</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [52,]   57   76   66   87   92   75   59   55   98    86</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [53,]   51   87   78   77   59   66   55   76   52    57</span>
@@ -1286,7 +1300,7 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [56,]   67   91   97   95   96   79  100   85   74    89</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [57,]   52   86   92   87  128   71  139   64   79    76</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [58,]   94   99   61   82   81   60   80   70   65    90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [59,]   76   55   66   87   77   75   52   98   53    92</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [59,]   76   55   66   87   77   75   52   98   53    64</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [60,]   90   95   54   81   70   89   65  100   82    97</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [61,]   94   58   82   81   99   54   70   90   80    60</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [62,]   97   79   96  100   89   98   72   67   92    56</span>
@@ -1294,9 +1308,9 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [64,]   92   74   79   98  139  127   55  128   56   134</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [65,]   83   80   89  100   70   60   93   90   81    82</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [66,]   76   87   59   52   75   55   51   77   53    98</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67,]   85   56   97   79   62   96   89   95  100    91</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [67,]   85   56   97   79   62   96   89   95  100    92</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [68,]   93   83  100   70   95   97   96   72   89    90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [69,]   88   73  120   55   74  147  124   79   63   127</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [69,]   88   73  120   55   74  147  124   79  127    63</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [70,]   81   90   82   93   83   54   68   95  100    80</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [71,]  139  128  150   86   57  127   92   79   64   122</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [72,]   98   83   93   62  100   75   68   97   96    95</span>
@@ -1311,14 +1325,14 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [81,]   82   70   90   54   80   93   83   68   60    95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [82,]   81   70   80   90   54   93   83   68   65    63</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [83,]   93  100   68   70   72   95   97   90   89    65</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [84,]  134  102  143  150  124  127  128   73  139   147</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [84,]  134  143  102  150  124  127  128   73  139   147</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [85,]   67   56   97   89   95   96   91  100   62    79</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [86,]   57   71   52   92   79   62  139   67   64   128</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [87,]   53   66   59   51   76   77   52   55   78    57</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [88,]   69   73   63   55   75   98   74   72   59   120</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [89,]   96   97  100   95   62   83   67   56   68    93</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [89,]   97   96  100   95   62   83   67   56   68    93</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [90,]   54   70   95   81   93  100   83   60   91    82</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91,]   95   56  100   90   97   68   96   93   54    67</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [91,]   95   56  100   90   97   68   96   93   54    85</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [92,]   64   79   74   98   52   57   75   62  139    55</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [93,]   83   68  100   70   95   90   72   97   81    54</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [94,]   58   61   99   82   81   80   60   70   54    90</span>
@@ -1331,23 +1345,23 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [101,]  137  145  105  144  141  125  149  121  133   116</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [102,]  143  114  122  150   84  139  128  115  127   124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [103,]  126  121  144  131  113  130  125  140  108   141</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [104,]  138  117  129  112  133  148  105  135  134   109</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [104,]  117  138  129  112  133  148  105  135  134   109</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [105,]  133  129  141  125  144  113  121  145  104   117</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [106,]  123  108  136  119  131  126  118  103  132   110</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [107,]   85   60   91   90   67   95   54  122   56   114</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [108,]  131  126  106  103  130  123  136  144  109   119</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [109,]  129  104  133  117  112  113  105  103  138   130</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [110,]  144  121  145  103  136  126  125  118  141   132</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [111,]  148  116  146   78  138  117  142  140  128   113</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [111,]  148  116   78  146  138  117  142  140  128   113</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [112,]  148  129  147  104  117  124  133  138  134    84</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [113,]  140  141  121  125  146  117  148  105  129   142</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [114,]  143  102  122  115   84  150  147  127  139   120</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [115,]  122  143  102  114  150  139  128  116  147   127</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [116,]  149  146  111  137  148  141  133  113  129   145</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [116,]  149  146  111  137  148  141  133  113  129   125</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [117,]  138  104  148  112  129  113  133  111  105   125</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [118,]  132  106  110  136  123  126  108  119  131   103</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [119,]  123  106  136  108  131  118  103  126  132   110</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [120,]   73   84   69  147  114  124  102  143  134    88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [120,]   73   84   69  147  114  124  143  102  134    88</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [121,]  144  141  145  125  113  140  103  105  146   142</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [122,]  102  143  114  150  115  139   71  128   84   127</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [123,]  106  119  108  131  136  126  118  103  132   130</span>
@@ -1366,18 +1380,18 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [136,]  131  106  103  108  123  126  110  119  130   121</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [137,]  149  116  101  145  141  125  105  144  133   121</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [138,]  117  104  148  129  112  111  125  133  113   105</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [139,]  128   71  127  150   64  124   79   92   84   143</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [139,]  128   71  127  150   64   79  124   92   84   143</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [140,]  113  142  146  121  125  141  148  117  111   103</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [141,]  145  121  113  144  105  125  140  146  116   133</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [142,]  146  140  113  111  148  116  141  121   78   125</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [143,]  102  114  122  150   84  139  128  115  127   124</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [144,]  121  125  145  141  105  103  113  101  140   137</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [142,]  146  140  113  111  148  141  116  121   78   125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [143,]  102  114  122  150   84  128  139  115  127   124</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [144,]  121  145  125  141  105  103  113  101  140   137</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [145,]  141  121  144  125  137  105  101  116  113   140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [146,]  142  148  140  116  113  111  141  133  129   121</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [147,]  124  112  127   73   84  134  102  143  128   148</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [147,]  124  112  127   73   84  134  143  102  128   148</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [148,]  111  112  146  117  116  138   78  113  129   140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [149,]  137  116  111  148  125  145  141  138  101   105</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [150,]  128  139  143  102   71   84  122  127  124   134</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [149,]  137  116  111  148  145  125  141  138  101   105</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [150,]  128  139  102  143   71   84  122  127  124   134</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nn_in$dist</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               [,1]       [,2]       [,3]       [,4]       [,5]       [,6]</span>
@@ -2144,19 +2158,19 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      nnp2      nnp5     nnp10 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 0.4566667 0.6400000 0.7346667 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  nnp2  nnp5 nnp10 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.460 0.640 0.734 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnpv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnpv$nnp2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 1.0 0.5 0.5 0.0 0.5 1.0 0.5 1.0 0.5 0.5 0.5 0.0 0.0 1.0 0.5 1.0 0.5 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] 1.0 0.5 0.5 0.5 0.5 0.5 0.0 0.5 0.5 0.0 0.5 0.5 1.0 0.5 0.0 0.0 0.5 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] 0.0 0.5 1.0 0.5 0.5 1.0 1.0 1.0 0.0 0.5 1.0 0.5 0.5 0.5 1.0 0.5 0.5 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] 1.0 0.5 0.5 0.5 0.5 0.5 0.0 0.5 0.5 0.5 0.5 0.5 1.0 0.5 0.0 0.0 0.5 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] 0.0 0.5 1.0 0.5 0.0 1.0 1.0 1.0 0.0 0.5 1.0 0.5 0.5 0.5 1.0 0.5 0.5 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [55] 0.5 0.5 0.5 1.0 0.0 0.0 1.0 0.0 0.5 1.0 1.0 0.5 1.0 0.0 0.5 0.5 0.5 0.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [73] 0.0 0.5 0.5 0.5 0.0 0.0 0.5 0.5 0.5 0.5 0.0 0.0 1.0 0.0 0.0 0.0 0.0 1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [91] 0.5 1.0 0.5 1.0 0.0 1.0 1.0 0.5 1.0 0.0 0.0 0.5 0.5 0.0 0.0 0.5 0.0 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [109] 0.5 0.0 0.5 0.0 0.5 0.5 0.5 0.5 0.5 1.0 1.0 0.0 0.0 0.5 1.0 0.0 0.0 1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [127] 0.5 1.0 0.5 0.0 1.0 0.5 0.5 0.0 0.0 0.5 0.0 0.5 0.5 0.5 0.0 1.0 0.5 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [127] 0.5 1.0 0.5 0.0 1.0 0.5 0.5 0.0 0.0 0.5 0.0 0.5 0.5 0.5 0.0 1.0 0.5 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [145] 0.5 0.0 0.0 0.0 0.5 0.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nnpv$nnp5</span>
@@ -2174,7 +2188,7 @@ functions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 1.0 0.7 0.9 0.7 0.9 0.7 0.4 0.9 0.8 0.7 0.9 0.7 0.9 0.9 1.0 0.9 1.0 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [19] 0.7 0.7 0.4 0.6 1.0 0.7 0.8 0.7 0.8 0.6 0.7 0.8 1.0 0.5 0.8 0.9 0.8 0.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [37] 0.6 0.8 0.9 0.9 0.9 0.8 0.9 0.6 0.7 0.9 0.6 0.8 0.7 0.7 0.9 0.9 0.7 0.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55] 0.5 0.7 0.6 0.9 0.7 0.6 1.0 0.9 0.5 0.7 0.9 0.8 0.7 0.9 0.5 0.8 0.6 0.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [55] 0.5 0.7 0.6 0.9 0.6 0.6 1.0 0.9 0.5 0.7 0.9 0.8 0.7 0.9 0.5 0.8 0.6 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [73] 0.5 0.5 0.8 0.8 0.6 0.5 0.7 0.8 0.8 0.9 0.8 0.8 0.6 0.4 1.0 0.2 0.8 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [91] 0.8 0.7 0.7 0.9 0.8 0.8 0.8 0.7 1.0 0.7 0.8 0.7 0.8 0.7 0.7 1.0 0.6 0.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [109] 0.7 0.5 0.7 0.7 0.6 0.8 0.5 0.6 0.6 1.0 0.9 0.7 0.7 0.6 0.9 0.7 0.7 0.8</span>
