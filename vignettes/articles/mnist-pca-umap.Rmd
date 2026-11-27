@@ -73,14 +73,17 @@ McInnes, Healy and Melville. [UMAP paper](https://arxiv.org/abs/1802.03426) ·
 
 ```{r mnist-fit, eval=FALSE}
 pca <- prcomp(x, rank. = 2)$x
-set.seed(414)
-umap <- uwot::umap(
-  x,
-  n_neighbors = 15,
-  min_dist = 0.1,
-  n_threads = 1,
-  n_sgd_threads = 1
-)
+fit_umap <- function(n_neighbors, seed) {
+  set.seed(seed)
+  uwot::umap(
+    x,
+    n_neighbors = n_neighbors,
+    min_dist = 0.1,
+    n_threads = 1,
+    n_sgd_threads = 1
+  )
+}
+umap <- fit_umap(15, 414)
 maps <- list(PCA = pca, UMAP = umap)
 ```
 
@@ -852,26 +855,33 @@ The first entry is the image itself.
 
 ```{r mnist-tsne-fit, eval=FALSE}
 # pak::pak(c("jlmelville/smallvis/smallvis", "zufft"))
-pixel_graph <- rnndescent::brute_force_knn(x, k = 91, n_threads = 2)
-set.seed(435)
-tsne <- smallvis::smallvis(
-  x,
-  method = list("tsne", repulsion = "hybrid"),
-  inp_kernel = "nngaussian",
-  neighbors = pixel_graph,
-  Y_init = 1e-4 * pca / sd(pca[, 1]),
-  scale = FALSE,
-  pca = FALSE,
-  perplexity = 30,
-  exaggeration_factor = 12,
-  stop_lying_iter = 250,
-  mom_switch_iter = 250,
-  eta = 200,
-  max_iter = 1000,
-  epoch_callback = FALSE,
-  n_threads = 2,
-  verbose = FALSE
-)
+fit_tsne <- function(perplexity) {
+  pixel_graph <- rnndescent::brute_force_knn(
+    x,
+    k = 3 * perplexity + 1,
+    n_threads = 2
+  )
+  set.seed(435)
+  smallvis::smallvis(
+    x,
+    method = list("tsne", repulsion = "hybrid"),
+    inp_kernel = "nngaussian",
+    neighbors = pixel_graph,
+    Y_init = 1e-4 * pca / sd(pca[, 1]),
+    scale = FALSE,
+    pca = FALSE,
+    perplexity = perplexity,
+    exaggeration_factor = 12,
+    stop_lying_iter = 250,
+    mom_switch_iter = 250,
+    eta = 200,
+    max_iter = 1000,
+    epoch_callback = FALSE,
+    n_threads = 2,
+    verbose = FALSE
+  )
+}
+tsne <- fit_tsne(30)
 digit_maps <- list(UMAP = umap, `t-SNE` = tsne)
 ```
 
@@ -1080,7 +1090,7 @@ precision for these selected queries.
 
 ```{r mnist-tsne-precision, eval=FALSE}
 depth <- c(1L, 5L, 15L)
-precision <- lapply(digit_maps, function(y) {
+digit_precision <- function(y) {
   t(vapply(
     audit,
     function(i) {
@@ -1091,7 +1101,8 @@ precision <- lapply(digit_maps, function(y) {
     },
     numeric(length(depth))
   ))
-})
+}
+precision <- lapply(digit_maps, digit_precision)
 mean_percent <- function(rows) {
   scores <- vapply(
     precision,
@@ -1109,6 +1120,51 @@ table(
   UMAP = precision$UMAP[disagree, 1],
   tSNE = precision[["t-SNE"]][disagree, 1]
 )
+```
+
+</details>
+
+### Does the early lead depend on the settings?
+
+Keep the same 5,000 images and the same 1,000 queries. Fit UMAP with 15 and 30 neighbors, each
+with seeds 414 and 437. Fit t-SNE at perplexities 15, 30 and 50 with the same PCA start, seed
+and optimizer. Each t-SNE fit uses three times its perplexity in pixel neighbors. For each query
+we still have all 4,999 other images to choose from.
+
+Compare each t-SNE map with each UMAP map. The table gives the smallest and largest differences
+in mean same-digit precision, in percentage points. Positive values favor t-SNE.
+
+| Neighbors inspected | Smallest difference | Largest difference | Comparisons favoring t-SNE |
+| ---: | ---: | ---: | ---: |
+| 1 | 4.90 | 7.30 | 12 of 12 |
+| 5 | 2.42 | 5.56 | 12 of 12 |
+| 15 | −0.04 | 3.33 | 11 of 12 |
+
+The lead shrinks from one to five neighbors and again from five to fifteen in every pairing.
+At fifteen, UMAP comes out ahead once. With 15 neighbors and seed 437, it finds six more
+matching digits than t-SNE at perplexity 50 across the 15,000 query-neighbor positions.
+
+<details>
+<summary>Refit the maps and compare the 12 pairs</summary>
+
+```{r mnist-tsne-fit-sensitivity, eval=FALSE}
+umap_fits <- list(umap, fit_umap(15, 437), fit_umap(30, 414), fit_umap(30, 437))
+tsne_fits <- list(fit_tsne(15), tsne, fit_tsne(50))
+mean_precision <- function(y) 100 * colMeans(digit_precision(y))
+umap_scores <- vapply(umap_fits, mean_precision, numeric(length(depth)))
+tsne_scores <- vapply(tsne_fits, mean_precision, numeric(length(depth)))
+fit_pairs <- expand.grid(
+  umap = seq_along(umap_fits),
+  tsne = seq_along(tsne_fits)
+)
+gap <- tsne_scores[, fit_pairs$tsne] - umap_scores[, fit_pairs$umap]
+data.frame(
+  neighbors = depth,
+  smallest = round(apply(gap, 1, min), 2),
+  largest = round(apply(gap, 1, max), 2),
+  tsne_ahead = rowSums(gap > 0)
+)
+sum(gap[1, ] > gap[2, ] & gap[2, ] > gap[3, ])
 ```
 
 </details>
