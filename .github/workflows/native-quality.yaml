@@ -56,7 +56,7 @@ jobs:
       - name: Install native tools
         run: |
           sudo apt-get update
-          sudo apt-get install --yes clang python3-venv shellcheck
+          sudo apt-get install --yes clang clang-tidy python3-venv shellcheck
 
       - name: Install clang-format 21.1.8
         run: |
@@ -74,8 +74,31 @@ jobs:
           bash -n tools/native-quality.sh tools/tsan-neighbor-overlap.sh
           shellcheck tools/native-quality.sh tools/tsan-neighbor-overlap.sh
 
-      - name: Run native quality checks
-        run: tools/native-quality.sh
+      - name: Run native quality checks and clang-tidy
+        id: native
+        shell: bash
+        run: tools/native-quality.sh --tidy 2>&1 | tee "$RUNNER_TEMP/native-quality.log"
+
+      - name: Report clang-tidy findings
+        if: ${{ !cancelled() && steps.native.outcome != 'skipped' }}
+        env:
+          NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: |
+          echo '### clang-tidy' >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$NATIVE_OUTCOME" != success ]]; then
+            echo 'Native checks failed. See the check log for the error.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          awk -v root="$GITHUB_WORKSPACE/" '
+            /:[0-9]+:[0-9]+: warning: / && !seen[$0]++ {
+              if (++n == 1) print "\n```text"
+              print index($0, root) == 1 ? substr($0, length(root) + 1) : $0
+            }
+            END {
+              if (n) print "```"
+              printf "\n%d distinct warning(s). Repeated header diagnostics are counted once.\n", n
+            }
+          ' "$RUNNER_TEMP/native-quality.log" >> "$GITHUB_STEP_SUMMARY"
 
   thread-sanitizer:
     name: ThreadSanitizer

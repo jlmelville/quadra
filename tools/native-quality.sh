@@ -3,11 +3,20 @@
 set -euo pipefail
 
 usage() {
-  printf 'Usage: %s\n' "${0##*/}"
+  printf 'Usage: %s [--tidy]\n' "${0##*/}"
+  printf 'Run the strict compiler and formatting checks. Add --tidy to report clang-tidy findings.\n'
 }
 
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+run_tidy=false
 case "${1-}" in
   "")
+    ;;
+  --tidy)
+    run_tidy=true
     ;;
   -h|--help)
     usage
@@ -25,6 +34,9 @@ repo_root=$(CDPATH='' cd -- "$script_dir/.." && pwd)
 cd "$repo_root"
 
 required_commands=(Rscript g++ clang++ clang-format)
+if [[ $run_tidy == true ]]; then
+  required_commands+=(clang-tidy)
+fi
 for required_command in "${required_commands[@]}"; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
     printf '%s: required command not found: %s\n' \
@@ -129,3 +141,12 @@ done
 clang-format --dry-run --Werror "${format_sources[@]}"
 
 printf 'native-quality: PASS (GCC, Clang, clang-format)\n'
+
+if [[ $run_tidy == true ]]; then
+  clang-tidy --version
+  clang-tidy --quiet \
+    --checks='-*,clang-analyzer-*,bugprone-*,performance-*' \
+    --header-filter='(^|/)(src|tools)/' \
+    "${maintained_sources[@]}" tools/tsan-neighbor-overlap.cpp \
+    -- "${compiler_flags[@]}"
+fi
