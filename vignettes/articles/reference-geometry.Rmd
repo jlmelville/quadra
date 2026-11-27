@@ -20,13 +20,13 @@ only 46% of the 15 nearest neighbors on average.
 
 ## Make the roll and its flat reference
 
-Install `quadra` from this checkout for the band profile, and install `flotsam` and `vizier`
-for the fit and figures.
+With this version of `quadra` installed, you'll also need `flotsam` for LTSA, `vizier` for the
+plots and `geometry` for the final comparison of triangle areas.
 
 ```{r roll-install, eval=FALSE}
 # Run once if the packages are missing:
 # install.packages("pak")
-# pak::pak(c("jlmelville/flotsam", "jlmelville/vizier"))
+# pak::pak(c("jlmelville/flotsam", "jlmelville/vizier", "geometry"))
 ```
 
 ```{r roll-data, eval=FALSE}
@@ -132,8 +132,10 @@ overlap barely changes for either embedding, and LTSA has the higher overlap und
 
 ## Compare short and long distances
 
-The fraction is defined separately for each reference. Compare PCA and LTSA *within* a reference
-at each fraction, where they use the same pairs and radius.
+Does LTSA's advantage along the surface extend to short distances? In each panel, start with the
+shortest 5% of pairs in that reference and widen the band until it includes all pairs. PCA and
+LTSA are scored on the same pairs within a panel. A pair that's close across a fold might enter
+the ambient panel well before it enters the intrinsic one.
 
 ```{r roll-bands, eval=FALSE, fig.width=8, fig.height=4}
 bands <- c(0.05, 0.1, 0.2, 0.5, 1)
@@ -164,8 +166,9 @@ for (ref in names(references)) {
 knitr::include_graphics("figures/roll-bands.png")
 ```
 
-The fitted-scale stress ranking reverses only at the full intrinsic band among these five
-band sizes. The small-radius results and full-band results describe different pairs.
+PCA has lower fitted-scale stress at all five cutoffs for straight-line distances. Along the
+surface it still leads at the first four cutoffs. LTSA pulls ahead only when we include every
+pair. So the full-surface result doesn't tell us which map better preserves short distances.
 
 ## Locate the lost neighbors
 
@@ -193,8 +196,10 @@ Both panels in each row use the same 0–1 scale from purple to yellow.
 
 ## Compare neighborhood agreement across sizes
 
-For each observation, compare LTSA to PCA at `k = 15` and by RNX AUC. Both comparisons
-use the same rows. Count a win only when LTSA has the higher score.
+Fifteen neighbors is one view of the roll. Does LTSA still come out ahead if we widen the
+neighborhood? RNX measures overlap after adjusting for chance. For each point we can compare the
+maps at `k = 15`, then over the whole RNX curve. Its area (RNX AUC) gives more weight to smaller
+neighborhoods. In the table, a win means LTSA scored higher than PCA for that point.
 
 ```{r roll-pointwise-rnx, eval=FALSE}
 roll_ranks <- lapply(references, exact_rank_profiles, embeddings = maps, k = k, mrre = TRUE)
@@ -235,10 +240,10 @@ blue favors PCA, and both panels use the same scale centered at zero.
 
 ## Where did the nearest surface neighbor go?
 
-At 15 neighbors LTSA has higher mean RNX, trustworthiness, and continuity under the intrinsic
-reference, as well as higher RNX AUC. Look at individual queries where all four agree. Input MRRE
-weights displacement of the closest reference neighbors most heavily. Check how often it favors
-PCA there, then trace the nearest reference neighbor into each map.
+LTSA leads on RNX, trustworthiness and continuity at 15 neighbors, and on RNX AUC across sizes.
+Now take the points where all four measures favor LTSA on the surface. What happened
+to the very closest surface neighbor? Input mean relative rank error (MRRE) gives the greatest
+weight to a move from first place. We'll look for points where that changes which map we'd choose.
 
 ```{r roll-mrre, eval=FALSE}
 neighbor_order <- function(coords, i) {
@@ -425,6 +430,9 @@ points in both panels, with the LTSA coordinates calibrated as above. Center eac
 or reflect LTSA into the reference frame. The gray lines join adjacent grid positions from the
 original roll. Following the same lines in both panels makes the change in shape visible.
 
+<details>
+<summary>Align and draw the patch around point 486</summary>
+
 ```{r roll-shape-patch, eval=FALSE, fig.width=7, fig.height=4.1}
 anchor <- 486L
 ids <- c(anchor, reference_graph$idx[anchor, ])
@@ -457,6 +465,8 @@ for (name in names(patches)) {
   mtext(sprintf("Marked points are %.2f units apart", dist(xy[focus, ])), side = 1, line = 0.4)
 }
 ```
+
+</details>
 
 ```{r show-roll-shape-patch, echo=FALSE, out.width="100%", fig.alt="The same grid patch is wide in the flat reference and stretches into a thin vertical strip in LTSA. The marked rows 484 and 487 move close together."}
 knitr::include_graphics("figures/roll-shape-patch.png")

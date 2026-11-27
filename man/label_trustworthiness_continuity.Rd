@@ -27,8 +27,9 @@ The data frame \code{pairs} has columns \code{label_a}, \code{label_b},
 input). Pairs follow the first appearance of the labels.
 }
 \description{
-Compare how well each pair of classes separates around its centroids in
-the reference coordinates and the embedding.
+For each pair of classes, what fraction of observations lie closer to
+their own class centroid? Compare that fraction in the reference and the
+embedding to see which classes have become harder or easier to tell apart.
 }
 \details{
 For each pair of labels and in each space, compute the two

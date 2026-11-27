@@ -7,7 +7,8 @@
 #'   same order. Supply lists with a nearest-first `idx` matrix as returned by
 #'   [nn_preservation()]. Distances are optional. Self indices are stripped.
 #' @param k Number of non-self neighbors to use from each row.
-#' @param ret_extra Return the directional norms and changed pairs?
+#' @param ret_extra Return the separate scores for gains and losses and the
+#'   row pairs whose shared-neighbor counts changed?
 #' @details For each graph, divide the number of shared neighbors of each
 #'   pair by `k`. Subtract the reference fractions from the output fractions.
 #'   Compute the Frobenius norms of the positive and negative parts of this

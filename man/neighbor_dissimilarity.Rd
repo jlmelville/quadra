@@ -13,7 +13,8 @@ same order. Supply lists with a nearest-first \code{idx} matrix as returned by
 
 \item{k}{Number of non-self neighbors to use from each row.}
 
-\item{ret_extra}{Return the directional norms and changed pairs?}
+\item{ret_extra}{Return the separate scores for gains and losses and the
+row pairs whose shared-neighbor counts changed?}
 }
 \value{
 A scalar, with smaller values indicating closer shared-neighbor

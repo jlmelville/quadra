@@ -3,21 +3,21 @@ title: "Metric overview"
 description: "Choose a metric from the relationship your embedding should preserve."
 ---
 
-This package provides several ways to evaluate the performance of an
-embedding. Start with the relationship you want to check.
+An embedding can put the right digit next to yours and still put two whole groups much too far
+apart. Which of those would matter for the way you intend to use the map?
 
 ## Choosing a Starting Metric
 
-| User question | Reasonable starting metric | Decision supported by the result |
-|---|---|---|
-| Are the same nearby observations retained? | `nn_preservation()` | Whether local-neighborhood identity is preserved well enough for the intended use. |
-| Do dense and sparse regions keep their relative local scale? | `local_radius_correlation()` | Whether scale distortion needs attention even when neighbor identities look acceptable. |
-| Are broad distance orderings retained? | `random_triplet_accuracy()` | Whether the embedding preserves enough global ordering for the intended use. |
-| Do known labels remain retrievable? | `roc_auc()` or `pr_auc()` | Whether same-label observations rank ahead of other labels in the embedding. |
-| Did a neighborhood keep its members but change shape? | `local_procrustes()` | Inspect the matched points in the [Swiss-roll patch](reference-geometry.html#compare-local-shape-after-alignment). |
-| Did a gap open between groups? | `gap_index()` | Locate the triangle spanning the [gap between three digits](mnist-pca-umap.html#inspect-the-gaps-between-digits). |
-| Does a visible island represent a coherent group in the reference? | `steadiness_cohesiveness()` | Check [label-free groups in the MNIST audit](mnist-pca-umap.html#check-groups-without-digit-labels) in both directions. |
-| Did a class pair become easier to retrieve while its geometry changed? | Pairwise AUC, label trustworthiness and continuity, and CADI | Compare retrieval, centroid separation, and [the spread of 5s seen from 3s](mnist-pca-umap.html#compare-angular-spread-from-each-digit). |
+| What do you want to know? | Where to start |
+|---|---|
+| Who stayed nearby? | `nn_preservation()` counts how many of the original neighbors each point keeps. |
+| Do dense regions stay dense? | `local_radius_correlation()` checks whether points with small neighborhood radii in the input still have small radii on the map. |
+| Do distances keep their order? | `random_triplet_accuracy()` takes a point and two others. How often does the closer one stay closer? |
+| Can I retrieve a label? | `roc_auc()` and `pr_auc()` tell you how well images of the same digit, for example, rank ahead of the other digits. |
+| Did a patch change shape? | `local_procrustes()` aligns the same points in both spaces. See what happened to [one patch of the Swiss roll](reference-geometry.html#compare-local-shape-after-alignment). |
+| Did a gap open up? | `gap_index()` compares triangle areas. See the [gap between three digits](mnist-pca-umap.html#inspect-the-gaps-between-digits). |
+| Can I trust an island? | `steadiness_cohesiveness()` checks groups [in both directions](mnist-pca-umap.html#check-groups-without-digit-labels), without using the digit labels. |
+| Did two classes become easier to tell apart? | Compare `class_pair_auc()` with the fraction of points closer to their own class centroid. To check angular spread, look at [the 5s as seen from the 3s](mnist-pca-umap.html#compare-angular-spread-from-each-digit). |
 
 ## Which metrics work on large datasets?
 
@@ -28,14 +28,26 @@ and two embeddings. A single matrix grows from 7.6 MiB at 1,000 rows to 763 MiB 
 26.8 GiB at 60,000. Allow additional memory for coordinates, copies and working storage. The
 practical limit depends on which metric you run and how much memory is available.
 
-| What you want to check | Recommended approach for large data | What determines the cost |
-|---|---|---|
-| Global distances and ordering | Start with `random_pair_distance_correlation()`, `random_pair_distance_emd()`, `random_pair_distance_stress()`, `random_pair_distance_band_profile()` or `random_triplet_accuracy()` on the full coordinates. Reuse the sampled pairs or triplets across embeddings. | Only sampled distances are evaluated. `n_pairs` is a total count. For triplet accuracy, `n_triplets` is a count **per observation**. Check how many sampled pairs fall in the narrowest band. |
-| Neighbor overlap, local radius or reciprocal neighbors | Use `nn_preservation()`, `nbr_pres_knn()`, `local_radius_correlation()` or `mutual_neighbor_correlation()` with existing neighbor graphs. When building graphs, consider approximate search and spot-check its recall. | A graph holding `k` neighbors per row has `N * k` entries. Brute-force search still evaluates all pairs. Radius comparisons also need neighbor distances. |
-| Exact neighborhood ranks | For Euclidean coordinates, use `exact_rank_profiles()` with selected `query_rows` and a few `k` values. | Each query ranks the full pool. Scoring every query still requires quadratic distance work, even though the per-query workspace is linear in `N`. |
-| Label separation or angular spread | Use `label_trustworthiness_continuity()` for centroid separation or `class_angular_distortion_index()` for angles. | The first visits every pair of classes. The second works on sampled triplets, with `n_triplets` a **total** count. Neither needs all observation-pair distances. |
-| Local shape or empty regions | Reuse a reference neighbor graph for `local_procrustes()`. Use `gap_index()` for gaps in a 2D map. | Procrustes fits one small alignment per row. Gap Index triangulates the embedding and evaluates the triangle edges. Both avoid a dense distance matrix. |
-| Changes in shared neighbors | Use `neighbor_dissimilarity()` when the identities of the affected pairs matter. | Its sparse graph product can approach `N^2` entries when many rows share a popular neighbor. This also affects the scalar score. |
+- **Distances and their ordering.** Use the full coordinates and reuse a sample of pairs across
+  embeddings for correlation, EMD, stress or a distance-band profile. Check how many pairs reach
+  the narrowest band. For `random_triplet_accuracy()`, the sample size is *per observation*.
+  [Global distance metrics](#global-distance-preservation)
+- **Neighbors.** A graph with `k` neighbors per row stores `N * k` indices. Keep the graphs from
+  `nn_preservation(..., ret_extra = TRUE)` for overlap, local radii (which also need distances)
+  and reciprocal neighbors. Brute-force search still compares every pair. For approximate search,
+  [spot-check a few queries](mnist-pca-umap.html#spot-check-the-pixel-neighbor-search).
+- **Exact ranks.** With Euclidean coordinates, `exact_rank_profiles()` can score a sample of
+  queries against every candidate. It needs only one query's ranks at a time, but scoring *all*
+  queries still requires quadratic distance work.
+  [Try a query sample](#sample-queries-when-the-full-neighbor-pool-matters).
+- **Class geometry.** `label_trustworthiness_continuity()` checks nearest-centroid consistency for
+  every pair of classes. `class_angular_distortion_index()` estimates angular distortion from
+  sampled triplets. Here `n_triplets` is the *total* number to draw. Both work on coordinates.
+- **Patches and gaps.** Reuse a reference graph for `local_procrustes()` and fit one small
+  alignment per point. For `gap_index()`, only the edges of the 2D triangulation need distances.
+- **Shared neighbors.** `neighbor_dissimilarity()` starts with sparse graphs. One popular neighbor
+  can occur in many lists, and every pair of those lists shares that neighbor. Even the scalar
+  score can then require space for nearly every pair of observations.
 
 **When to use a smaller dataset.** `nbr_pres()`, `trustworthiness()`, `continuity()`, `rnx_auc()`,
 `rnx_curve()`, `pointwise_rank_preservation()` and `pointwise_rnx()` each take **two dense distance
@@ -78,9 +90,10 @@ the number of queries, the size of the candidate pool and `k`.
 `rnx_auc()` summarizes rank-based neighborhood agreement over many neighborhood sizes, while
 `rnx_curve()` retains the individual scales. `pointwise_rnx()` gives the comparison per observation.
 
-To check whether the closest neighbors retain their order, use `exact_rank_profiles()` with
-`mrre = TRUE`. Compare input and output mean relative rank error at the same `k`. Smaller values
-indicate better preservation.
+To see how far the closest neighbors move in the ranking, use `exact_rank_profiles()` with
+`mrre = TRUE`. A first neighbor that slips to fifth counts more than a tenth neighbor that slips
+to fourteenth. You can follow the input neighbors into the embedding or trace the embedding's
+neighbors back to the input.
 [Worked example](local-preservation.html#can-the-same-neighbors-come-back-in-a-different-order)
 
 See the [local preservation](local-preservation.html) article for examples and
@@ -152,9 +165,10 @@ local-scale summaries, but not neighbor, triplet, or Spearman ordering.
 and treat matching labels as relevant. They require the
 [PRROC package](https://cran.r-project.org/package=PRROC).
 
-`label_trustworthiness_continuity()` compares each class pair's centroid separation with
-its separation in the input. `class_angular_distortion_index()` measures changes in the
-angles that one class subtends from points in another.
+For each class pair, `label_trustworthiness_continuity()` asks how many observations fall closer
+to their own class centroid and how that fraction changes in the embedding.
+`class_angular_distortion_index()` measures changes in the angles that one class subtends from
+points in another.
 
 See the [label retrieval](label-retrieval.html) article for examples and return
 value details.

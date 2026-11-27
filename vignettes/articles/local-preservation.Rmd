@@ -124,10 +124,11 @@ Values nearer 1 mean smaller rank penalties. Both metrics are above 0.9 at the
 shown scales, so this embedding introduces relatively small trustworthiness and
 continuity penalties for these Iris neighborhoods.
 
-These functions use full `n` by `n` distance matrices and require `k` to be
-less than half the number of observations, so they are intended for exact
-small-dataset checks. For larger datasets, use nearest-neighbor preservation
-metrics such as `nn_preservation()` or `nbr_pres_knn()`.
+These functions take two full distance matrices and require `k` to be less than half the number of
+observations. If you have Euclidean coordinates, `exact_rank_profiles()` can compute the same
+penalties one query at a time. For a larger dataset, sample `query_rows` and keep the full set of
+candidates. If you only need to count which neighbors survived, you can use the neighbor graphs
+directly with `nn_preservation()` or `nbr_pres_knn()`.
 
 ### Where did a gap remove neighbors?
 

@@ -3,10 +3,11 @@ title: "Distance fidelity across scales"
 description: "Compare distance order and magnitude from nearby input pairs to the whole dataset."
 ---
 
-A single distance correlation averages over short and long distances. A distance-band profile
-starts with nearby input pairs, then admits progressively more distant pairs. Each band reports
-Spearman correlation for distance order and normalized stress for distance magnitudes after
-fitting one multiplier.
+Suppose an embedding puts two well-separated clouds almost on top of each other. What would a
+score for short distances tell us? That depends on where we look for the short pairs. Here we
+choose them in the input, then see what happens as we widen the radius to include both clouds.
+Spearman correlation tells us whether the distances keep their order. Normalized stress tells us
+how closely their lengths match after we fit one scale factor for the whole band.
 
 ## Preserve short distances and create false neighbors
 
@@ -58,9 +59,10 @@ k <- 8
 mean(nbr_pres(as.matrix(dist(x)), as.matrix(dist(merged)), k))
 ```
 
-The near band preserves order and distances even though the merged clouds lose neighbors to
-the other copy. The selection uses input distances, so those newly close pairs enter only at
-larger input radii.
+At radius 2.5 the stress is effectively zero. Every pair we've checked belongs to a single cloud,
+and sliding a cloud sideways leaves those distances alone. The neighbor overlap tells a different
+story because a point can now pick up neighbors from the other cloud. To see those pairs in the
+distance score, we have to widen the *input* radius.
 
 ## Compare sampled and exact profiles
 
@@ -90,6 +92,10 @@ for (metric in c("spearman", "normalized_stress")) {
 }
 ```
 
+The first three bands contain only pairs from the same cloud. Once the bands start admitting
+pairs from opposite clouds, Spearman correlation falls and stress rises. The sample of 10,000
+pairs picks up the same turn as the exact calculation.
+
 ## Compress both clouds without moving their centers
 
 This time keep each cloud’s center and shrink its offsets to one quarter. Fitting the scale inside
@@ -110,8 +116,9 @@ round(c(input = relative_scale(detail$distance_in),
 print(transform(detail$profile, fitted_scale = detail$fitted_scale), digits = 3)
 ```
 
-The near band needs a multiplier of four to undo the within-cloud compression. The full band
-needs a multiplier close to one because it includes the distances between the two centers.
+The short pairs need a multiplier of four to recover their original lengths. Once the long pairs
+enter, a multiplier close to one fits better. The centers are still just as far apart, so scaling
+the whole map by four would pull the clouds much too far apart.
 
 ## Whose distances enter a short band?
 
@@ -176,10 +183,10 @@ data.frame(row = top, group = region[top], incident_pairs = incidents[top],
            error_share = round(allocated[top] / sum(allocated), 3))
 ```
 
-The stretched sparse group accounts for 94.1% of the squared error on only 34 of 976 pair ends.
-The five largest allocations all belong to sparse points, each appearing in only one or two pairs.
-Seventeen sparse points have no qualifying pair at this radius and hence no evidence about their
-distortion here. The unchanged dense group contributes some error because the pooled multiplier
-is 0.969.
+Only 17 of the 488 pairs come from the stretched cloud, yet they account for 94.1% of the squared
+error. The five points with the largest contributions all come from that cloud. Each appears in
+just one or two pairs. Another 17 points in the same cloud have no partner within the radius, so
+this band tells us nothing about their distortion. Even the unchanged cloud contributes a little
+error because we multiply its distances by the same fitted factor of 0.969.
 
 For the fixed-radius approach, see [Takaeda's distance-band benchmark](https://arxiv.org/abs/2608.21779).

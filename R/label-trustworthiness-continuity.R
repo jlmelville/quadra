@@ -1,7 +1,8 @@
 #' Label Trustworthiness and Continuity
 #'
-#' Compare how well each pair of classes separates around its centroids in
-#' the reference coordinates and the embedding.
+#' For each pair of classes, what fraction of observations lie closer to
+#' their own class centroid? Compare that fraction in the reference and the
+#' embedding to see which classes have become harder or easier to tell apart.
 #'
 #' @param Xin Reference coordinates, as a dense numeric matrix or data
 #'   frame with observations in rows.

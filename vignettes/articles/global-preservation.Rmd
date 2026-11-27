@@ -163,9 +163,10 @@ c(
 )
 ```
 
-Range scaling absorbs the common offset. A multiplier cannot absorb it, so fitted-scale stress
-is about 0.122. See [distance fidelity across scales](distance-band-fidelity.html) for comparisons
-restricted to nearby input pairs.
+Range scaling takes both sets of distances to `0, 0.5, 1`, giving zero error. Now try to do the
+same with a single multiplier. Halving the output distances fixes the first pair, but it sends
+the third distance to 2 when we wanted 3. Even the best multiplier leaves a fitted-scale stress
+of about 0.122. [Try the same comparison on short distances](distance-band-fidelity.html).
 
 ## Check Output Scale Alongside Scores
 

@@ -19,14 +19,16 @@ what you want to read from it.
   orderings (67% versus 62%) and has lower fitted-scale stress in every distance band shown.
   [Compare distance bands](#distance-band-plot) or
   [check distance ordering for individual images](#check-distance-ordering-from-each-anchor).
-- **Are the digits easier to tell apart?** On the 1,000-image audit, UMAP gives higher mean PR AUC
-  than PCA for every digit. UMAP also makes 3s and 5s easier to retrieve than in pixel space, yet
-  angles from 3s to pairs of 5s change more than in the reverse direction.
+- **Are the digits easier to tell apart?** On the 1,000-image audit, UMAP does a better job than
+  PCA of retrieving images of the same digit for all ten digits, as measured by the area under
+  the precision-recall curve (PR AUC). UMAP also makes 3s and 5s easier to retrieve than in pixel
+  space, yet angles from 3s to pairs of 5s change more than in the reverse direction.
   [Compare retrieval by digit](#digit-retrieval-plot) and
   [inspect the angles in both directions](#class-angle-plot).
 - **Does a UMAP island hold together in pixel space?** The island with the best neighborhood
-  agreement scores highly on Steadiness, yet some pixel-space groups involving its images disperse
-  in UMAP. [Trace the groups in both directions](#check-groups-without-digit-labels) or
+  agreement has sampled groups that tend to hold together when we trace them back to the pixels.
+  Start in pixel space, though, and some groups involving those same images disperse in UMAP.
+  [Trace the groups in both directions](#check-groups-without-digit-labels) or
   [see which image pairs acquire shared neighbors](#which-images-acquire-shared-neighbors).
 
 To run the recipes, start with the data and fits below. Later sections reuse those objects.
@@ -144,17 +146,18 @@ Each point is colored by its fraction of retained neighbors at `k = 15`. Both pa
 
 ### Spot-check the pixel neighbor search
 
-The first calculation used neighbor descent in pixel space and brute-force search in each
-embedding. Sample 100 queries per digit. Each query can still choose from all 4,999 other images.
-We will reuse these 1,000 rows later for a separate, smaller candidate pool.
+The first calculation used an approximate search in pixel space. Could that explain UMAP's lead?
+We can check 100 images of each digit exactly. For now these 1,000 images are just the *queries*.
+Each one can still have any of the other 4,999 images as a neighbor. Later we'll see what happens
+when we also restrict the candidates to the 1,000-image sample.
 
 ```{r mnist-audit-rows, eval=FALSE}
 set.seed(417)
 audit <- sort(unlist(lapply(split(seq_along(label), label), sample, size = 100)))
 ```
 
-Get exact overlap at 15 neighbors for just these queries. RNX adjusts the fraction of shared
-neighbors for chance. Undo that adjustment to recover the number of shared neighbors.
+For each query, `exact_rank_profiles()` gives us RNX, the fraction of shared neighbors adjusted
+for chance. Undoing the adjustment gives us the number of neighbors the two spaces share out of 15.
 
 ```{r mnist-search-exact, eval=FALSE}
 spot_k <- 15L
@@ -166,9 +169,9 @@ exact_hits <- vapply(spot, function(p) {
 }, numeric(length(audit)))
 ```
 
-Compare two input graphs at the same cutoff. The earlier graph was built for 50 neighbors.
-Build the second for 15 with the same seed. Keep the two embedding graphs fixed. To measure
-pixel-graph recall directly, also fetch the exact pixel-neighbor IDs for the selected queries.
+There are two ways to get a list of 15 neighbors from the approximate search. We can ask for 15,
+or we can ask for 50 and keep the first 15, as we did above. Let's compare both lists with the
+exact pixel neighbors, keeping the embedding graphs fixed.
 
 ```{r mnist-search-audit, eval=FALSE}
 set.seed(416)
@@ -480,9 +483,10 @@ RNX difference (0s minus 7s) is +0.083 at 100 neighbors and −0.080 at 500. Wit
 
 ### Inspect the closest neighbors within the first 15
 
-Input MRRE asks where each of the 15 closest pixel neighbors ended up. Output MRRE starts with the
-15 closest neighbors in the embedding and looks up their pixel ranks. Both give the closest
-neighbor the most weight. Reuse the full-pool ranks to compare these errors with the earlier scores.
+Keeping four of the closest 15 images sounds better than keeping none. Does it mean we can trust
+the *first* neighbor? Mean relative rank error (MRRE) gives that first position the most weight.
+Input MRRE follows the closest pixel neighbors into each map. Output MRRE takes the closest
+neighbors on the map and looks up their pixel ranks.
 
 ```{r mnist-mrre, eval=FALSE}
 rank_scores15 <- lapply(full_ranks, function(p) {
@@ -509,6 +513,9 @@ UMAP leads on average in both directions. Among the 4,012 images where all four 
 favor UMAP, 51 have higher output MRRE in UMAP. Inspect the query with the largest increase in
 output error among those 4,012. The figure shows the query and its nearest neighbor in each space.
 
+<details>
+<summary>Find the nearest images and draw the four digits</summary>
+
 ```{r mnist-mrre-neighbors, eval=FALSE, fig.width=8, fig.height=2.6}
 i <- which.max(ifelse(ahead, delta15[, "output_error"], -Inf))
 neighbor_order <- function(coords) {
@@ -529,6 +536,8 @@ for (j in seq_along(rows)) {
   mtext(captions[j], side = 1, line = 0.3)
 }
 ```
+
+</details>
 
 ```{r show-mnist-mrre-neighbors, echo=FALSE, out.width="100%", fig.alt="Four handwritten digits. For the query 7, the nearest PCA neighbor is a 9 ranked 67th in pixel space. The nearest UMAP neighbor is a 7 ranked 3,331st."}
 knitr::include_graphics("figures/mnist-mrre-neighbors.png")
@@ -945,7 +954,8 @@ qualifying_pairs        shared_in       shared_out
 2        57524        2      0.995        1.000
 ```
 
-The two images retain three and two pixel neighbors individually, and both have Steadiness above
-0.99. The pair table shows what changed between them. They now share 12 of their 15 neighbors.
+Each image keeps only a few of its own pixel neighbors (three and two), yet both have Steadiness
+above 0.99. Look at the two lists together, though. They had no neighbors in common in pixel
+space and now share 12 of their 15, even though neither image lists the other.
 Across the three balanced audit draws (seeds 417–419), 69, 76, and 71 pairs meet the same cutoff
 without either image directly listing the other.

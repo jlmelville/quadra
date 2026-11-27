@@ -2,18 +2,20 @@
 
 * Add `neighbor_dissimilarity()` to compare shared neighbors in two graphs and identify the
   observation pairs that gain or lose them.
-* Add `exact_rank_profiles()` for exact Euclidean rank comparisons across embeddings using
-  one query's distance and rank workspace at a time. Set `mrre = TRUE` for directional mean
-  relative rank errors among each query's closest input and output neighbors. Use `query_rows`
-  to score selected observations against the full candidate pool.
-* Add `steadiness_cohesiveness()` to assess label-free groups and map group distortion.
+* Add `exact_rank_profiles()` to compare Euclidean neighborhood ranks across embeddings without
+  storing a full distance matrix. Use `query_rows` to check selected observations against the full
+  candidate pool. Use `mrre = TRUE` to see how far the closest neighbors move in either direction.
+* Add `steadiness_cohesiveness()` to check whether groups on the map hold together in the input
+  and whether input groups hold together on the map. Neither check needs class labels.
 * Return per-band fitted scale multipliers with detailed distance-band profiles.
-* Add `class_pair_auc()` for pair-restricted ROC and PR AUC and their defined-query counts.
+* Add `class_pair_auc()` to see which pairs of classes became easier or harder to retrieve. It
+  reports ROC and PR AUC and the number of queries that contribute to each score.
 * Add `class_angular_distortion_index()` for directed class-pair angular distortion.
 * Add `gap_index()` for regional area distortion in two-dimensional embeddings.
 * Add per-anchor counts and accuracy with `random_triplet_accuracy(..., by_anchor = TRUE)`.
 * Add `pointwise_rnx()` for observation-level RNX AUC and selected neighborhood sizes.
-* Add `label_trustworthiness_continuity()` to detect changes in class-pair centroid consistency.
+* Add `label_trustworthiness_continuity()` to compare the fraction of points closer to their own
+  centroid for each pair of classes in the input and the embedding.
 * Add `random_pair_distance_band_profile()` for Spearman correlation and fitted-scale stress
   across input-distance bands, with reusable pair samples.
 * Add `pointwise_rank_preservation()` for observation-level trustworthiness and continuity.
