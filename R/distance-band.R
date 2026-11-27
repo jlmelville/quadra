@@ -6,6 +6,7 @@
 #'
 #' @inheritParams random_pair_distance_correlation
 #' @inheritSection random_pair_distance_correlation Numerical failures
+#' @inheritSection random_pair_distance_correlation Scaling
 #' @param bands Strictly increasing, finite band selectors. Proportions must
 #'   be in `(0, 1]`; radii must be nonnegative.
 #' @param band_type Interpret `bands` as empirical proportions or as radii in
@@ -28,7 +29,9 @@
 #'   bands can fit different multipliers.
 #'
 #'   Spearman correlation needs at least three pairs and variation in both
-#'   distance vectors. Stress needs nonzero norms in both vectors.
+#'   distance vectors. Check `n_pairs` in the narrowest band and increase the
+#'   pair sample if few distances qualify. Stress needs nonzero norms in both
+#'   vectors.
 #'   Undefined values are `NA_real_` with one warning per call.
 #' @return A data frame with columns `band_type`, `band`, `radius`,
 #'   `n_pairs`, `pair_fraction`, `spearman`, and `normalized_stress`.

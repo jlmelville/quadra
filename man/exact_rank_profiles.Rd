@@ -44,10 +44,6 @@ Each row's candidate pool contains all other observations.
 Tied Euclidean distances follow observation order, as with
 \code{\link[=pointwise_rank_preservation]{pointwise_rank_preservation()}} and \code{\link[=pointwise_rnx]{pointwise_rnx()}} on matrices from
 \code{\link[stats:dist]{stats::dist()}}. RNX AUC uses every size from one through \code{n - 2}.
-Only the selected queries incur distance and ranking work. Temporary
-workspace grows linearly with the number of observations. Returned
-profiles use space proportional to scored queries, requested sizes, and
-embeddings.
 
 For MRRE, select the first \code{k} neighbors in one space. For each of these
 neighbors, divide the absolute change in rank by its rank in the selecting
@@ -55,13 +51,29 @@ space. Sum and divide by \code{sum((n - 2 * r) / r)} over ranks 1 through \code{
 Identical rankings give zero and reversed rankings give one. For large
 neighborhoods, other permutations can exceed one under this normalization.
 }
+\section{Scaling}{
+
+Keep all \code{N} rows of the coordinates. Each of \code{q} selected queries computes
+and sorts \code{N - 1} distances per space. Scoring all rows requires quadratic
+distance work, and wide inputs make each distance more expensive. Temporary
+rank workspace grows linearly with \code{N}. Output size grows with the number
+of queries, requested neighborhood sizes, and embeddings.
+
+For a large-data audit, sample \code{query_rows} and reuse them for every
+embedding. Each score is exact for its query against the full pool. The
+column means summarize the sampled queries. Slicing \code{Xin} and the embeddings
+before the call changes the candidate pool and can change the scores.
+}
+
 \examples{
 x <- as.matrix(iris[, -5])
 y <- prcomp(x)$x[, 1:2]
 profile <- exact_rank_profiles(x, list(PCA = y), k = c(5, 15), mrre = TRUE)
 colMeans(profile$PCA$mrre_input)
-spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = c(80, 3))
-spot$PCA$curve
+set.seed(42)
+queries <- sample.int(nrow(x), 30)
+spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = queries)
+colMeans(spot$PCA$curve) # 30 queries, 149 candidates per query
 }
 \references{
 Lee, J. A. and Verleysen, M. (2008).

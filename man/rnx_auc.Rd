@@ -21,6 +21,14 @@ the random-neighborhood baseline, and values may be negative. Diagonal
 entries are excluded; off-diagonal entries must be finite. Ties follow column
 order.
 }
+\section{Scaling}{
+
+Supply two dense \code{N} by \code{N} distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working storage.
+For Euclidean coordinates, \code{\link[=exact_rank_profiles]{exact_rank_profiles()}} ranks one query at a
+time. Set \code{query_rows} to score a sample against all other observations.
+}
+
 \references{
 Lee, J. A., Peluffo-Ordo'nez, D. H., & Verleysen, M. (2015).
 Multi-scale similarities in stochastic neighbour embedding: Reducing

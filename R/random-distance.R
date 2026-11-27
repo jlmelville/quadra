@@ -37,6 +37,11 @@ sample_pairs <- function(n_obs, n_pairs = 1000) {
 #' `Xin` and `metric_in` define the reference geometry. Supply `pairs` to reuse
 #' exact comparisons, or reset the R seed and keep `n_threads` fixed.
 #'
+#' @section Scaling:
+#' For large datasets, use the full coordinates and set `n_pairs` to a total
+#' sample size. Distance calculations and stored distances scale with the
+#' number of sampled pairs. Reuse `pairs` across embeddings. Supplying every
+#' unordered pair makes both the pair count and distance work quadratic.
 #' @section Numerical failures:
 #' A nonfinite computed distance causes an error, even with finite coordinates.
 #' Finite distances alone do not guarantee accuracy at extreme coordinate scales.
@@ -122,6 +127,7 @@ random_pair_distance_correlation <- function(
 #' `ret_extra = TRUE` when collapse or absolute scale is a concern.
 #'
 #' @inheritSection random_pair_distance_correlation Numerical failures
+#' @inheritSection random_pair_distance_correlation Scaling
 #' @param Xin Input data, with observations in rows by default. Data must be
 #'   dense and finite; nonnumeric data-frame columns are ignored.
 #' @param Xout Output data, with the same input conventions and number of
@@ -211,6 +217,7 @@ emd <- function(x, y) {
 #'
 #' @inheritParams random_pair_distance_emd
 #' @inheritSection random_pair_distance_correlation Numerical failures
+#' @inheritSection random_pair_distance_correlation Scaling
 #' @details With `range_scale = TRUE`, constant distance vectors scale to zero.
 #'   Inspect raw distances with `ret_extra = TRUE` when collapse or absolute scale
 #'   is a concern.

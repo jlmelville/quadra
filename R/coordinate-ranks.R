@@ -21,16 +21,23 @@
 #'   Tied Euclidean distances follow observation order, as with
 #'   [pointwise_rank_preservation()] and [pointwise_rnx()] on matrices from
 #'   [stats::dist()]. RNX AUC uses every size from one through `n - 2`.
-#'   Only the selected queries incur distance and ranking work. Temporary
-#'   workspace grows linearly with the number of observations. Returned
-#'   profiles use space proportional to scored queries, requested sizes, and
-#'   embeddings.
 #'
 #' For MRRE, select the first `k` neighbors in one space. For each of these
 #' neighbors, divide the absolute change in rank by its rank in the selecting
 #' space. Sum and divide by `sum((n - 2 * r) / r)` over ranks 1 through `k`.
 #' Identical rankings give zero and reversed rankings give one. For large
 #' neighborhoods, other permutations can exceed one under this normalization.
+#' @section Scaling:
+#' Keep all `N` rows of the coordinates. Each of `q` selected queries computes
+#' and sorts `N - 1` distances per space. Scoring all rows requires quadratic
+#' distance work, and wide inputs make each distance more expensive. Temporary
+#' rank workspace grows linearly with `N`. Output size grows with the number
+#' of queries, requested neighborhood sizes, and embeddings.
+#'
+#' For a large-data audit, sample `query_rows` and reuse them for every
+#' embedding. Each score is exact for its query against the full pool. The
+#' column means summarize the sampled queries. Slicing `Xin` and the embeddings
+#' before the call changes the candidate pool and can change the scores.
 #' @references Lee, J. A. and Verleysen, M. (2008).
 #' Quality assessment of nonlinear dimensionality reduction based on K-ary
 #' neighborhoods. <https://proceedings.mlr.press/v4/lee08a.html>
@@ -46,8 +53,10 @@
 #' y <- prcomp(x)$x[, 1:2]
 #' profile <- exact_rank_profiles(x, list(PCA = y), k = c(5, 15), mrre = TRUE)
 #' colMeans(profile$PCA$mrre_input)
-#' spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = c(80, 3))
-#' spot$PCA$curve
+#' set.seed(42)
+#' queries <- sample.int(nrow(x), 30)
+#' spot <- exact_rank_profiles(x, list(PCA = y), k = 5, query_rows = queries)
+#' colMeans(spot$PCA$curve) # 30 queries, 149 candidates per query
 #' @export
 exact_rank_profiles <- function(
   Xin,

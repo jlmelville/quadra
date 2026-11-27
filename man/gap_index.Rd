@@ -48,6 +48,14 @@ fill the convex hull, so regions at the boundary participate in the
 result. The triangulation can change with the embedding or the rows
 included. Requires the \code{geometry} package.
 }
+\section{Scaling}{
+
+The 2D Delaunay triangulation has a number of triangles proportional to
+\code{N}. Only their edge distances are computed in the two spaces. Use all
+eligible rows when the gaps of the full map matter. Subsetting the rows
+changes the triangulation and can change which gaps are visible.
+}
+
 \section{Numerical failures}{
 
 A nonfinite computed distance causes an error, even with finite coordinates.

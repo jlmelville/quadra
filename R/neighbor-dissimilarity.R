@@ -16,9 +16,13 @@
 #'   agree, which can happen even when neighbor identities change.
 #'
 #'   ND depends on graph size and `k`. Compare embeddings on the same rows
-#'   and at the same `k`. The calculation uses sparse matrices from the
-#'   `Matrix` package. When many lists intersect, the number of represented
-#'   pairs can grow quadratically with the number of rows.
+#'   and at the same `k`.
+#' @section Scaling:
+#' Each input graph needs only `k` neighbors per row, but the sparse matrix
+#' product represents every pair of rows sharing a neighbor. One neighbor
+#' listed by all `N` rows creates `N * (N - 1) / 2` unordered pairs. Even the
+#' scalar score can therefore need quadratic memory. `ret_extra = TRUE` also
+#' returns a table of changed pairs. The calculation uses the `Matrix` package.
 #' @return A scalar, with smaller values indicating closer shared-neighbor
 #'   structure. With `ret_extra = TRUE`, a list containing `nd`, `gain` and
 #'   `loss` (the nonnegative directional norms), and `pairs`. The data frame

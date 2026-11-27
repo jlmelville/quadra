@@ -9,6 +9,11 @@
 #'
 #' @note Requires the `PRROC` package.
 #'
+#' @section Scaling:
+#' Each call takes one dense `N` by `N` distance matrix and ranks candidates
+#' for every query. At 5,000 observations the matrix alone uses about 191 MiB
+#' in double precision. When using a subset, report its size and use the same
+#' rows in each space. Its rows determine both the queries and the candidates.
 #' @param dm Finite square numeric distance matrix. The query itself is excluded.
 #' @param labels A label vector without missing values, with one label per row
 #'   of `dm`.
@@ -21,6 +26,7 @@
 #'
 #'   With `ret_extra = TRUE`, the list also contains `query_auc`, with
 #'   `NA_real_` for undefined queries, and the integer `n_defined`.
+#' @seealso [pr_auc()], [class_pair_auc()]
 #' @export
 roc_auc <- function(dm, labels, ret_extra = FALSE) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
@@ -41,6 +47,7 @@ roc_auc <- function(dm, labels, ret_extra = FALSE) {
 #' @note Requires the `PRROC` package.
 #'
 #' @inheritParams roc_auc
+#' @inheritSection roc_auc Scaling
 #' @return A list whose first components are:
 #'
 #'   * `av_auc`: the mean PR AUC over defined queries.
@@ -270,6 +277,11 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn, ret_extra) {
 #' Restrict both queries and candidates to two classes at a time. Each
 #' defined query receives equal weight within its class pair.
 #'
+#' @section Scaling:
+#' The input is a dense `N` by `N` distance matrix. Each class pair also
+#' requires a square submatrix for its members. For a particular pair, select
+#' its two classes before computing distances. Keeping all members of those
+#' classes gives the same pair score as extracting it from the full analysis.
 #' @inheritParams roc_auc
 #' @param metrics Which AUCs to report. Defaults to both `"roc"` and `"pr"`.
 #' @return A data frame with one row per unordered class pair and columns

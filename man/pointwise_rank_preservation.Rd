@@ -31,6 +31,14 @@ Like \code{\link[=trustworthiness]{trustworthiness()}} and \code{\link[=continui
 exact distance matrices, excludes the diagonal, and breaks ties by column
 order. Ranking is shared between the two measures.
 }
+\section{Scaling}{
+
+Supply two dense \code{N} by \code{N} distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working storage.
+For Euclidean coordinates, \code{\link[=exact_rank_profiles]{exact_rank_profiles()}} ranks one query at a
+time. Set \code{query_rows} to score a sample against all other observations.
+}
+
 \examples{
 x <- as.matrix(iris[, -5])
 y <- prcomp(x, rank. = 2)$x

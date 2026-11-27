@@ -36,8 +36,16 @@ each value by \code{1 / k}, regardless of the curve sizes requested.
 Distances use the same exact ranking and column-order tie convention as
 \code{\link[=rnx_curve]{rnx_curve()}}. Diagonal entries are excluded. A value of 1 means perfect
 agreement, 0 is the random-neighborhood baseline, and values can be
-negative. The exact calculation uses two dense distance matrices.
+negative.
 }
+\section{Scaling}{
+
+Supply two dense \code{N} by \code{N} distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working storage.
+For Euclidean coordinates, \code{\link[=exact_rank_profiles]{exact_rank_profiles()}} ranks one query at a
+time. Set \code{query_rows} to score a sample against all other observations.
+}
+
 \examples{
 din <- as.matrix(dist(iris[, -5]))
 dout <- as.matrix(dist(prcomp(iris[, -5], rank. = 2)$x))

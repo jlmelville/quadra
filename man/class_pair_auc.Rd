@@ -29,6 +29,14 @@ defined query receives equal weight within its class pair.
 \note{
 Requires the \code{PRROC} package.
 }
+\section{Scaling}{
+
+The input is a dense \code{N} by \code{N} distance matrix. Each class pair also
+requires a square submatrix for its members. For a particular pair, select
+its two classes before computing distances. Keeping all members of those
+classes gives the same pair score as extracting it from the full analysis.
+}
+
 \examples{
 \dontshow{if (requireNamespace("PRROC", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 class_pair_auc(as.matrix(dist(iris[, -5])), iris$Species)

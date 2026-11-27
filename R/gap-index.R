@@ -28,6 +28,11 @@
 #'   fill the convex hull, so regions at the boundary participate in the
 #'   result. The triangulation can change with the embedding or the rows
 #'   included. Requires the `geometry` package.
+#' @section Scaling:
+#' The 2D Delaunay triangulation has a number of triangles proportional to
+#' `N`. Only their edge distances are computed in the two spaces. Use all
+#' eligible rows when the gaps of the full map matter. Subsetting the rows
+#' changes the triangulation and can change which gaps are visible.
 #' @return The scalar Gap Index. With `ret_extra = TRUE`, a list with
 #'   `gap_index`, a matrix `triangles` of one-based row indices, and the
 #'   corresponding vectors `relative_area_in`, `relative_area_out`, and

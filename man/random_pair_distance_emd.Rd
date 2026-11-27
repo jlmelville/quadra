@@ -69,6 +69,14 @@ A nonfinite computed distance causes an error, even with finite coordinates.
 Finite distances alone do not guarantee accuracy at extreme coordinate scales.
 }
 
+\section{Scaling}{
+
+For large datasets, use the full coordinates and set \code{n_pairs} to a total
+sample size. Distance calculations and stored distances scale with the
+number of sampled pairs. Reuse \code{pairs} across embeddings. Supplying every
+unordered pair makes both the pair count and distance work quadratic.
+}
+
 \examples{
 iris_x <- iris[, -5]
 iris_pca2 <- stats::prcomp(iris_x, rank. = 2, scale = FALSE, retx = TRUE)$x

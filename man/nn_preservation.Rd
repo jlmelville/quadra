@@ -133,6 +133,16 @@ a fixed \code{Xin} with multiple \code{Xout}, e.g. where different dimensionalit
 reduction methods have been used, or parameters such as output dimensionality
 or random number seed have been been modified.
 }
+\section{Scaling}{
+
+For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing \code{k} neighbors per observation has \code{N * k} entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider \code{"nnd"} for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.
+}
+
 \section{Nearest Neighbor Graph Format}{
 
 

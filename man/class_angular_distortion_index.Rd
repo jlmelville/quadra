@@ -58,6 +58,14 @@ the angles. Angle agreement emphasizes relative angular spread. For
 example, compact classes can subtend small angles under several
 arrangements of their centers.
 }
+\section{Scaling}{
+
+Use the full coordinates and control the cost with \code{n_triplets}, the total
+number of sampled triplets (default \code{10 * N}). The calculation processes
+coordinates in blocks and stores the triplet plan and cosines. Check the
+per-pair counts before interpreting a rare class direction.
+}
+
 \section{Numerical failures}{
 
 Nonfinite intermediate calculations cause an error. Extreme coordinate

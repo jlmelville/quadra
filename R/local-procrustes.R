@@ -32,6 +32,11 @@
 #'   Automatic neighbor search uses Euclidean ordering. Supplied graphs
 #'   select the patch members in their given order. The Procrustes fit
 #'   always uses the coordinate geometry of `Xin` and `Xout`.
+#' @section Scaling:
+#' Each alignment uses one patch of `k + 1` observations. With `k` fixed, the
+#' number of fits grows linearly with `N`. The default brute-force reference
+#' search compares all pairs. Supply `nn_in` to reuse a reference graph across
+#' embeddings, or use `nn_method_in = "nnd"` to find approximate neighbors.
 #' @return The mean residual over defined reference patches, or `NA_real_`
 #'   when all are undefined. With `ret_extra = TRUE`, a list with `error`,
 #'   `pointwise_error`, `n_defined`, and `nn_in`. The pointwise vector

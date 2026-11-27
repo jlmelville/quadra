@@ -68,6 +68,14 @@ Automatic neighbor search uses Euclidean ordering. Supplied graphs
 select the patch members in their given order. The Procrustes fit
 always uses the coordinate geometry of \code{Xin} and \code{Xout}.
 }
+\section{Scaling}{
+
+Each alignment uses one patch of \code{k + 1} observations. With \code{k} fixed, the
+number of fits grows linearly with \code{N}. The default brute-force reference
+search compares all pairs. Supply \code{nn_in} to reuse a reference graph across
+embeddings, or use \code{nn_method_in = "nnd"} to find approximate neighbors.
+}
+
 \examples{
 x <- as.matrix(iris[, -5])
 embedding <- prcomp(x, rank. = 2)$x

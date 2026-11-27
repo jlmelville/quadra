@@ -48,6 +48,14 @@ Distance consistency uses one centroid per class. Compare it with
 \code{\link[=roc_auc]{roc_auc()}} or \code{\link[=pr_auc]{pr_auc()}} when classes have multiple clusters or
 irregular shapes. Nonfinite computed centroid distances cause an error.
 }
+\section{Scaling}{
+
+This is a full-data option when the number of classes is modest. Each row
+is compared with its own centroid and each other class centroid. With \code{C}
+classes the summaries cover \code{C * (C - 1) / 2} pairs. No observation-level
+distance matrix is required.
+}
+
 \examples{
 x <- as.matrix(iris[, -5])
 y <- prcomp(x, rank. = 2)$x

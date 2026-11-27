@@ -48,9 +48,20 @@ reciprocal of the sum of their mean similarity and 0.1.
 
 Each score subtracts the weighted mean positive directional distortion
 from one. Weights are the products of subgroup sizes. A direction
-with no observed positive distortion receives one. This dense audit
-needs quadratic memory. Both \code{dbscan} and \code{Matrix} are required.
+with no observed positive distortion receives one. Both \code{dbscan} and
+\code{Matrix} are required.
 }
+\section{Scaling}{
+
+The calculation builds dense \code{N} by \code{N} distances and shared-neighbor
+similarities internally, even for global scores. A single double matrix at
+5,000 rows uses about 191 MiB. Several coexist, and \code{ret_extra = TRUE} adds
+square matrices of partner losses and visit counts. For large datasets,
+evaluate the same representative subset in both spaces and report its size.
+Reducing \code{n_iter} saves repeated clustering work. The dense graphs still
+cover every supplied observation.
+}
+
 \examples{
 \dontshow{if (requireNamespace("dbscan", quietly = TRUE) && requireNamespace("Matrix", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 x <- as.matrix(iris[, -5])

@@ -27,6 +27,11 @@
 #'   Distance consistency uses one centroid per class. Compare it with
 #'   [roc_auc()] or [pr_auc()] when classes have multiple clusters or
 #'   irregular shapes. Nonfinite computed centroid distances cause an error.
+#' @section Scaling:
+#' This is a full-data option when the number of classes is modest. Each row
+#' is compared with its own centroid and each other class centroid. With `C`
+#' classes the summaries cover `C * (C - 1) / 2` pairs. No observation-level
+#' distance matrix is required.
 #' @return A named numeric vector with `trustworthiness` and `continuity`.
 #'   With `ret_extra = TRUE`, a list containing `scores` and `pairs`.
 #'   The data frame `pairs` has columns `label_a`, `label_b`,

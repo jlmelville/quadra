@@ -76,6 +76,14 @@ result is \code{NA_real_} if no triplet defines an ordering.
 reuse exact comparisons, or reset the R seed and keep \code{n_threads} fixed. A
 matrix-valued \code{n_triplets} uses its documented zero-based column layout.
 }
+\section{Scaling}{
+
+Evaluate the full coordinates with a fixed number of sampled comparisons
+per anchor. A numeric \code{n_triplets} gives \code{N * n_triplets} comparisons in
+total. Each uses only its three observations. Reuse a triplet plan across
+embeddings and request \code{by_anchor = TRUE} for counts and accuracy per row.
+}
+
 \section{Numerical failures}{
 
 A nonfinite computed distance causes an error, even with finite coordinates.

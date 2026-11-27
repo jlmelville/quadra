@@ -37,3 +37,14 @@ observations are excluded. An empty average is \code{NA_real_}.
 \note{
 Requires the \code{PRROC} package.
 }
+\section{Scaling}{
+
+Each call takes one dense \code{N} by \code{N} distance matrix and ranks candidates
+for every query. At 5,000 observations the matrix alone uses about 191 MiB
+in double precision. When using a subset, report its size and use the same
+rows in each space. Its rows determine both the queries and the candidates.
+}
+
+\seealso{
+\code{\link[=pr_auc]{pr_auc()}}, \code{\link[=class_pair_auc]{class_pair_auc()}}
+}

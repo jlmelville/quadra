@@ -26,3 +26,13 @@ the \code{k}th distance are included, with each score capped at 1.
 A collapsed output can therefore score 1. Inspect output-distance magnitudes
 or coordinate spread alongside neighborhood scores when distances are tied.
 }
+\section{Scaling}{
+
+Supply two dense \code{N} by \code{N} distance matrices. For large datasets, use
+\code{\link[=nn_preservation]{nn_preservation()}} or \code{\link[=nbr_pres_knn]{nbr_pres_knn()}} to score overlap from neighbor
+lists. The graph functions use the stored order to resolve boundary ties.
+}
+
+\seealso{
+\code{\link[=pointwise_rank_preservation]{pointwise_rank_preservation()}} for rank penalties per observation.
+}

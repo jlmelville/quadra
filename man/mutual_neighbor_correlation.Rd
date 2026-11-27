@@ -122,6 +122,16 @@ approximation.
 If either mutual-neighbor count vector is constant, the correlation is
 undefined and the corresponding result is \code{NA_real_}.
 }
+\section{Scaling}{
+
+For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing \code{k} neighbors per observation has \code{N * k} entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider \code{"nnd"} for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.
+}
+
 \examples{
 iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 mutual_neighbor_correlation(

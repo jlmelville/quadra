@@ -83,13 +83,23 @@ within that band. A uniformly rescaled band has zero stress. Separate
 bands can fit different multipliers.
 
 Spearman correlation needs at least three pairs and variation in both
-distance vectors. Stress needs nonzero norms in both vectors.
+distance vectors. Check \code{n_pairs} in the narrowest band and increase the
+pair sample if few distances qualify. Stress needs nonzero norms in both
+vectors.
 Undefined values are \code{NA_real_} with one warning per call.
 }
 \section{Numerical failures}{
 
 A nonfinite computed distance causes an error, even with finite coordinates.
 Finite distances alone do not guarantee accuracy at extreme coordinate scales.
+}
+
+\section{Scaling}{
+
+For large datasets, use the full coordinates and set \code{n_pairs} to a total
+sample size. Distance calculations and stored distances scale with the
+number of sampled pairs. Reuse \code{pairs} across embeddings. Supplying every
+unordered pair makes both the pair count and distance work quadratic.
 }
 
 \examples{

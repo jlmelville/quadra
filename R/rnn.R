@@ -35,6 +35,14 @@
 #' reduction methods have been used, or parameters such as output dimensionality
 #' or random number seed have been been modified.
 #'
+#' @section Scaling:
+#' For large datasets, reuse neighbor graphs across embeddings and metrics.
+#' A graph storing `k` neighbors per observation has `N * k` entries in its
+#' index matrix and, if supplied, its distance matrix. Brute-force search
+#' evaluates all pairs. With raw coordinates, consider `"nnd"` for an
+#' approximate search and check a sample of queries against exact neighbors
+#' from the full candidate pool.
+#'
 #' @section Nearest Neighbor Graph Format:
 #'
 #' Rather than provide the observations to `Xin` and `Xout`, pre-computed
@@ -297,6 +305,7 @@ nn_preservation <- function(
 #'   `k` nearest neighbors.
 #' @param method correlation method, either `"spearman"` or `"pearson"`.
 #' @param log if `TRUE`, calculate the correlation on log local radii.
+#' @inheritSection nn_preservation Scaling
 #' @inheritParams nn_preservation
 #' @return A named numeric vector of local radius correlations, one value for
 #'   each `k`. Items are named `lrc<k>`, where `<k>` refers to the values
@@ -477,6 +486,7 @@ local_radius_correlation <- function(
 #'   which case the mutual neighbor correlation is calculated for each value
 #'   separately.
 #' @param method correlation method, either `"pearson"` or `"spearman"`.
+#' @inheritSection nn_preservation Scaling
 #' @inheritParams nn_preservation
 #' @return A named numeric vector of mutual neighbor correlations, one value for
 #'   each `k`. Items are named `mnc<k>`, where `<k>` refers to the values

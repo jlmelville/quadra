@@ -131,6 +131,16 @@ the corresponding result is \code{NA_real_}. If \code{log = TRUE}, all selected 
 radius values must be positive, so duplicate points that produce zero local
 radii should be handled before requesting a log-scale comparison.
 }
+\section{Scaling}{
+
+For large datasets, reuse neighbor graphs across embeddings and metrics.
+A graph storing \code{k} neighbors per observation has \code{N * k} entries in its
+index matrix and, if supplied, its distance matrix. Brute-force search
+evaluates all pairs. With raw coordinates, consider \code{"nnd"} for an
+approximate search and check a sample of queries against exact neighbors
+from the full candidate pool.
+}
+
 \examples{
 iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 local_radius_correlation(

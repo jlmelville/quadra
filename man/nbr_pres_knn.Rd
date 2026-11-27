@@ -29,3 +29,12 @@ Rows contain distinct one-based indices in nearest-first order. Self-indices
 are removed, so self-inclusive matrices need at least \code{k + 1} columns.
 Supplied order resolves ties.
 }
+\section{Scaling}{
+
+With \code{k} stored neighbors per observation, each input uses \code{N * k} indices.
+Reuse these lists across comparisons to avoid rebuilding neighbor graphs.
+}
+
+\seealso{
+\code{\link[=nn_preservation]{nn_preservation()}} for computing the graphs from coordinates.
+}

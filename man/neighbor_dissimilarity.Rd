@@ -35,10 +35,17 @@ Both orders of each pair enter the norms. Zero means all shared counts
 agree, which can happen even when neighbor identities change.
 
 ND depends on graph size and \code{k}. Compare embeddings on the same rows
-and at the same \code{k}. The calculation uses sparse matrices from the
-\code{Matrix} package. When many lists intersect, the number of represented
-pairs can grow quadratically with the number of rows.
+and at the same \code{k}.
 }
+\section{Scaling}{
+
+Each input graph needs only \code{k} neighbors per row, but the sparse matrix
+product represents every pair of rows sharing a neighbor. One neighbor
+listed by all \code{N} rows creates \code{N * (N - 1) / 2} unordered pairs. Even the
+scalar score can therefore need quadratic memory. \code{ret_extra = TRUE} also
+returns a table of changed pairs. The calculation uses the \code{Matrix} package.
+}
+
 \examples{
 \dontshow{if (requireNamespace("Matrix", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 x <- as.matrix(iris[, -5])

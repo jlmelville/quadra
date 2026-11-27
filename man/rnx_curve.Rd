@@ -24,6 +24,14 @@ values may be negative. Diagonal entries are excluded; off-diagonal entries
 must be finite. Ties follow column order. The curve diagnoses scale-specific
 preservation; it does not establish a universally preferred embedding.
 }
+\section{Scaling}{
+
+Supply two dense \code{N} by \code{N} distance matrices. At 5,000 observations
+their double entries use about 381.5 MiB together, before working storage.
+For Euclidean coordinates, \code{\link[=exact_rank_profiles]{exact_rank_profiles()}} ranks one query at a
+time. Set \code{query_rows} to score a sample against all other observations.
+}
+
 \examples{
 iris_pca <- stats::prcomp(iris[, -5], rank. = 2, scale = FALSE, retx = TRUE)$x
 din <- as.matrix(stats::dist(iris[, -5]))

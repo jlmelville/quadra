@@ -59,6 +59,14 @@ measures rank association.
 \code{Xin} and \code{metric_in} define the reference geometry. Supply \code{pairs} to reuse
 exact comparisons, or reset the R seed and keep \code{n_threads} fixed.
 }
+\section{Scaling}{
+
+For large datasets, use the full coordinates and set \code{n_pairs} to a total
+sample size. Distance calculations and stored distances scale with the
+number of sampled pairs. Reuse \code{pairs} across embeddings. Supplying every
+unordered pair makes both the pair count and distance work quadratic.
+}
+
 \section{Numerical failures}{
 
 A nonfinite computed distance causes an error, even with finite coordinates.

@@ -19,27 +19,68 @@ embedding. Start with the relationship you want to check.
 | Does a visible island represent a coherent group in the reference? | `steadiness_cohesiveness()` | Check [label-free groups in the MNIST audit](mnist-pca-umap.html#check-groups-without-digit-labels) in both directions. |
 | Did a class pair become easier to retrieve while its geometry changed? | Pairwise AUC, label trustworthiness and continuity, and CADI | Compare retrieval, centroid separation, and [the spread of 5s seen from 3s](mnist-pca-umap.html#compare-angular-spread-from-each-digit). |
 
-Choose metrics to match the relationships an embedding should preserve. The
-table gives starting points.
+## Which metrics work on large datasets?
+
+Around **5,000 observations**, check the memory budget before constructing a distance matrix.
+One dense `N` by `N` double matrix takes `8 * N^2` bytes for its entries. At 5,000 rows, budget
+191 MiB for one space, 381.5 MiB for a reference and one embedding, or 572 MiB for a reference
+and two embeddings. A single matrix grows from 7.6 MiB at 1,000 rows to 763 MiB at 10,000 and
+26.8 GiB at 60,000. Allow additional memory for coordinates, copies and working storage. The
+practical limit depends on which metric you run and how much memory is available.
+
+| What you want to check | Recommended approach for large data | What determines the cost |
+|---|---|---|
+| Global distances and ordering | Start with `random_pair_distance_correlation()`, `random_pair_distance_emd()`, `random_pair_distance_stress()`, `random_pair_distance_band_profile()` or `random_triplet_accuracy()` on the full coordinates. Reuse the sampled pairs or triplets across embeddings. | Only sampled distances are evaluated. `n_pairs` is a total count. For triplet accuracy, `n_triplets` is a count **per observation**. Check how many sampled pairs fall in the narrowest band. |
+| Neighbor overlap, local radius or reciprocal neighbors | Use `nn_preservation()`, `nbr_pres_knn()`, `local_radius_correlation()` or `mutual_neighbor_correlation()` with existing neighbor graphs. When building graphs, consider approximate search and spot-check its recall. | A graph holding `k` neighbors per row has `N * k` entries. Brute-force search still evaluates all pairs. Radius comparisons also need neighbor distances. |
+| Exact neighborhood ranks | For Euclidean coordinates, use `exact_rank_profiles()` with selected `query_rows` and a few `k` values. | Each query ranks the full pool. Scoring every query still requires quadratic distance work, even though the per-query workspace is linear in `N`. |
+| Label separation or angular spread | Use `label_trustworthiness_continuity()` for centroid separation or `class_angular_distortion_index()` for angles. | The first visits every pair of classes. The second works on sampled triplets, with `n_triplets` a **total** count. Neither needs all observation-pair distances. |
+| Local shape or empty regions | Reuse a reference neighbor graph for `local_procrustes()`. Use `gap_index()` for gaps in a 2D map. | Procrustes fits one small alignment per row. Gap Index triangulates the embedding and evaluates the triangle edges. Both avoid a dense distance matrix. |
+| Changes in shared neighbors | Use `neighbor_dissimilarity()` when the identities of the affected pairs matter. | Its sparse graph product can approach `N^2` entries when many rows share a popular neighbor. This also affects the scalar score. |
+
+**When to use a smaller dataset.** `nbr_pres()`, `trustworthiness()`, `continuity()`, `rnx_auc()`,
+`rnx_curve()`, `pointwise_rank_preservation()` and `pointwise_rnx()` each take **two dense distance
+matrices**. `roc_auc()`, `pr_auc()` and `class_pair_auc()` take **one per space**. If you need AUC
+for just two classes, select those classes before computing distances. If the full matrices exceed
+your budget, use the same representative subset in every space and report the candidate pool size.
+
+For `steadiness_cohesiveness()`, start with a representative subset. It takes coordinates, then
+builds dense distance and similarity matrices and repeatedly clusters sampled groups.
+Asking for pointwise scores adds more square matrices. Fewer iterations save CPU while the dense
+allocations remain. The MNIST workflow ran exact coordinate ranks for all 5,000 images and used
+1,000 for the group comparison.
+[MNIST group audit](mnist-pca-umap.html#check-groups-without-digit-labels)
+
+### Sample queries when the full neighbor pool matters
+
+To estimate rank preservation for the full dataset, sample the **queries** and keep every row of
+the reference and embeddings. With `x` and `maps` from the MNIST workflow, these 500 queries each
+rank the other 4,999 images. The mean gives each sampled query equal weight.
+
+```{r overview-sample-queries, eval=FALSE}
+set.seed(42)
+queries <- sample.int(nrow(x), 500)
+profiles <- exact_rank_profiles(x, maps, k = 15, query_rows = queries)
+vapply(profiles, function(p) mean(p$trustworthiness[, 1]), numeric(1))
+```
+
+Subsetting the coordinate matrices also removes candidates and changes what the ranks mean. On
+the same MNIST queries at `k = 100`, 7s retained neighbors better than 0s in the 1,000-image pool,
+while 0s did better in the 5,000-image pool. At `k = 500` in the larger pool, 7s led again. Report
+the number of queries, the size of the candidate pool and `k`.
+[Full-pool MNIST comparison](mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images)
 
 ## Local Neighborhood Preservation
 
 `nbr_pres()` compares neighborhoods from exact distance matrices.
-`nn_preservation()` and `nbr_pres_knn()` work with nearest-neighbor graphs and
-scale to larger datasets.
+`nn_preservation()` and `nbr_pres_knn()` compare nearest-neighbor graphs.
 
-`trustworthiness()` and `continuity()` are also local-neighborhood metrics, but
-they use rank penalties rather than only counting shared neighbors. They are
-exact distance-matrix functions for small datasets. `rnx_auc()` summarizes
-rank-based neighborhood agreement over many neighborhood sizes, while
-`rnx_curve()` retains the individual scales. `pointwise_rnx()` provides the same comparison for each observation.
+`trustworthiness()` and `continuity()` score misplaced neighbors by their ranks.
+`rnx_auc()` summarizes rank-based neighborhood agreement over many neighborhood sizes, while
+`rnx_curve()` retains the individual scales. `pointwise_rnx()` gives the comparison per observation.
 
-For Euclidean coordinates, `exact_rank_profiles()` computes pointwise trustworthiness, continuity,
-and RNX across embeddings with a shared reference. The full candidate pool stays available at
-each query. [MNIST comparison](mnist-pca-umap.html#expand-the-candidate-pool-to-all-5000-images)
-
-To check whether the closest neighbors retain their order, set `mrre = TRUE`. Compare input and
-output mean relative rank error at the same `k`. Smaller values indicate better preservation.
+To check whether the closest neighbors retain their order, use `exact_rank_profiles()` with
+`mrre = TRUE`. Compare input and output mean relative rank error at the same `k`. Smaller values
+indicate better preservation.
 [Worked example](local-preservation.html#can-the-same-neighbors-come-back-in-a-different-order)
 
 See the [local preservation](local-preservation.html) article for examples and

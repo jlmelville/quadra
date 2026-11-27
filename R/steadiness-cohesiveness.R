@@ -21,8 +21,16 @@
 #'
 #'   Each score subtracts the weighted mean positive directional distortion
 #'   from one. Weights are the products of subgroup sizes. A direction
-#'   with no observed positive distortion receives one. This dense audit
-#'   needs quadratic memory. Both `dbscan` and `Matrix` are required.
+#'   with no observed positive distortion receives one. Both `dbscan` and
+#'   `Matrix` are required.
+#' @section Scaling:
+#' The calculation builds dense `N` by `N` distances and shared-neighbor
+#' similarities internally, even for global scores. A single double matrix at
+#' 5,000 rows uses about 191 MiB. Several coexist, and `ret_extra = TRUE` adds
+#' square matrices of partner losses and visit counts. For large datasets,
+#' evaluate the same representative subset in both spaces and report its size.
+#' Reducing `n_iter` saves repeated clustering work. The dense graphs still
+#' cover every supplied observation.
 #' @return A named vector of `steadiness` and `cohesiveness`. With
 #'   `ret_extra = TRUE`, returns `scores` and a row-aligned data frame
 #'   `pointwise` with both map values. Each map accumulates weighted losses

@@ -10,10 +10,15 @@
 #' A collapsed output can therefore score 1. Inspect output-distance magnitudes
 #' or coordinate spread alongside neighborhood scores when distances are tied.
 #'
+#' @section Scaling:
+#' Supply two dense `N` by `N` distance matrices. For large datasets, use
+#' [nn_preservation()] or [nbr_pres_knn()] to score overlap from neighbor
+#' lists. The graph functions use the stored order to resolve boundary ties.
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
 #' @param k Neighborhood size.
 #' @return Per-observation neighborhood overlap in `[0, 1]`.
+#' @seealso [pointwise_rank_preservation()] for rank penalties per observation.
 #' @export
 nbr_pres <- function(din, dout, k) {
   validate_distance_matrix_pair(din, dout)
@@ -46,6 +51,9 @@ nbr_pres <- function(din, dout, k) {
 #' are removed, so self-inclusive matrices need at least `k + 1` columns.
 #' Supplied order resolves ties.
 #'
+#' @section Scaling:
+#' With `k` stored neighbors per observation, each input uses `N * k` indices.
+#' Reuse these lists across comparisons to avoid rebuilding neighbor graphs.
 #' @param kin Reference nearest-neighbor index matrix, with observations in rows
 #'   and neighbors in nearest-first order.
 #' @param kout Nearest-neighbor index matrix to compare with `kin`.
@@ -53,6 +61,7 @@ nbr_pres <- function(din, dout, k) {
 #' @param n_threads Maximum number of threads to use. `0` or `1` runs
 #'   serially.
 #' @return Per-observation neighborhood overlap in `[0, 1]`.
+#' @seealso [nn_preservation()] for computing the graphs from coordinates.
 #' @export
 nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
   if (!methods::is(kin, "matrix")) {
@@ -93,6 +102,11 @@ nbr_pres_knn <- function(kin, kout, k = ncol(kin), n_threads = 0) {
 #' [nbr_pres()], the penalty reflects how far a misplaced neighbor falls beyond
 #' `k`.
 #'
+#' @section Scaling:
+#' Supply two dense `N` by `N` distance matrices. At 5,000 observations
+#' their double entries use about 381.5 MiB together, before working storage.
+#' For Euclidean coordinates, [exact_rank_profiles()] ranks one query at a
+#' time. Set `query_rows` to score a sample against all other observations.
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
 #' @param k One or more unique neighborhood sizes, each less than half the
@@ -143,6 +157,7 @@ continuity <- function(din, dout, k) {
 #' must be finite. Ties follow column order. The curve diagnoses scale-specific
 #' preservation; it does not establish a universally preferred embedding.
 #'
+#' @inheritSection trustworthiness Scaling
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
 #' @param k Optional unique neighborhood sizes from 1 through `n - 2`, where
@@ -182,6 +197,7 @@ rnx_curve <- function(din, dout, k = NULL) {
 #' entries are excluded; off-diagonal entries must be finite. Ties follow column
 #' order.
 #'
+#' @inheritSection trustworthiness Scaling
 #' @param din Reference distance matrix.
 #' @param dout Distance matrix to compare with `din`.
 #' @return Area under the RNX curve.
@@ -481,6 +497,7 @@ distance_matrix <- function(X) {
 #' ranked beyond `k` in the reference. Continuity penalizes reference
 #' neighbors that fall beyond `k` in the embedding.
 #'
+#' @inheritSection trustworthiness Scaling
 #' @inheritParams trustworthiness
 #' @details Like [trustworthiness()] and [continuity()], this function uses
 #'   exact distance matrices, excludes the diagonal, and breaks ties by column
@@ -513,6 +530,7 @@ pointwise_rank_preservation <- function(din, dout, k) {
 #' For each observation, compare which neighbors are shared by the reference
 #' and the embedding across neighborhood sizes.
 #'
+#' @inheritSection trustworthiness Scaling
 #' @inheritParams rnx_curve
 #' @param k Optional unique neighborhood sizes from 1 through `n - 2`, where
 #'   `n` is the number of observations. Supply these sizes to return curve
@@ -525,7 +543,7 @@ pointwise_rank_preservation <- function(din, dout, k) {
 #'   Distances use the same exact ranking and column-order tie convention as
 #'   [rnx_curve()]. Diagonal entries are excluded. A value of 1 means perfect
 #'   agreement, 0 is the random-neighborhood baseline, and values can be
-#'   negative. The exact calculation uses two dense distance matrices.
+#'   negative.
 #' @return A list with `auc`, a numeric vector in observation order, and
 #'   `curve`, a matrix with one row per observation and columns `rnx<k>`
 #'   in requested order, or `NULL` when `k` is omitted. Both retain the
