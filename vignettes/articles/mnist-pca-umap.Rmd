@@ -11,8 +11,9 @@ a closer look at the neighbors. Which map you would use depends on what you want
 - **Can I trust the nearest images?** UMAP keeps 34% of the 15 closest pixel neighbors on average,
   compared with 6% for PCA. For one handwritten 7, though, UMAP's nearest image ranks 3,331st in
   pixel space. [Inspect the two nearest images](#inspect-the-closest-neighbors-within-the-first-15).
-- **Does keeping more neighbors help me find the same digit?** For 414 of the 1,000 queries, t-SNE
-  kept more pixel neighbors but UMAP did better at retrieving the digit across the full ranking.
+- **Does keeping more neighbors help me find the same digit?** t-SNE's nearest image has the
+  right digit for 937 of 1,000 queries, compared with 877 for UMAP. Across the full ranking,
+  UMAP has the higher mean area under the precision-recall curve (PR AUC) for same-digit retrieval.
   [Look at the handwritten 2, 4 and 6 and their neighbors](#umap-versus-tsne).
 - **Would an exact search or a larger candidate pool change the answer?** UMAP keeps its lead on
   the [exact-search spot check](#spot-check-the-pixel-neighbor-search). In UMAP, 0s keep more of
@@ -22,10 +23,9 @@ a closer look at the neighbors. Which map you would use depends on what you want
   orderings (67% versus 62%) and has lower fitted-scale stress in every distance band shown.
   [Compare distance bands](#distance-band-plot) or
   [check distance ordering for individual images](#check-distance-ordering-from-each-anchor).
-- **Are the digits easier to tell apart?** On the 1,000-image audit, UMAP does a better job than
-  PCA of retrieving images of the same digit for all ten digits, as measured by the area under
-  the precision-recall curve (PR AUC). UMAP also makes 3s and 5s easier to retrieve than in pixel
-  space, yet angles from 3s to pairs of 5s change more than in the reverse direction.
+- **Are the digits easier to tell apart?** On the 1,000-image audit, UMAP has a higher
+  same-digit PR AUC than PCA for all ten digits. UMAP also makes 3s and 5s easier to retrieve
+  than in pixel space, yet angles from 3s to pairs of 5s change more than in the reverse direction.
   [Compare retrieval by digit](#digit-retrieval-plot) and
   [inspect the angles in both directions](#class-angle-plot).
 - **Does a UMAP island hold together in pixel space?** The island with the best neighborhood
@@ -1002,8 +1002,7 @@ For the 2, t-SNE finds the two closest pixel neighbors in reverse order. UMAP's 
 ranks 26th in pixels. Now take the 6. UMAP's very first neighbor is a 2, while t-SNE finds the
 same 6 we got from the pixels. Keep looking down the list, though, and UMAP retrieves the other
 6s better overall. For the 4, both maps found 4s, but t-SNE kept ten of the original fifteen
-images and UMAP kept eight. For a case where overlap barely moves while the
-whole map changes shape, see [the two LTSA fits](ltsa-map-spread.html).
+images and UMAP kept eight.
 
 <details>
 <summary>Select the examples, inspect their scores and draw their neighbors</summary>
@@ -1051,6 +1050,71 @@ for (i in examples) {
 ```
 
 </details>
+
+### How many of the first few neighbors have the right digit?
+
+Suppose we only look at the five images closest to a query on the map. If four show the same
+digit as the query, its precision at five is 4/5. Keep the same 4,999 candidates and count the
+matching digits among the first one, five and fifteen. Each entry below is the mean percentage
+that match, giving each query equal weight.
+
+| Queries | Map | First 1 | First 5 | First 15 |
+| --- | --- | ---: | ---: | ---: |
+| All 1,000 | UMAP | 87.7% | 87.8% | 87.5% |
+| All 1,000 | t-SNE | 93.7% | 90.2% | 88.4% |
+| Selected 414 | UMAP | 89.4% | 89.7% | 89.5% |
+| Selected 414 | t-SNE | 94.0% | 91.5% | 89.0% |
+
+Across all 1,000 queries, t-SNE finds more matching digits on average at each cutoff. Its lead
+shrinks from six percentage points at the first neighbor to about one at fifteen. UMAP's higher
+full-ranking PR AUC tells us which map retrieves the other 499 images of the digit better
+overall. For someone looking only at the first few images, t-SNE does better here.
+
+The last two rows use the 414 queries where t-SNE retained more pixel neighbors and UMAP had
+higher PR AUC. Even in this group, the first neighbor has the right digit in t-SNE alone for
+30 queries and in UMAP alone for 11. By fifteen neighbors, UMAP has a small lead in mean
+precision for these selected queries.
+
+<details>
+<summary>Count matching digits at each depth</summary>
+
+```{r mnist-tsne-precision, eval=FALSE}
+depth <- c(1L, 5L, 15L)
+precision <- lapply(digit_maps, function(y) {
+  t(vapply(
+    audit,
+    function(i) {
+      d2 <- rowSums(sweep(y, 2, y[i, ], "-")^2)
+      d2[i] <- Inf
+      near <- head(order(d2), max(depth))
+      cumsum(label[near] == label[i])[depth] / depth
+    },
+    numeric(length(depth))
+  ))
+})
+mean_percent <- function(rows) {
+  scores <- vapply(
+    precision,
+    function(p) {
+      colMeans(p[rows, , drop = FALSE])
+    },
+    numeric(length(depth))
+  )
+  rownames(scores) <- paste0("k", depth)
+  round(100 * t(scores), 1)
+}
+mean_percent(seq_along(audit))
+mean_percent(which(disagree))
+table(
+  UMAP = precision$UMAP[disagree, 1],
+  tSNE = precision[["t-SNE"]][disagree, 1]
+)
+```
+
+</details>
+
+For a case where overlap barely moves while the whole map changes shape, see
+[the two LTSA fits](ltsa-map-spread.html).
 
 ## How does separation change for a pair of digits? {#compare-pairs-of-digits}
 
@@ -1430,11 +1494,23 @@ Keeping these islands and their member rows fixed, the same island also ranks hi
 RNX AUC when those rows can choose from the full candidate pool, in all three audits. On the
 main audit its mean changes from 0.513 to 0.455 (`mean(full_ranks$UMAP$auc[audit[island]])`).
 
-Now use the digit labels to ask which individual images are easy to retrieve. Compute PR AUC
-against all 999 audit candidates per query, then inspect the queries inside the selected island.
+The island contains 100 handwritten 1s and six images of other digits. Keep those same 106
+queries. How well can each retrieve its own digit when we expand the ranking from the 999 other
+audit images to all 4,999 other images? The table gives the median PR AUC for each group.
 
 ```{r mnist-island-retrieval, eval=FALSE}
-query_pr <- pr_auc(dout$UMAP, audit_label, ret_extra = TRUE)$query_auc
+audit_pr <- pr_auc(
+  dout$UMAP,
+  audit_label,
+  query_rows = island,
+  ret_extra = TRUE
+)$query_auc
+full_pr <- pr_auc(
+  coords = umap,
+  labels = label,
+  query_rows = audit[island],
+  ret_extra = TRUE
+)$query_auc
 majority <- names(which.max(table(audit_label[island])))
 type <- ifelse(
   audit_label[island] == majority,
@@ -1443,14 +1519,15 @@ type <- ifelse(
 )
 cbind(
   queries = table(type),
-  median_PR = round(tapply(query_pr[island], type, median), 3)
+  audit_PR = round(tapply(audit_pr, type, median), 3),
+  full_PR = round(tapply(full_pr, type, median), 3)
 )
 ```
 
 ```text
-             queries median_PR
-Digit 1          100     0.862
-Other digits       6     0.090
+             queries audit_PR full_PR
+Digit 1          100    0.862   0.816
+Other digits       6    0.090   0.092
 ```
 
 ```{r mnist-group-map, eval=FALSE, fig.width=10, fig.height=3.8}
@@ -1471,23 +1548,25 @@ for (key in c("steadiness", "cohesiveness")) {
 }
 vizier::embed_plot(
   xy[island, , drop = FALSE],
-  x = query_pr[island],
+  x = full_pr,
   color_scheme = "grDevices::Viridis",
   limits = c(0, 1),
   fixed_aspect = TRUE,
   show_axes = FALSE,
-  title = "Query PR AUC inside island"
+  title = "Same-digit PR AUC, full pool"
 )
 other <- island[audit_label[island] != majority]
 points(xy[other, , drop = FALSE], pch = 1, cex = 1.35, lwd = 1.5)
 ```
 
-```{r show-mnist-group-map, echo=FALSE, out.width="100%", fig.alt="The outlined UMAP island has high local Steadiness and low local Cohesiveness. In the enlarged island, the six circled images of other digits have lower query PR AUC than most digit 1 images."}
+```{r show-mnist-group-map, echo=FALSE, out.width="100%", fig.link="figures/mnist-group-map.png", fig.alt="The outlined UMAP island has high local Steadiness and low local Cohesiveness. On the full-pool PR AUC map, the six circled images of other digits score below every 1 in the island."}
 knitr::include_graphics("figures/mnist-group-map.png")
 ```
 
-The first two panels outline the same island. The last enlarges it and circles the six queries
-with labels other than 1. Purple indicates low scores and yellow high scores in all three panels.
+Purple indicates low scores and yellow high scores in all three panels. The first two outline
+the island. The last enlarges it and circles the six queries with labels other than 1. Even with
+499 other images of its own digit to retrieve, each of the six scores below every 1 in the island.
+The highest PR AUC among the six is 0.288 and the lowest among the 1s is 0.430.
 
 ### Which images acquire shared neighbors?
 
