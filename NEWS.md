@@ -1,5 +1,12 @@
 # quadra 0.2.1.9000
 
+* Require rnndescent 0.3.0 or later. Its compiled cosine and correlation distances preserve the
+  expected values when otherwise ordinary coordinates are multiplied by `1e100`.
+* Use `coords` and `query_rows` in `pr_auc()` or `roc_auc()` to score selected observations
+  against the full candidate pool without building a square distance matrix.
+* Read the number of shared neighbors at each requested size from the `retained` matrix in
+  each embedding's `exact_rank_profiles()` result.
+
 * Add `neighbor_dissimilarity()` to compare shared neighbors in two graphs and identify the
   observation pairs that gain or lose them.
 * Add `exact_rank_profiles()` to compare Euclidean neighborhood ranks across embeddings without

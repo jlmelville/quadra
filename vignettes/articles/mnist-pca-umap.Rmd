@@ -11,7 +11,7 @@ a closer look at the neighbors. Which map you would use depends on what you want
 - **Can I trust the nearest images?** UMAP keeps 34% of the 15 closest pixel neighbors on average,
   compared with 6% for PCA. For one handwritten 7, though, UMAP's nearest image ranks 3,331st in
   pixel space. [Inspect the two nearest images](#inspect-the-closest-neighbors-within-the-first-15).
-- **Does keeping more neighbors help me find the same digit?** For 403 of the 1,000 queries, t-SNE
+- **Does keeping more neighbors help me find the same digit?** For 414 of the 1,000 queries, t-SNE
   kept more pixel neighbors but UMAP did better at retrieving the digit across the full ranking.
   [Look at the handwritten 2, 4 and 6 and their neighbors](#umap-versus-tsne).
 - **Would an exact search or a larger candidate pool change the answer?** UMAP keeps its lead on
@@ -197,22 +197,20 @@ audit <- sort(unlist(lapply(
 )))
 ```
 
-For each query, `exact_rank_profiles()` gives us RNX, the fraction of shared neighbors adjusted
-for chance. Undoing the adjustment gives us the number of neighbors the two spaces share out of 15.
+For each query, `exact_rank_profiles()` reports how many of the 15 neighbors the two spaces
+share. It also reports RNX, which adjusts the fraction shared for chance.
 [Lee and colleagues describe RNX](https://doi.org/10.1016/j.neucom.2012.12.036) and its
 [weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
 ```{r mnist-search-exact, eval=FALSE}
 spot_k <- 15L
 spot <- exact_rank_profiles(x, maps, k = spot_k, query_rows = audit)
-pool <- nrow(x) - 1L
 exact_hits <- vapply(
   spot,
   function(p) {
-    overlap <- (spot_k + (pool - spot_k) * p$curve[, 1]) / pool
-    round(spot_k * overlap)
+    p$retained[, 1]
   },
-  numeric(length(audit))
+  integer(length(audit))
 )
 ```
 
@@ -847,8 +845,9 @@ Use the pixels, labels, training row IDs and two maps from [the data and fits](#
 The [pixel search spot check](#spot-check-the-pixel-neighbor-search) supplies the 1,000 query
 indices in `audit`.
 This is van der Maaten and Hinton's t-SNE with perplexity 30, using the hybrid FFT-tree option
-in smallvis. The exact pixel graph supplies 90 other images per row. The first entry is the image
-itself. [t-SNE paper](https://www.jmlr.org/papers/v9/vandermaaten08a.html) ·
+in smallvis. The exact pixel graph from rnndescent 0.3.0 supplies 90 other images per row.
+The first entry is the image itself.
+[t-SNE paper](https://www.jmlr.org/papers/v9/vandermaaten08a.html) ·
 [smallvis](https://github.com/jlmelville/smallvis)
 
 ```{r mnist-tsne-fit, eval=FALSE}
@@ -882,25 +881,25 @@ digit_maps <- list(UMAP = umap, `t-SNE` = tsne)
 knitr::include_graphics("figures/mnist-tsne-scales.png")
 ```
 
-At five neighbors, t-SNE has nearly twice UMAP's chance-adjusted overlap (RNX), 0.493 against
-0.253. Widen the neighborhood to 150 and UMAP edges ahead, 0.485 against 0.473. Each point on
+At five neighbors, t-SNE has nearly twice UMAP's chance-adjusted overlap (RNX), 0.485 against
+0.253. Widen the neighborhood to 150 and UMAP edges ahead, 0.485 against 0.475. Each point on
 the curves averages over the same 1,000 query images with all 4,999 other images as candidates.
 
 | Mean over queries | UMAP | t-SNE |
 | --- | ---: | ---: |
 | Fraction of the 15 nearest pixel neighbors retained | 0.342 | 0.441 |
-| Same-digit PR AUC over the full candidate pool | 0.725 | 0.694 |
+| Same-digit PR AUC over the full candidate pool | 0.725 | 0.686 |
 
 Switching smallvis to `repulsion = "mutual"` gives much the same answer. The t-SNE overlap is
-still 0.441 to three decimal places and its PR AUC is 0.683.
+0.440 and its PR AUC is 0.675.
 
 <details>
 <summary>Compute both scores for each query and draw the maps and curves</summary>
 
 `exact_rank_profiles()` compares the pixel and map neighborhoods at each size. For label
 retrieval, score one query at a time against the other 4,999 images. All 499 other images of the
-same digit count as positives. This gives the same Davis–Goadrich area that `pr_auc()` uses,
-without allocating a 5,000 by 5,000 distance matrix.
+same digit count as positives. Give `pr_auc()` the map coordinates and query indices to get the
+Davis–Goadrich area for each query.
 [RNX](https://doi.org/10.1016/j.neucom.2012.12.036) ·
 [Davis and Goadrich](https://doi.org/10.1145/1143844.1143874) ·
 [PRROC](https://cran.r-project.org/package=PRROC)
@@ -915,31 +914,22 @@ rnx <- vapply(
   },
   numeric(4)
 )
-pool_size <- nrow(x) - 1L
 hits <- vapply(
   profiles,
   function(p) {
-    overlap <- (15 + (pool_size - 15) * p$curve[, "rnx15"]) / pool_size
-    round(15 * overlap)
+    p$retained[, "k15"]
   },
-  numeric(length(audit))
+  integer(length(audit))
 )
-
-query_d2 <- function(y, i) {
-  rowSums(sweep(y, 2, y[i, ], "-")^2)
-}
 pr <- vapply(
   digit_maps,
   function(y) {
-    vapply(
-      audit,
-      function(i) {
-        score <- -query_d2(y, i)[-i]
-        same <- label[-i] == label[i]
-        PRROC::pr.curve(score[same], score[!same])$auc.davis.goadrich
-      },
-      numeric(1)
-    )
+    pr_auc(
+      coords = y,
+      labels = label,
+      query_rows = audit,
+      ret_extra = TRUE
+    )$query_auc
   },
   numeric(length(audit))
 )
@@ -993,8 +983,8 @@ legend(
 
 </details>
 
-The averages go in opposite directions. Does this happen to the same images? Yes, for 403 of
-the 1,000 queries. Among those 403, take the first 2, the first 4 and the first 6 in training-row
+The averages go in opposite directions. Does this happen to the same images? Yes, for 414 of
+the 1,000 queries. Among those 414, take the first 2, the first 4 and the first 6 in training-row
 order. Each row starts with the query and shows its two closest images in pixels, UMAP and t-SNE.
 The number under each neighbor is its rank in pixel space, where 1 is closest.
 
@@ -1004,14 +994,14 @@ knitr::include_graphics("figures/mnist-tsne-neighbors.png")
 
 | Query (training row) | Neighbors kept out of 15, UMAP / t-SNE | Same-digit PR AUC, UMAP / t-SNE |
 | --- | ---: | ---: |
-| 2 (1540) | 7 / 8 | 0.923 / 0.769 |
-| 4 (1764) | 8 / 11 | 0.618 / 0.464 |
-| 6 (923) | 7 / 8 | 0.854 / 0.812 |
+| 2 (1540) | 7 / 8 | 0.923 / 0.765 |
+| 4 (1764) | 8 / 10 | 0.618 / 0.501 |
+| 6 (923) | 7 / 8 | 0.854 / 0.814 |
 
 For the 2, t-SNE finds the two closest pixel neighbors in reverse order. UMAP's first choice
 ranks 26th in pixels. Now take the 6. UMAP's very first neighbor is a 2, while t-SNE finds the
 same 6 we got from the pixels. Keep looking down the list, though, and UMAP retrieves the other
-6s better overall. For the 4, both maps found 4s, but t-SNE kept eleven of the original fifteen
+6s better overall. For the 4, both maps found 4s, but t-SNE kept ten of the original fifteen
 images and UMAP kept eight. For a case where overlap barely moves while the
 whole map changes shape, see [the two LTSA fits](ltsa-map-spread.html).
 
@@ -1035,7 +1025,8 @@ spaces <- c(list(Pixels = x), digit_maps)
 for (i in examples) {
   others <- seq_len(nrow(x))[-i]
   orders <- lapply(spaces, function(y) {
-    others[order(query_d2(y, i)[others], others)]
+    d2 <- rowSums(sweep(y, 2, y[i, ], "-")^2)
+    others[order(d2[others], others)]
   })
   near <- unlist(lapply(orders, head, n = 2), use.names = FALSE)
   rows <- c(i, near)

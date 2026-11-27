@@ -16,8 +16,9 @@ test_that("Neighbor Dissimilarity uses both orders and separates gains from loss
   gain <- sqrt(sum(pmax(delta, 0)^2))
   loss <- sqrt(sum(pmin(delta, 0)^2))
   expect_gt(gain, loss)
-  f <- function(x, y, ...)
+  f <- function(x, y, ...) {
     neighbor_dissimilarity(list(idx = x), list(idx = y), k = 2, ...)
+  }
   out <- f(a, b, ret_extra = TRUE)
   expect_equal(out$nd, max(gain, loss))
   expect_equal(f(a, b), out$nd)

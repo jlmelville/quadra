@@ -53,7 +53,10 @@
 #' @return A list in embedding order, retaining the names of `embeddings`.
 #'   Each entry contains pointwise `trustworthiness` and `continuity`
 #'   matrices, the RNX `auc` vector, and the RNX `curve` matrix at the
-#'   requested sizes. Rows retain the selected reference row names. Column
+#'   requested sizes. The integer matrix `retained` counts neighbors shared
+#'   by the reference and embedding among the first `k` other observations.
+#'   Divide a column by its `k` to get the unadjusted fraction retained.
+#'   Rows retain the selected reference row names. Column
 #'   means summarize the selected queries. With `mrre = TRUE`, each
 #'   entry also contains `mrre_input` and `mrre_output` matrices at the
 #'   requested sizes. Smaller errors indicate better rank preservation.
@@ -85,17 +88,7 @@ exact_rank_profiles <- function(
   }
   mrre <- validate_scalar_logical(mrre, "mrre")
   k <- validate_rank_penalty_k(k, nrow(Xin))
-  if (is.null(query_rows)) {
-    query_rows <- seq_len(nrow(Xin))
-  } else {
-    if (!is.null(dim(query_rows))) {
-      stop("query_rows must be a vector of row positions", call. = FALSE)
-    }
-    query_rows <- validate_positive_integer_vector(query_rows, "query_rows")
-    if (any(query_rows > nrow(Xin))) {
-      stop("query_rows contains a position outside Xin", call. = FALSE)
-    }
-  }
+  query_rows <- validate_query_rows(query_rows, nrow(Xin))
   embeddings <- lapply(
     embeddings,
     prepare_input_matrix,
@@ -110,6 +103,7 @@ exact_rank_profiles <- function(
       rows,
       paste0("k", k)
     )
+    dimnames(profile$retained) <- dimnames(profile$continuity)
     if (mrre) {
       dimnames(profile$mrre_input) <- dimnames(profile$trustworthiness)
       dimnames(profile$mrre_output) <- dimnames(profile$trustworthiness)

@@ -55,6 +55,25 @@ test_that("nonfinite pair distances fail before aggregation", {
   }
 })
 
+test_that("cosine and correlation distances survive large finite rescaling", {
+  x <- rbind(c(1, 2), c(2, 1), c(1, -1))
+  pairs <- rbind(c(1L, 2L), c(1L, 3L))
+  expected <- list(cosine = c(0.2, 1 + 1 / sqrt(10)), correlation = c(2, 2))
+  for (metric in names(expected)) {
+    values <- random_pair_distance_stress(
+      x,
+      x * 1e100,
+      pairs = pairs,
+      metric_in = metric,
+      metric_out = metric,
+      ret_extra = TRUE,
+      range_scale = FALSE
+    )
+    expect_equal(values$distance_in, expected[[metric]])
+    expect_equal(values$distance_out, expected[[metric]])
+  }
+})
+
 test_that("NaN angular distances also cause numerical-failure errors", {
   x <- rbind(c(1, 2), c(2, 1), c(3, 4))
   for (metric in c("cosine", "correlation")) {

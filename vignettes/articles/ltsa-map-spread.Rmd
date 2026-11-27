@@ -131,11 +131,16 @@ concentration all but disappears, even though we still score overlap at 15 and g
 same answer. Neighbors can keep their order in a tiny clump. Their distances tell us how much
 of the original geometry still fits inside it.
 
+Do the two farthest digits also account for most of the error? Only 21 of the 20,000 sampled
+pairs contain either digit. Together those pairs account for 0.025% of the squared error after
+fitting one scale to all 20,000 pairs. Almost all the error comes from distances between images
+in the clump.
+
 <details>
 <summary>Measure spread, overlap and stress on the same queries and pairs</summary>
 
-For overlap, use 100 queries per digit and all 4,999 other images as candidates. Undo the
-chance adjustment in RNX to get the fraction of shared neighbors. For stress, use the same
+For overlap, use 100 queries per digit and all 4,999 other images as candidates. Divide the number
+of retained neighbors by 15 to get the fraction shared. For stress, use the same
 20,000 pairs in every fit and include all their distances.
 [Chen and Buja on neighbor overlap](https://doi.org/10.1198/jasa.2009.0111) ·
 [Lee and colleagues on RNX](https://doi.org/10.1016/j.neucom.2012.12.036) ·
@@ -153,7 +158,6 @@ audit <- sort(unlist(lapply(
 set.seed(415)
 pairs <- sample_pairs(nrow(x), 20000)
 rank15 <- exact_rank_profiles(x, fits30, k = 15, query_rows = audit)
-pool <- nrow(x) - 1L
 stress <- function(ref, y, pairs) {
   random_pair_distance_band_profile(
     ref,
@@ -167,11 +171,28 @@ scores <- lapply(names(fits30), function(name) {
   share <- sort(spread(y), decreasing = TRUE)
   c(
     top_two_pct = 100 * sum(head(share, 2)),
-    overlap = (15 + (pool - 15) * mean(rank15[[name]]$curve)) / pool,
+    overlap = mean(rank15[[name]]$retained) / 15,
     stress = stress(x, y, pairs)
   )
 })
 round(do.call(rbind, setNames(scores, names(fits30))), 3)
+```
+
+```{r ltsa-pair-error, eval=FALSE}
+detail <- random_pair_distance_band_profile(
+  x,
+  fits$Ordinary,
+  bands = 1,
+  pairs = pairs,
+  ret_extra = TRUE
+)
+squared_error <- (detail$distance_in -
+  detail$fitted_scale * detail$distance_out)^2
+touches <- pairs[, 1] %in% extreme | pairs[, 2] %in% extreme
+c(
+  pairs = sum(touches),
+  error_pct = 100 * sum(squared_error[touches]) / sum(squared_error)
+)
 ```
 
 </details>

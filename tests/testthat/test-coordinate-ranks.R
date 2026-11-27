@@ -16,7 +16,25 @@ test_that("row-wise coordinate ranks reproduce dense profiles and their tie orde
         pointwise_rank_preservation(din, dout, ks),
         pointwise_rnx(din, dout, ks)
       )
-      expect_equal(result[[m]], expected)
+      counts <- vapply(
+        ks,
+        function(k) {
+          vapply(
+            seq_len(nrow(input)),
+            function(i) {
+              others <- seq_len(nrow(input))[-i]
+              a <- head(others[order(din[i, others], others)], k)
+              b <- head(others[order(dout[i, others], others)], k)
+              sum(a %in% b)
+            },
+            integer(1)
+          )
+        },
+        integer(nrow(input))
+      )
+      dimnames(counts) <- list(rownames(input), paste0("k", ks))
+      expect_identical(result[[m]]$retained, counts)
+      expect_equal(result[[m]][names(expected)], expected)
     }
   }
 })

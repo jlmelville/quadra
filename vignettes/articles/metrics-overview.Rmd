@@ -15,6 +15,7 @@ apart. Which of those would matter for the way you intend to use the map?
 | Do distances keep their order? | `random_triplet_accuracy()` takes a point and two others. How often does the closer one stay closer? |
 | Can I retrieve a label? | `roc_auc()` and `pr_auc()` tell you how well images of the same digit, for example, rank ahead of the other digits. |
 | Did a patch change shape? | `local_procrustes()` aligns the same points in both spaces. See what happened to [one patch of the Swiss roll](reference-geometry.html#compare-local-shape-after-alignment). |
+| Can a few points dominate the map? | Compare coordinate spread with fitted-scale stress. See [the two digits that set the scale of an LTSA map](ltsa-map-spread.html). |
 | Did a gap open up? | `gap_index()` compares triangle areas. See the [gap between three digits](mnist-pca-umap.html#inspect-the-gaps-between-digits). |
 | Can I trust an island? | `steadiness_cohesiveness()` checks groups [in both directions](mnist-pca-umap.html#check-groups-without-digit-labels), without using the digit labels. |
 | Did two classes become easier to tell apart? | Compare `class_pair_auc()` with the fraction of points closer to their own class centroid. To check angular spread, look at [the 5s as seen from the 3s](mnist-pca-umap.html#compare-angular-spread-from-each-digit). |
@@ -40,6 +41,9 @@ practical limit depends on which metric you run and how much memory is available
   queries against every candidate. It needs only one query's ranks at a time, but scoring *all*
   queries still requires quadratic distance work.
   [Try a query sample](#sample-queries-when-the-full-neighbor-pool-matters).
+- **Label retrieval.** Give `roc_auc()` or `pr_auc()` the map coordinates in `coords` and a
+  sample of `query_rows`. Every other observation stays in the ranking. Use the same queries in
+  each map. [Compare UMAP and t-SNE on the same digits](mnist-pca-umap.html#umap-versus-tsne).
 - **Class geometry.** `label_trustworthiness_continuity()` checks nearest-centroid consistency for
   every pair of classes. `class_angular_distortion_index()` estimates angular distortion from
   sampled triplets. Here `n_triplets` is the *total* number to draw. Both work on coordinates.
@@ -51,7 +55,7 @@ practical limit depends on which metric you run and how much memory is available
 
 **When to use a smaller dataset.** `nbr_pres()`, `trustworthiness()`, `continuity()`, `rnx_auc()`,
 `rnx_curve()`, `pointwise_rank_preservation()` and `pointwise_rnx()` each take **two dense distance
-matrices**. `roc_auc()`, `pr_auc()` and `class_pair_auc()` take **one per space**. If you need AUC
+matrices**. `class_pair_auc()` takes **one per space**. If you need class-pair AUC
 for just two classes, select those classes before computing distances. If the full matrices exceed
 your budget, use the same representative subset in every space and report the candidate pool size.
 

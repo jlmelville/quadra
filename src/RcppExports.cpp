@@ -146,6 +146,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// euclidean_distances_from_row
+NumericVector euclidean_distances_from_row(const NumericMatrix& x, int row);
+RcppExport SEXP _quadra_euclidean_distances_from_row(SEXP xSEXP, SEXP rowSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type row(rowSEXP);
+    rcpp_result_gen = Rcpp::wrap(euclidean_distances_from_row(x, row));
+    return rcpp_result_gen;
+END_RCPP
+}
 // coordinate_rank_profiles
 List coordinate_rank_profiles(const NumericMatrix& input, const List& embeddings, const IntegerVector& k, bool mrre, const IntegerVector& query_rows);
 RcppExport SEXP _quadra_coordinate_rank_profiles(SEXP inputSEXP, SEXP embeddingsSEXP, SEXP kSEXP, SEXP mrreSEXP, SEXP query_rowsSEXP) {
@@ -222,6 +233,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_quadra_continuity_exact_multi", (DL_FUNC) &_quadra_continuity_exact_multi, 3},
     {"_quadra_pointwise_rank_preservation_exact", (DL_FUNC) &_quadra_pointwise_rank_preservation_exact, 3},
     {"_quadra_pointwise_rnx_exact", (DL_FUNC) &_quadra_pointwise_rnx_exact, 3},
+    {"_quadra_euclidean_distances_from_row", (DL_FUNC) &_quadra_euclidean_distances_from_row, 2},
     {"_quadra_coordinate_rank_profiles", (DL_FUNC) &_quadra_coordinate_rank_profiles, 5},
     {"_quadra_triplet_sample", (DL_FUNC) &_quadra_triplet_sample, 6},
     {"_quadra_triplet_plan_sample", (DL_FUNC) &_quadra_triplet_plan_sample, 8},

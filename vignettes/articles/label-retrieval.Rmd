@@ -95,9 +95,20 @@ All 150 Iris queries are defined. In other data, queries without both relevant
 and irrelevant candidates are `NA_real_` and excluded from the overall and
 per-label means. If no query is defined, the overall average is `NA_real_`.
 
-Both functions require a finite square distance matrix and one nonmissing label
-per observation. The query itself is excluded from its ranking. Labels without
-a defined query remain `NA_real_` in `label_av`.
+If all you have are the map coordinates, pass them to `coords`. You can pick a few query flowers
+and still rank each against the other 149 by Euclidean distance. Here each query has 49 flowers
+of its own species to retrieve. A species with no defined query has mean `NA_real_` in `label_av`.
+
+```{r coordinate-query-auc}
+rows <- c(1L, 51L, 101L)
+selected <- roc_auc(
+  coords = pca_iris,
+  labels = iris$Species,
+  query_rows = rows,
+  ret_extra = TRUE
+)
+data.frame(row = selected$query_rows, ROC = selected$query_auc)
+```
 
 ## Find which class pairs changed
 
@@ -111,9 +122,12 @@ onto one another. In the other, do the same within each row.
 tile <- as.matrix(expand.grid(x = c(-0.125, 0, 0.125), y = c(-0.125, 0, 0.125)))
 label <- rep(LETTERS[1:4], each = nrow(tile))
 make_distances <- function(cx, cy) {
-  xy <- do.call(rbind, lapply(seq_along(cx), function(i) {
-    sweep(tile, 2, c(cx[i], cy[i]), "+")
-  }))
+  xy <- do.call(
+    rbind,
+    lapply(seq_along(cx), function(i) {
+      sweep(tile, 2, c(cx[i], cy[i]), "+")
+    })
+  )
   as.matrix(dist(xy))
 }
 din <- make_distances(c(0, 0, 4, 4), c(0, 4, 0, 4))
@@ -121,7 +135,10 @@ merge_columns <- make_distances(c(0, 0, 4, 4), c(0, 0, 0, 0))
 merge_rows <- make_distances(c(0, 0, 0, 0), c(0, 4, 0, 4))
 
 pr_by_label <- function(d) unlist(pr_auc(d, label)$label_av)
-round(rbind(columns = pr_by_label(merge_columns), rows = pr_by_label(merge_rows)), 3)
+round(
+  rbind(columns = pr_by_label(merge_columns), rows = pr_by_label(merge_rows)),
+  3
+)
 ```
 
 Both outputs give the same PR AUC for each label. Now compare two-class ROC AUC in the input and
@@ -131,8 +148,14 @@ in each output, using the same query and candidate IDs for each pair.
 reference <- class_pair_auc(din, label, metrics = "roc")
 data.frame(
   reference,
-  column_merge_change = round(class_pair_auc(merge_columns, label, "roc")$roc - reference$roc, 3),
-  row_merge_change = round(class_pair_auc(merge_rows, label, "roc")$roc - reference$roc, 3)
+  column_merge_change = round(
+    class_pair_auc(merge_columns, label, "roc")$roc - reference$roc,
+    3
+  ),
+  row_merge_change = round(
+    class_pair_auc(merge_rows, label, "roc")$roc - reference$roc,
+    3
+  )
 )
 ```
 

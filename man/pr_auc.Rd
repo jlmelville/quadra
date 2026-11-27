@@ -4,26 +4,36 @@
 \alias{pr_auc}
 \title{Average Precision-Recall AUC for Label Retrieval}
 \usage{
-pr_auc(dm, labels, ret_extra = FALSE)
+pr_auc(dm = NULL, labels, ret_extra = FALSE, coords = NULL, query_rows = NULL)
 }
 \arguments{
-\item{dm}{Finite square numeric distance matrix. The query itself is excluded.}
+\item{dm}{Finite square numeric distance matrix. Supply exactly one of \code{dm}
+and \code{coords}.}
 
 \item{labels}{A label vector without missing values, with one label per row
-of \code{dm}.}
+of the supplied data.}
 
-\item{ret_extra}{Whether to append row-aligned query AUCs and the number of
-defined queries.}
+\item{ret_extra}{Whether to return query AUCs in the requested row order
+and the number of defined queries.}
+
+\item{coords}{Dense Euclidean coordinates, one observation per row.
+Numeric columns are used for data frames.}
+
+\item{query_rows}{Unique one-based row positions to score, in the order
+requested. The default scores every row. Only the query itself is
+excluded from its candidate pool.}
 }
 \value{
 A list whose first components are:
 \itemize{
-\item \code{av_auc}: the mean PR AUC over defined queries.
+\item \code{av_auc}: the mean AUC over defined queries.
 \item \code{label_av}: a named list of per-label means in first-appearance order.
 }
 
 With \code{ret_extra = TRUE}, the list also contains \code{query_auc}, with
-\code{NA_real_} for undefined queries, and the integer \code{n_defined}.
+\code{NA_real_} for undefined queries, and the integer \code{n_defined}. When
+supplied, \code{query_rows} identifies the returned queries. Means use the
+selected queries. Labels without a defined query have mean \code{NA_real_}.
 }
 \description{
 Precision-recall counterpart to \code{\link[=roc_auc]{roc_auc()}}, often more informative for
@@ -37,10 +47,12 @@ Quadra uses the Davis-Goadrich area returned by \code{\link[PRROC:pr.curve]{PRRO
 }
 \section{Scaling}{
 
-Each call takes one dense \code{N} by \code{N} distance matrix and ranks candidates
-for every query. At 5,000 observations the matrix alone uses about 191 MiB
-in double precision. When using a subset, report its size and use the same
-rows in each space. Its rows determine both the queries and the candidates.
+For large datasets, pass \code{coords} and sample \code{query_rows}. Each query
+computes one row of Euclidean distances and ranks all other observations.
+The distance workspace grows linearly with the candidate pool. Scoring all
+queries still takes quadratic distance work. If you already have \code{dm},
+you can sample the same queries from it. Subsetting the coordinates or
+the matrix before the call also changes the candidates.
 }
 
 \references{

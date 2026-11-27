@@ -29,7 +29,10 @@ outside the selection.}
 A list in embedding order, retaining the names of \code{embeddings}.
 Each entry contains pointwise \code{trustworthiness} and \code{continuity}
 matrices, the RNX \code{auc} vector, and the RNX \code{curve} matrix at the
-requested sizes. Rows retain the selected reference row names. Column
+requested sizes. The integer matrix \code{retained} counts neighbors shared
+by the reference and embedding among the first \code{k} other observations.
+Divide a column by its \code{k} to get the unadjusted fraction retained.
+Rows retain the selected reference row names. Column
 means summarize the selected queries. With \code{mrre = TRUE}, each
 entry also contains \code{mrre_input} and \code{mrre_output} matrices at the
 requested sizes. Smaller errors indicate better rank preservation.

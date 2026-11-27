@@ -16,6 +16,9 @@ Install the development version from GitHub with
 pak::pak("jlmelville/quadra")
 ```
 
+Quadra requires rnndescent 0.3.0 or later. If you are upgrading a source installation, rebuild
+Quadra after updating rnndescent so its compiled code uses the new distance functions.
+
 Quadra contains C++ code, so installing from source requires the appropriate
 build tools. On Windows, install
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/). On macOS, see the

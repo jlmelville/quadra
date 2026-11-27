@@ -99,7 +99,7 @@ double rnx_at_k(double overlap_count, std::size_t n_queries,
 
 double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
                                        std::size_t n_queries,
-                                       std::vector<double> *curve = nullptr) {
+                                       std::vector<double> *counts = nullptr) {
   const std::size_t n_ranks = histogram.size() - 1;
   double top_left = 0;
   double num = 0;
@@ -107,8 +107,8 @@ double rnx_auc_from_max_rank_histogram(const std::vector<double> &histogram,
   for (std::size_t k = 1; k < n_ranks; ++k) {
     top_left += histogram[k];
     const double rnx = rnx_at_k(top_left, n_queries, n_ranks, k);
-    if (curve != nullptr) {
-      (*curve)[k] = rnx;
+    if (counts != nullptr) {
+      (*counts)[k] = top_left;
     }
     num += rnx / k;
     den += 1.0 / k;
@@ -376,7 +376,7 @@ List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
   NumericVector auc(n_obs);
   NumericMatrix curve(n_obs, rank_ks.size());
   std::vector<double> histogram(n_ranks + 1, 0);
-  std::vector<double> row_curve(rank_ks.empty() ? 0 : n_ranks);
+  std::vector<double> row_counts(rank_ks.empty() ? 0 : n_ranks);
 
   for (std::size_t i = 0; i < n_obs; ++i) {
     if (i % 16 == 0) {
@@ -385,9 +385,10 @@ List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
     std::fill(histogram.begin(), histogram.end(), 0);
     add_max_ranks(din, dout, i, histogram);
     auc[i] = rnx_auc_from_max_rank_histogram(
-        histogram, 1, rank_ks.empty() ? nullptr : &row_curve);
+        histogram, 1, rank_ks.empty() ? nullptr : &row_counts);
     for (std::size_t col = 0; col < rank_ks.size(); ++col) {
-      curve(i, col) = row_curve[rank_ks[col]];
+      curve(i, col) =
+          rnx_at_k(row_counts[rank_ks[col]], 1, n_ranks, rank_ks[col]);
     }
   }
   return List::create(Named("auc") = auc, Named("curve") = curve);
@@ -395,9 +396,9 @@ List pointwise_rnx_exact(const NumericMatrix &din, const NumericMatrix &dout,
 
 // Form Euclidean distances in coordinate order, as in stats::dist(). Updating
 // all candidates together keeps the inner loop contiguous in R's columns.
-std::vector<std::size_t> euclidean_row_ranks(const NumericMatrix &x,
-                                             std::size_t row,
-                                             std::vector<double> &distances) {
+template <typename Vector>
+void fill_euclidean_distances(const NumericMatrix &x, std::size_t row,
+                              Vector &distances) {
   std::fill(distances.begin(), distances.end(), 0.0);
   for (int dim = 0; dim < x.ncol(); ++dim) {
     const double *column =
@@ -414,6 +415,22 @@ std::vector<std::size_t> euclidean_row_ranks(const NumericMatrix &x,
     }
     value = std::sqrt(value);
   }
+}
+
+// [[Rcpp::export(rng = false)]]
+NumericVector euclidean_distances_from_row(const NumericMatrix &x, int row) {
+  if (row < 1 || row > x.nrow()) {
+    stop("row must index a coordinate row");
+  }
+  NumericVector distances(x.nrow());
+  fill_euclidean_distances(x, row - 1, distances);
+  return distances;
+}
+
+std::vector<std::size_t> euclidean_row_ranks(const NumericMatrix &x,
+                                             std::size_t row,
+                                             std::vector<double> &distances) {
+  fill_euclidean_distances(x, row, distances);
   return first_tie_ranks(distances.size(), row,
                          [&](std::size_t j) { return distances[j]; });
 }
@@ -444,12 +461,13 @@ struct CoordinateRankProfile {
   NumericMatrix continuity;
   NumericVector auc;
   NumericMatrix curve;
+  IntegerMatrix retained;
   NumericMatrix mrre_input;
   NumericMatrix mrre_output;
   CoordinateRankProfile(int n, int n_sizes, bool mrre)
       : trustworthiness(n, n_sizes), continuity(n, n_sizes), auc(n),
-        curve(n, n_sizes), mrre_input(n, mrre ? n_sizes : 0),
-        mrre_output(n, mrre ? n_sizes : 0) {}
+        curve(n, n_sizes), retained(n, n_sizes),
+        mrre_input(n, mrre ? n_sizes : 0), mrre_output(n, mrre ? n_sizes : 0) {}
 };
 
 // [[Rcpp::export(rng = false)]]
@@ -477,7 +495,7 @@ List coordinate_rank_profiles(const NumericMatrix &input,
     maps.push_back(map);
     profiles.emplace_back(query_rows.size(), sizes.size(), mrre);
   }
-  std::vector<double> distances(n), histogram(n), row_curve(n);
+  std::vector<double> distances(n), histogram(n), row_counts(n);
   for (R_xlen_t q = 0; q < query_rows.size(); ++q) {
     if (query_rows[q] < 1 || query_rows[q] > n) {
       stop("query_rows contains a position outside the reference");
@@ -498,9 +516,11 @@ List coordinate_rank_profiles(const NumericMatrix &input,
       }
       std::fill(histogram.begin(), histogram.end(), 0.0);
       accumulate_max_ranks(reference, embedded, anchor, histogram);
-      p.auc[q] = rnx_auc_from_max_rank_histogram(histogram, 1, &row_curve);
+      p.auc[q] = rnx_auc_from_max_rank_histogram(histogram, 1, &row_counts);
       for (std::size_t col = 0; col < sizes.size(); ++col) {
-        p.curve(q, col) = row_curve[sizes[col]];
+        const auto size = sizes[col];
+        p.retained(q, col) = static_cast<int>(row_counts[size]);
+        p.curve(q, col) = rnx_at_k(row_counts[size], 1, n - 1, size);
       }
     }
   }
@@ -514,6 +534,7 @@ List coordinate_rank_profiles(const NumericMatrix &input,
       profile["mrre_input"] = p.mrre_input;
       profile["mrre_output"] = p.mrre_output;
     }
+    profile["retained"] = p.retained;
     result[m] = profile;
   }
   return result;

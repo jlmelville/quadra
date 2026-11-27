@@ -45,6 +45,10 @@ pointwise_rnx_exact <- function(din, dout, k) {
     .Call(`_quadra_pointwise_rnx_exact`, din, dout, k)
 }
 
+euclidean_distances_from_row <- function(x, row) {
+    .Call(`_quadra_euclidean_distances_from_row`, x, row)
+}
+
 coordinate_rank_profiles <- function(input, embeddings, k, mrre, query_rows) {
     .Call(`_quadra_coordinate_rank_profiles`, input, embeddings, k, mrre, query_rows)
 }

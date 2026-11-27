@@ -13,6 +13,40 @@ retrieval_query_oracle <- function(dm, labels, i, curve) {
   as.numeric(PRROC::pr.curve(scores0, scores1)$auc.davis.goadrich)
 }
 
+test_that("coordinate and matrix retrieval use identical candidates for selected rows", {
+  skip_if_not_installed("PRROC")
+  x <- cbind(c(0L, 1L, 0L, 2L, -1L, 3L), c(0L, 0L, 0L, 1L, 0L, 0L))
+  labels <- factor(c("a", "b", "b", "c", "a", "d"))
+  dm <- as.matrix(dist(x))
+  rows <- c(5L, 4L, 2L)
+  for (fn in list(pr_auc, roc_auc)) {
+    full <- fn(dm, labels, TRUE)
+    expect_identical(fn(coords = x, labels = labels, ret_extra = TRUE), full)
+    spot <- fn(coords = x, labels = labels, ret_extra = TRUE, query_rows = rows)
+    expect_identical(spot, fn(dm, labels, TRUE, query_rows = rows))
+    expect_identical(spot$query_rows, rows)
+    expect_equal(spot$query_auc, full$query_auc[rows])
+    expect_equal(spot$av_auc, mean(full$query_auc[rows], na.rm = TRUE))
+    expect_identical(spot$n_defined, 2L)
+    expect_equal(
+      spot$label_av,
+      list(
+        a = full$query_auc[5],
+        b = full$query_auc[2],
+        c = NA_real_,
+        d = NA_real_
+      )
+    )
+    expect_error(fn(dm, labels, coords = x), "exactly one")
+    expect_error(fn(labels = labels), "exactly one")
+    expect_error(
+      fn(coords = x, labels = labels, query_rows = c(2, 2)),
+      "unique"
+    )
+    expect_error(fn(coords = x, labels = labels, query_rows = 7), "outside")
+  }
+})
+
 test_that("public AUC metrics reject invalid distance matrices", {
   skip_if_not_installed("PRROC")
 

@@ -87,6 +87,20 @@ validate_positive_integer <- function(x, name) {
   as.integer(x)
 }
 
+validate_query_rows <- function(query_rows, n) {
+  if (is.null(query_rows)) {
+    return(seq_len(n))
+  }
+  if (!is.null(dim(query_rows))) {
+    stop("query_rows must be a vector of row positions", call. = FALSE)
+  }
+  rows <- validate_positive_integer_vector(query_rows, "query_rows")
+  if (any(rows > n)) {
+    stop("query_rows contains a position outside the input", call. = FALSE)
+  }
+  rows
+}
+
 validate_positive_integer_vector <- function(x, name) {
   if (
     !is.numeric(x) ||

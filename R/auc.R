@@ -18,31 +18,45 @@
 #' \doi{10.1093/bioinformatics/btv153}
 #'
 #' @section Scaling:
-#' Each call takes one dense `N` by `N` distance matrix and ranks candidates
-#' for every query. At 5,000 observations the matrix alone uses about 191 MiB
-#' in double precision. When using a subset, report its size and use the same
-#' rows in each space. Its rows determine both the queries and the candidates.
-#' @param dm Finite square numeric distance matrix. The query itself is excluded.
+#' For large datasets, pass `coords` and sample `query_rows`. Each query
+#' computes one row of Euclidean distances and ranks all other observations.
+#' The distance workspace grows linearly with the candidate pool. Scoring all
+#' queries still takes quadratic distance work. If you already have `dm`,
+#' you can sample the same queries from it. Subsetting the coordinates or
+#' the matrix before the call also changes the candidates.
+#' @param dm Finite square numeric distance matrix. Supply exactly one of `dm`
+#'   and `coords`.
 #' @param labels A label vector without missing values, with one label per row
-#'   of `dm`.
-#' @param ret_extra Whether to append row-aligned query AUCs and the number of
-#'   defined queries.
+#'   of the supplied data.
+#' @param coords Dense Euclidean coordinates, one observation per row.
+#'   Numeric columns are used for data frames.
+#' @param query_rows Unique one-based row positions to score, in the order
+#'   requested. The default scores every row. Only the query itself is
+#'   excluded from its candidate pool.
+#' @param ret_extra Whether to return query AUCs in the requested row order
+#'   and the number of defined queries.
+#' @examplesIf requireNamespace("PRROC", quietly = TRUE)
+#' x <- as.matrix(iris[, 1:4])
+#' roc_auc(coords = x, labels = iris$Species, query_rows = c(1, 51, 101))
 #' @return A list whose first components are:
 #'
 #'   * `av_auc`: the mean AUC over defined queries.
 #'   * `label_av`: a named list of per-label means in first-appearance order.
 #'
 #'   With `ret_extra = TRUE`, the list also contains `query_auc`, with
-#'   `NA_real_` for undefined queries, and the integer `n_defined`.
+#'   `NA_real_` for undefined queries, and the integer `n_defined`. When
+#'   supplied, `query_rows` identifies the returned queries. Means use the
+#'   selected queries. Labels without a defined query have mean `NA_real_`.
 #' @seealso [pr_auc()], [class_pair_auc()]
 #' @export
-roc_auc <- function(dm, labels, ret_extra = FALSE) {
-  if (!requireNamespace("PRROC", quietly = TRUE)) {
-    stop("roc_auc function requires 'PRROC' package")
-  }
-  ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
-  validate_auc_inputs(dm, labels)
-  summarize_retrieval_auc(dm, labels, roc_auc_row, ret_extra)
+roc_auc <- function(
+  dm = NULL,
+  labels,
+  ret_extra = FALSE,
+  coords = NULL,
+  query_rows = NULL
+) {
+  retrieval_auc(dm, labels, ret_extra, coords, query_rows, roc_auc_scores)
 }
 
 #' Average Precision-Recall AUC for Label Retrieval
@@ -56,13 +70,7 @@ roc_auc <- function(dm, labels, ret_extra = FALSE) {
 #'
 #' @inheritParams roc_auc
 #' @inheritSection roc_auc Scaling
-#' @return A list whose first components are:
-#'
-#'   * `av_auc`: the mean PR AUC over defined queries.
-#'   * `label_av`: a named list of per-label means in first-appearance order.
-#'
-#'   With `ret_extra = TRUE`, the list also contains `query_auc`, with
-#'   `NA_real_` for undefined queries, and the integer `n_defined`.
+#' @inherit roc_auc return
 #' @references
 #' Keilwagen, J., Grosse, I., & Grau, J. (2014).
 #' Area under precision-recall curves for weighted and unweighted data.
@@ -76,13 +84,58 @@ roc_auc <- function(dm, labels, ret_extra = FALSE) {
 #' Grau, Grosse and Keilwagen (2015) describe the PRROC implementation.
 #' \doi{10.1093/bioinformatics/btv153}
 #' @export
-pr_auc <- function(dm, labels, ret_extra = FALSE) {
+pr_auc <- function(
+  dm = NULL,
+  labels,
+  ret_extra = FALSE,
+  coords = NULL,
+  query_rows = NULL
+) {
+  retrieval_auc(dm, labels, ret_extra, coords, query_rows, pr_auc_scores)
+}
+
+retrieval_auc <- function(dm, labels, ret_extra, coords, query_rows, auc_fn) {
   if (!requireNamespace("PRROC", quietly = TRUE)) {
-    stop("pr_auc function requires 'PRROC' package")
+    stop("Label retrieval AUC requires the PRROC package", call. = FALSE)
   }
   ret_extra <- validate_scalar_logical(ret_extra, "ret_extra")
-  validate_auc_inputs(dm, labels)
-  summarize_retrieval_auc(dm, labels, pr_auc_row, ret_extra)
+  if (is.null(dm) == is.null(coords)) {
+    stop("Supply exactly one of dm and coords", call. = FALSE)
+  }
+  if (is.null(coords)) {
+    validate_auc_inputs(dm, labels)
+    distance_row <- function(i) {
+      dm[i, ]
+    }
+  } else {
+    coords <- prepare_input_matrix(
+      coords,
+      name = "coords",
+      require_finite = TRUE
+    )
+    if (nrow(coords) < 3L) {
+      stop("coords must have at least 3 rows", call. = FALSE)
+    }
+    validate_label_vector(labels, nrow(coords), "coords")
+    if (is.integer(coords)) {
+      storage.mode(coords) <- "double"
+    }
+    distance_row <- function(i) {
+      euclidean_distances_from_row(coords, i)
+    }
+  }
+  rows <- validate_query_rows(query_rows, length(labels))
+  result <- summarize_retrieval_auc(
+    distance_row,
+    labels,
+    auc_fn,
+    ret_extra,
+    rows
+  )
+  if (ret_extra && !is.null(query_rows)) {
+    result$query_rows <- rows
+  }
+  result
 }
 
 validate_auc_inputs <- function(dm, labels, min_rows = 3L) {
@@ -113,153 +166,47 @@ validate_auc_inputs <- function(dm, labels, min_rows = 3L) {
   validate_label_vector(labels, nrow(dm), "dm")
 }
 
-# Area Under the PR Curve of an Observation
-#
-# Per-query label-retrieval score.
-#
-# The PR curve plots precision (also known as positive predictive value, PPV)
-# against recall (also known as the true positive rate). The area under the
-# curve provides similar information compared to the area under the ROC curve,
-# but may be more appropriate when classes are highly imbalanced.
-#
-# This function calculates the curve with the label of the specified
-# observation set as the positive class. The other observations are then
-# ranked according to their distance from the ith observation
-# (lower distances being better). Observations with the same label as the
-# specified observation count as the positive observations.
-#
-# Perfect retrieval results in an AUC of 1. Random retrieval gives a value
-# of the proportion of positive class with respect to the entire data set
-# (e.g. if there are 20 observations with the positive class label in a
-# dataset of 100, then the random AUC is 0.2).
-#
-# @note Use of this function requires that the \code{PRROC} package be
-# installed.
-#
-# @param dm Distance matrix.
-# @param labels Vector of labels, of the same size as the number of rows
-# (or columns) in the distance matrix.
-# @param i The row of the distance matrix to use in the PR calculation.
-# @return Area Under the curve.
-# @references
-#
-# Keilwagen, J., Grosse, I., & Grau, J. (2014).
-# Area under precision-recall curves for weighted and unweighted data.
-# \emph{PloS One}, \emph{9}(3), e92209.
-#
-# Davis, J., & Goadrich, M. (2006, June).
-# The relationship between Precision-Recall and ROC curves.
-# In \emph{Proceedings of the 23rd international conference on Machine
-# learning}
-# (pp. 233-240). ACM.
-pr_auc_row <- function(dm, labels, i) {
-  other_ind <- seq_len(nrow(dm))[-i]
-  is_positive <- labels[other_ind] == labels[i]
-  if (!any(is_positive) || all(is_positive)) {
-    return(NA_real_)
-  }
-
-  pos_dist <- dm[i, other_ind[is_positive]]
-  neg_dist <- dm[i, other_ind[!is_positive]]
-
-  as.numeric(
-    PRROC::pr.curve(
-      scores.class0 = -pos_dist,
-      scores.class1 = -neg_dist
-    )$auc.davis.goadrich
-  )
+pr_auc_scores <- function(positive, negative) {
+  PRROC::pr.curve(positive, negative)$auc.davis.goadrich
 }
 
-# Area Under the ROC Curve of an Observation
-#
-# Per-query label-retrieval score.
-#
-# The ROC curve plots the true positive rate vs false positive rate.
-# This function calculates the curve with the label of the specified
-# observation set as the positive class. The other observations are then
-# ranked according to their distance from the ith observation
-# (lower distances being better). Observations with the same label as the
-# specified observation count as the positive observations.
-#
-# Perfect retrieval results in an AUC of 1. For random retrieval gives a value
-# of 0.5.
-#
-# @note Use of this function requires that the \code{PRROC} package be
-# installed.
-#
-# @param dm Distance matrix.
-# @param labels Vector of labels, of the same size as the number of rows
-# (or columns) in the distance matrix.
-# @param i The row of the distance matrix to use in the ROC calculation.
-# @return Area Under the curve.
-roc_auc_row <- function(dm, labels, i) {
-  other_ind <- seq_len(nrow(dm))[-i]
-  is_positive <- labels[other_ind] == labels[i]
-  if (!any(is_positive) || all(is_positive)) {
-    return(NA_real_)
-  }
-
-  pos_dist <- dm[i, other_ind[is_positive]]
-  neg_dist <- dm[i, other_ind[!is_positive]]
-
-  as.numeric(
-    PRROC::roc.curve(
-      scores.class0 = -pos_dist,
-      scores.class1 = -neg_dist
-    )$auc
-  )
+roc_auc_scores <- function(positive, negative) {
+  PRROC::roc.curve(positive, negative)$auc
 }
 
-# Average Area Under a Curve
-#
-# Aggregate label-retrieval scores.
-#
-# This function calculates a curve using the specified function, repeating the
-# procedure N times, where N is the number of the observations. Each time
-# a different row of the distance matrix is used. The label of the Nth
-# observation is set as the positive class and then the other observations are
-# ranked according to their distance from the Nth observation in the output
-# coordinates (lower distances being better). Observations with the same label
-# as the Nth observation count as positive observations. The final reported
-# result is the average over all observations.
-#
-# @note Use of this function requires that the \code{PRROC} package be
-# installed.
-#
-# @param dm Distance matrix.
-# @param labels Vector of labels, of the same size as the number of rows
-# (or columns) in the distance matrix.
-# @param auc_row_fn A function which can calculate the Area Under a Curve
-# for a particular quality measure. Should have the signature
-# \code{auc_row_fn(dm, labels, i)} where \code{i} is the ith row of the
-# distance matrix, and should return a scalar value giving the area under the
-# curve using the ith row of the distance matrix.
-# @return A list containing:
-# \item{av_auc}{Area Under the curve, averaged over each observation.}
-# The list also contains the average AUC per class label, with each average
-# being named after the class label.
-summarize_retrieval_auc <- function(dm, labels, auc_row_fn, ret_extra) {
+summarize_retrieval_auc <- function(
+  distance_row,
+  labels,
+  auc_fn,
+  ret_extra,
+  query_rows = seq_along(labels)
+) {
   av_auc <- 0
   av_n <- 0
-  n <- nrow(dm)
-  query_auc <- if (ret_extra) rep(NA_real_, n) else NULL
+  query_auc <- if (ret_extra) rep(NA_real_, length(query_rows)) else NULL
   label_names <- unique(as.character(labels))
   ns <- stats::setNames(as.list(integer(length(label_names))), label_names)
   label_av <- stats::setNames(
     as.list(numeric(length(label_names))),
     label_names
   )
-  for (i in seq_len(n)) {
+  for (j in seq_along(query_rows)) {
+    i <- query_rows[j]
     label_index <- match(as.character(labels[i]), label_names)
 
-    auc <- auc_row_fn(dm, labels, i)
+    positive <- labels[-i] == labels[i]
+    if (!any(positive) || all(positive)) {
+      next
+    }
+    scores <- -distance_row(i)[-i]
+    auc <- auc_fn(scores[positive], scores[!positive])
     if (is.numeric(auc) && length(auc) == 1L && isTRUE(is.finite(auc))) {
       av_auc <- av_auc + auc
       av_n <- av_n + 1
       label_av[[label_index]] <- label_av[[label_index]] + auc
       ns[[label_index]] <- ns[[label_index]] + 1L
       if (ret_extra) {
-        query_auc[[i]] <- auc
+        query_auc[[j]] <- auc
       }
     }
   }
@@ -293,7 +240,9 @@ summarize_retrieval_auc <- function(dm, labels, auc_row_fn, ret_extra) {
 #' requires a square submatrix for its members. For a particular pair, select
 #' its two classes before computing distances. Keeping all members of those
 #' classes gives the same pair score as extracting it from the full analysis.
-#' @inheritParams roc_auc
+#' @param dm Finite square numeric distance matrix. The query itself is excluded.
+#' @param labels A label vector without missing values, with one label per row
+#'   of `dm`.
 #' @param metrics Which AUCs to report. Defaults to both `"roc"` and `"pr"`.
 #' @return A data frame with one row per unordered class pair and columns
 #'   `label_a` and `label_b` in the same first-appearance order as
@@ -325,7 +274,7 @@ class_pair_auc <- function(dm, labels, metrics = c("roc", "pr")) {
     label_a = classes[pairs[1L, ]],
     label_b = classes[pairs[2L, ]]
   )
-  row_functions <- list(roc = roc_auc_row, pr = pr_auc_row)
+  row_functions <- list(roc = roc_auc_scores, pr = pr_auc_scores)
   for (metric in metrics) {
     result[[metric]] <- NA_real_
     result[[paste0("n_defined_", metric)]] <- 0L
@@ -335,7 +284,9 @@ class_pair_auc <- function(dm, labels, metrics = c("roc", "pr")) {
     distances <- dm[rows, rows, drop = FALSE]
     for (metric in metrics) {
       summary <- summarize_retrieval_auc(
-        distances,
+        function(i) {
+          distances[i, ]
+        },
         labels[rows],
         row_functions[[metric]],
         TRUE

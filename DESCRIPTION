@@ -25,7 +25,7 @@ Suggests:
 Imports:
     methods,
     Rcpp,
-    rnndescent (>= 0.0.16)
+    rnndescent (>= 0.3.0)
 LinkingTo:
     Rcpp,
     dqrng,
