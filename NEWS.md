@@ -1,4 +1,6 @@
-# quadra 0.2.1.9000
+# quadra 0.3.0
+
+## New features and requirements
 
 * Require rnndescent 0.3.0 or later. Its compiled cosine and correlation distances preserve the
   expected values when otherwise ordinary coordinates are multiplied by `1e100`.
@@ -6,7 +8,6 @@
   against the full candidate pool without building a square distance matrix.
 * Read the number of shared neighbors at each requested size from the `retained` matrix in
   each embedding's `exact_rank_profiles()` result.
-
 * Add `neighbor_dissimilarity()` to compare shared neighbors in two graphs and identify the
   observation pairs that gain or lose them.
 * Add `exact_rank_profiles()` to compare Euclidean neighborhood ranks across embeddings without
@@ -27,6 +28,17 @@
   across input-distance bands, with reusable pair samples.
 * Add `pointwise_rank_preservation()` for observation-level trustworthiness and continuity.
 * Add `local_procrustes()` for fixed-scale shape error on matched reference neighborhoods.
+
+## Worked examples
+
+* Compare PCA, UMAP and t-SNE on the same MNIST images. See which pixel neighbors each map keeps
+  and how many of its first few neighbors show the same digit as the query.
+* Compare two LTSA maps whose neighbor overlap is nearly identical even though two images dominate
+  the spread of one map. The Swiss-roll example shows how the choice of reference geometry changes
+  which embedding best preserves distances.
+
+## Bug fixes and other improvements
+
 * Make random-triplet result construction safe during garbage collection, without changing sampled
   comparisons or random-number sequences.
 * Neighbor-overlap calculations no longer create `.Random.seed` when it is absent.
