@@ -83,7 +83,12 @@ overall accuracy by dividing total agreements by total defined comparisons.
 
 ```{r triplet-anchor-summary}
 set.seed(43)
-triplet_summary <- random_triplet_accuracy(iris_x, pca_unscaled, n_triplets = 64, by_anchor = TRUE)
+triplet_summary <- random_triplet_accuracy(
+  iris_x,
+  pca_unscaled,
+  n_triplets = 64,
+  by_anchor = TRUE
+)
 head(triplet_summary$by_anchor)
 with(triplet_summary$by_anchor, sum(n_agree) / sum(n_defined))
 ```
@@ -141,14 +146,26 @@ y <- x[c(1, 4, 3, 2), , drop = FALSE]
 pairs <- t(combn(nrow(x), 2))
 c(
   emd = random_pair_distance_emd(
-    x, y, pairs = pairs, metric_in = "euclidean", metric_out = "euclidean",
+    x,
+    y,
+    pairs = pairs,
+    metric_in = "euclidean",
+    metric_out = "euclidean",
     range_scale = FALSE
   ),
   stress = random_pair_distance_stress(
-    x, y, pairs = pairs, metric_in = "euclidean", metric_out = "euclidean",
+    x,
+    y,
+    pairs = pairs,
+    metric_in = "euclidean",
+    metric_out = "euclidean",
     range_scale = FALSE
   ),
-  neighbor_overlap = mean(nbr_pres(as.matrix(dist(x)), as.matrix(dist(y)), k = 1))
+  neighbor_overlap = mean(nbr_pres(
+    as.matrix(dist(x)),
+    as.matrix(dist(y)),
+    k = 1
+  ))
 )
 ```
 
@@ -171,10 +188,17 @@ y <- cbind(c(0, 2, 3, 4))
 pairs <- cbind(1L, 2:4)
 c(
   range_scaled_rmse = random_pair_distance_stress(
-    x, y, pairs = pairs, metric_in = "euclidean", metric_out = "euclidean"
+    x,
+    y,
+    pairs = pairs,
+    metric_in = "euclidean",
+    metric_out = "euclidean"
   ),
   fitted_scale_stress = random_pair_distance_band_profile(
-    x, y, pairs = pairs, bands = 1
+    x,
+    y,
+    pairs = pairs,
+    bands = 1
   )$normalized_stress
 )
 ```

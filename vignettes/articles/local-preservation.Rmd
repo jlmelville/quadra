@@ -151,10 +151,13 @@ before <- as.matrix(dist(sheet))
 after <- as.matrix(dist(split_sheet))
 tear <- pointwise_rank_preservation(before, after, k = 12)
 merge <- pointwise_rank_preservation(after, before, k = 12)
-round(rbind(
-  opening = vapply(tear, mean, numeric(1)),
-  closing = vapply(merge, mean, numeric(1))
-), 3)
+round(
+  rbind(
+    opening = vapply(tear, mean, numeric(1)),
+    closing = vapply(merge, mean, numeric(1))
+  ),
+  3
+)
 ```
 
 Each query contributes one score. The column means recover the aggregate measures. The plot uses
@@ -166,9 +169,14 @@ limits <- c(0, max(1 - tear$trustworthiness, 1 - tear$continuity))
 plot_penalties <- function(xy, scores, title) {
   for (metric in names(scores)) {
     vizier::embed_plot(
-      xy, x = 1 - scores[[metric]][, "k12"], limits = limits,
-      color_scheme = "grDevices::Viridis", title = paste(title, metric, sep = " / "),
-      fixed_aspect = TRUE, show_axes = FALSE, cex = 1.25
+      xy,
+      x = 1 - scores[[metric]][, "k12"],
+      limits = limits,
+      color_scheme = "grDevices::Viridis",
+      title = paste(title, metric, sep = " / "),
+      fixed_aspect = TRUE,
+      show_axes = FALSE,
+      cex = 1.25
     )
   }
 }
@@ -194,7 +202,11 @@ fixed-scale residual for each patch.
 patch <- rbind(c(0, 0), c(1, 0), c(2, 1), c(0.4, 2))
 sheared <- patch %*% rbind(c(1, 0), c(0.8, 1))
 c(
-  overlap = mean(nbr_pres(as.matrix(dist(patch)), as.matrix(dist(sheared)), k = 3)),
+  overlap = mean(nbr_pres(
+    as.matrix(dist(patch)),
+    as.matrix(dist(sheared)),
+    k = 3
+  )),
   local_procrustes = local_procrustes(patch, sheared, k = 3)
 )
 ```
@@ -342,9 +354,13 @@ ring <- function(step) {
   i <- 0:15
   list(idx = cbind((i + step) %% 16 + 1L, (i - step) %% 16 + 1L))
 }
-vapply(c(step7 = 7, step3 = 3), function(step) {
-  neighbor_dissimilarity(ring(1), ring(step), k = 2)
-}, numeric(1))
+vapply(
+  c(step7 = 7, step3 = 3),
+  function(step) {
+    neighbor_dissimilarity(ring(1), ring(step), k = 2)
+  },
+  numeric(1)
+)
 ```
 
 With step seven, rows two positions apart still share one neighbor, so Neighbor Dissimilarity
@@ -407,12 +423,28 @@ map the original nearest neighbor moves to second place. In the second map it mo
 
 ```{r local-mrre-cycle}
 line <- cbind(0:7)
-cycles <- list(forward = cbind(c(0, 2, 3, 1, 4:7)), reverse = cbind(c(0, 3, 1, 2, 4:7)))
+cycles <- list(
+  forward = cbind(c(0, 2, 3, 1, 4:7)),
+  reverse = cbind(c(0, 3, 1, 2, 4:7))
+)
 cycle_ranks <- exact_rank_profiles(line, cycles, k = 3, mrre = TRUE)
-round(t(vapply(cycle_ranks, function(p) {
-  c(RNX = p$curve[[1]], trust = p$trustworthiness[[1]], continuity = p$continuity[[1]],
-    AUC = p$auc[[1]], input_error = p$mrre_input[[1]], output_error = p$mrre_output[[1]])
-}, numeric(6))), 3)
+round(
+  t(vapply(
+    cycle_ranks,
+    function(p) {
+      c(
+        RNX = p$curve[[1]],
+        trust = p$trustworthiness[[1]],
+        continuity = p$continuity[[1]],
+        AUC = p$auc[[1]],
+        input_error = p$mrre_input[[1]],
+        output_error = p$mrre_output[[1]]
+      )
+    },
+    numeric(6)
+  )),
+  3
+)
 ```
 
 All three neighbors stay inside the cutoff. Even the full pointwise RNX curves coincide because
@@ -433,7 +465,10 @@ Quadra follows [ZADU 0.5.4](https://github.com/hj-n/zadu) for shared-neighbor an
 set.seed(450)
 clouds <- replicate(3, matrix(rnorm(160, sd = 0.45), 80, 2), simplify = FALSE)
 place <- function(centers) {
-  do.call(rbind, Map(function(z, offset) sweep(z, 2, offset, "+"), clouds, centers))
+  do.call(
+    rbind,
+    Map(function(z, offset) sweep(z, 2, offset, "+"), clouds, centers)
+  )
 }
 separate <- place(list(c(-4, 0), c(4, 0), c(0, 7)))
 merged <- place(list(c(-0.1, 0), c(0.1, 0), c(0, 7)))

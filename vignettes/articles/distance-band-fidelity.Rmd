@@ -36,12 +36,22 @@ pairs <- t(combn(nrow(x), 2))
 palette <- c(A = "#17628A", B = "#BD542D")
 par(mfrow = c(1, 2), mar = c(2, 1, 3, 1))
 vizier::embed_plot(
-  x, colors = unname(palette[group]), title = "Reference",
-  fixed_aspect = TRUE, show_axes = FALSE, xlim = c(-1, 13), ylim = c(-2, 2)
+  x,
+  colors = unname(palette[group]),
+  title = "Reference",
+  fixed_aspect = TRUE,
+  show_axes = FALSE,
+  xlim = c(-1, 13),
+  ylim = c(-2, 2)
 )
 vizier::embed_plot(
-  merged, colors = unname(palette[group]), title = "Output",
-  fixed_aspect = TRUE, show_axes = FALSE, xlim = c(-1, 13), ylim = c(-2, 2),
+  merged,
+  colors = unname(palette[group]),
+  title = "Output",
+  fixed_aspect = TRUE,
+  show_axes = FALSE,
+  xlim = c(-1, 13),
+  ylim = c(-2, 2),
   alpha_scale = 0.65
 )
 ```
@@ -57,7 +67,11 @@ reference. Both results use the same exact pair list.
 
 ```{r bands-radius}
 profile <- random_pair_distance_band_profile(
-  x, merged, bands = c(2.5, 14), band_type = "radius", pairs = pairs
+  x,
+  merged,
+  bands = c(2.5, 14),
+  band_type = "radius",
+  pairs = pairs
 )
 print(profile, digits = 3)
 
@@ -79,21 +93,39 @@ embeddings. Here the exact list provides a check on the sampled profile.
 set.seed(64)
 sampled_pairs <- sample_pairs(nrow(x), 10000)
 bands <- c(0.05, 0.2, 0.4, 0.55, 0.75, 1)
-exact <- random_pair_distance_band_profile(x, merged, bands = bands, pairs = pairs)
-sampled <- random_pair_distance_band_profile(x, merged, bands = bands, pairs = sampled_pairs)
+exact <- random_pair_distance_band_profile(
+  x,
+  merged,
+  bands = bands,
+  pairs = pairs
+)
+sampled <- random_pair_distance_band_profile(
+  x,
+  merged,
+  bands = bands,
+  pairs = sampled_pairs
+)
 
 par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
 for (metric in c("spearman", "normalized_stress")) {
   title <- if (metric == "spearman") "Distance order" else "Fitted-scale stress"
   matplot(
-    bands, cbind(exact[[metric]], sampled[[metric]]), type = "b",
-    pch = c(1, 16), lty = c(1, 2), col = c("#174A77", "#AD4826"),
-    xlab = "Requested input-pair fraction", ylab = title
+    bands,
+    cbind(exact[[metric]], sampled[[metric]]),
+    type = "b",
+    pch = c(1, 16),
+    lty = c(1, 2),
+    col = c("#174A77", "#AD4826"),
+    xlab = "Requested input-pair fraction",
+    ylab = title
   )
   legend(
     if (metric == "spearman") "topright" else "topleft",
-    c("All unordered pairs", "Sampled pairs"), bty = "n",
-    lty = c(1, 2), pch = c(1, 16), col = c("#174A77", "#AD4826")
+    c("All unordered pairs", "Sampled pairs"),
+    bty = "n",
+    lty = c(1, 2),
+    pch = c(1, 16),
+    col = c("#174A77", "#AD4826")
   )
 }
 ```
@@ -113,12 +145,22 @@ center <- colMeans(cloud)
 small <- sweep(sweep(cloud, 2, center, "-") / 4, 2, center, "+")
 compressed <- rbind(small, shift(small, 12, 0))
 detail <- random_pair_distance_band_profile(
-  x, compressed, bands = c(2.5, 14), band_type = "radius", pairs = pairs, ret_extra = TRUE
+  x,
+  compressed,
+  bands = c(2.5, 14),
+  band_type = "radius",
+  pairs = pairs,
+  ret_extra = TRUE
 )
 within <- group[detail$pairs[, 1]] == group[detail$pairs[, 2]]
 relative_scale <- function(d) median(d[within]) / median(d)
-round(c(input = relative_scale(detail$distance_in),
-        output = relative_scale(detail$distance_out)), 3)
+round(
+  c(
+    input = relative_scale(detail$distance_in),
+    output = relative_scale(detail$distance_out)
+  ),
+  3
+)
 print(transform(detail$profile, fitted_scale = detail$fitted_scale), digits = 3)
 ```
 
@@ -138,19 +180,37 @@ reference <- rbind(cloud, shift(sparse, 20, 0))
 changed <- rbind(cloud, shift(sweep(sparse, 2, c(2, 0.4), "*"), 20, 0))
 radius <- 0.8
 in_group <- group[pairs[, 1]] == group[pairs[, 2]]
-plans <- list(Dense = pairs[in_group & group[pairs[, 1]] == "A", ],
-              Sparse = pairs[in_group & group[pairs[, 1]] == "B", ],
-              Pooled = pairs)
-scores <- do.call(rbind, lapply(plans, function(plan) {
-  random_pair_distance_band_profile(reference, changed, bands = radius,
-                                    band_type = "radius", pairs = plan)
-}))
+plans <- list(
+  Dense = pairs[in_group & group[pairs[, 1]] == "A", ],
+  Sparse = pairs[in_group & group[pairs[, 1]] == "B", ],
+  Pooled = pairs
+)
+scores <- do.call(
+  rbind,
+  lapply(plans, function(plan) {
+    random_pair_distance_band_profile(
+      reference,
+      changed,
+      bands = radius,
+      band_type = "radius",
+      pairs = plan
+    )
+  })
+)
 # Every qualifying pair has both endpoints in the same group.
-stopifnot(scores["Pooled", "n_pairs"] == sum(scores[c("Dense", "Sparse"), "n_pairs"]))
-round(data.frame(points = c(nrow(cloud), nrow(cloud), nrow(reference)),
-                 pairs = scores$n_pairs,
-                 endpoint_share = scores$n_pairs / scores["Pooled", "n_pairs"],
-                 stress = scores$normalized_stress, row.names = names(plans)), 3)
+stopifnot(
+  scores["Pooled", "n_pairs"] == sum(scores[c("Dense", "Sparse"), "n_pairs"])
+)
+round(
+  data.frame(
+    points = c(nrow(cloud), nrow(cloud), nrow(reference)),
+    pairs = scores$n_pairs,
+    endpoint_share = scores$n_pairs / scores["Pooled", "n_pairs"],
+    stress = scores$normalized_stress,
+    row.names = names(plans)
+  ),
+  3
+)
 ```
 
 Each group has 45 observations, but 471 of the 488 qualifying pairs come from the dense group.
@@ -165,8 +225,14 @@ Summing those allocations gives squared normalized stress. Keep the endpoint cou
 much evidence each observation contributes.
 
 ```{r bands-endpoints}
-pooled <- random_pair_distance_band_profile(reference, changed, bands = radius,
-  band_type = "radius", pairs = pairs, ret_extra = TRUE)
+pooled <- random_pair_distance_band_profile(
+  reference,
+  changed,
+  bands = radius,
+  band_type = "radius",
+  pairs = pairs,
+  ret_extra = TRUE
+)
 inside <- pooled$distance_in <= radius
 din <- pooled$distance_in[inside]
 residual <- din - pooled$fitted_scale * pooled$distance_out[inside]
@@ -176,17 +242,34 @@ totals <- rowsum(rep(half, 2), ends)
 allocated <- numeric(nrow(reference))
 allocated[as.integer(rownames(totals))] <- totals[, 1]
 incidents <- tabulate(ends, nrow(reference))
-stopifnot(isTRUE(all.equal(sqrt(sum(allocated)), pooled$profile$normalized_stress)))
+stopifnot(isTRUE(all.equal(
+  sqrt(sum(allocated)),
+  pooled$profile$normalized_stress
+)))
 
 region <- factor(group, levels = c("A", "B"), labels = c("Dense", "Sparse"))
 by_group <- split(seq_along(group), region)
-round(t(vapply(by_group, function(i) {
-  c(points_covered = sum(incidents[i] > 0), pair_ends = sum(incidents[i]),
-    squared_error_share = sum(allocated[i]) / sum(allocated))
-}, numeric(3))), 3)
+round(
+  t(vapply(
+    by_group,
+    function(i) {
+      c(
+        points_covered = sum(incidents[i] > 0),
+        pair_ends = sum(incidents[i]),
+        squared_error_share = sum(allocated[i]) / sum(allocated)
+      )
+    },
+    numeric(3)
+  )),
+  3
+)
 top <- head(order(allocated, decreasing = TRUE), 5)
-data.frame(row = top, group = region[top], incident_pairs = incidents[top],
-           error_share = round(allocated[top] / sum(allocated), 3))
+data.frame(
+  row = top,
+  group = region[top],
+  incident_pairs = incidents[top],
+  error_share = round(allocated[top] / sum(allocated), 3)
+)
 ```
 
 Only 17 of the 488 pairs come from the stretched cloud, yet they account for 94.1% of the squared

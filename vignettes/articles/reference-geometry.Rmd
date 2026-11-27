@@ -53,8 +53,12 @@ grid gives even coverage and avoids sparse patches where neighborhoods can jump 
 
 ```{r roll-geometry, eval=FALSE, fig.width=5.5, fig.height=5.5}
 vizier::embed_plot(
-  rolled[, c(1, 3)], x = s, color_scheme = "grDevices::Viridis",
-  title = "View along the height axis", fixed_aspect = TRUE, show_axes = FALSE
+  rolled[, c(1, 3)],
+  x = s,
+  color_scheme = "grDevices::Viridis",
+  title = "View along the height axis",
+  fixed_aspect = TRUE,
+  show_axes = FALSE
 )
 ```
 
@@ -67,7 +71,11 @@ knitr::include_graphics("figures/roll-geometry.png")
 ```{r roll-fit, eval=FALSE}
 pca <- prcomp(rolled, rank. = 2)$x
 ltsa <- flotsam::ltsa(
-  rolled, n_neighbors = 15, nn_method = "exact", eig_method = "eig", output = "result"
+  rolled,
+  n_neighbors = 15,
+  nn_method = "exact",
+  eig_method = "eig",
+  output = "result"
 )
 c(status = ltsa$eigen$status, components = ltsa$assembly$component_count)
 maps <- list(PCA = pca, LTSA = ltsa$embedding)
@@ -83,8 +91,13 @@ par(mfrow = c(1, 3), mar = c(1, 1, 3, 1))
 for (name in c("Flat reference", names(maps))) {
   xy <- c(list("Flat reference" = flat), maps)[[name]]
   vizier::embed_plot(
-    xy, x = s, color_scheme = "grDevices::Viridis", title = name,
-    fixed_aspect = TRUE, show_axes = FALSE, cex = 0.9
+    xy,
+    x = s,
+    color_scheme = "grDevices::Viridis",
+    title = name,
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    cex = 0.9
   )
 }
 ```
@@ -109,15 +122,35 @@ k <- 15
 compare <- function(reference, y) {
   c(
     pair_spearman = random_pair_distance_correlation(
-      reference, y, pairs = pairs, method = "spearman", n_threads = 1
+      reference,
+      y,
+      pairs = pairs,
+      method = "spearman",
+      n_threads = 1
     ),
-    neighbor_overlap = mean(nbr_pres(as.matrix(dist(reference)), as.matrix(dist(y)), k))
+    neighbor_overlap = mean(nbr_pres(
+      as.matrix(dist(reference)),
+      as.matrix(dist(y)),
+      k
+    ))
   )
 }
-results <- do.call(rbind, lapply(names(references), function(ref) {
-  values <- t(vapply(maps, function(y) compare(references[[ref]], y), numeric(2)))
-  data.frame(reference = ref, method = rownames(values), round(values, 3), row.names = NULL)
-}))
+results <- do.call(
+  rbind,
+  lapply(names(references), function(ref) {
+    values <- t(vapply(
+      maps,
+      function(y) compare(references[[ref]], y),
+      numeric(2)
+    ))
+    data.frame(
+      reference = ref,
+      method = rownames(values),
+      round(values, 3),
+      row.names = NULL
+    )
+  })
+)
 results
 ```
 
@@ -144,23 +177,43 @@ the ambient panel well before it enters the intrinsic one. The band comparisons 
 bands <- c(0.05, 0.1, 0.2, 0.5, 1)
 band_results <- lapply(references, function(reference) {
   lapply(maps, function(y) {
-    fit <- random_pair_distance_band_profile(reference, y, bands = bands, pairs = pairs,
-                                             ret_extra = TRUE)
+    fit <- random_pair_distance_band_profile(
+      reference,
+      y,
+      bands = bands,
+      pairs = pairs,
+      ret_extra = TRUE
+    )
     transform(fit$profile, fitted_scale = fit$fitted_scale)
   })
 })
 par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
 for (ref in names(references)) {
   profiles <- band_results[[ref]]
-  values <- vapply(profiles, function(z) z$normalized_stress, numeric(length(bands)))
+  values <- vapply(
+    profiles,
+    function(z) z$normalized_stress,
+    numeric(length(bands))
+  )
   matplot(
-    bands, values, type = "b", pch = c(16, 17), lty = 1,
-    col = c("#1B60A6", "#A33B20"), ylim = c(0, 0.7),
-    xlab = "Input-pair fraction", ylab = "Fitted-scale stress", main = ref
+    bands,
+    values,
+    type = "b",
+    pch = c(16, 17),
+    lty = 1,
+    col = c("#1B60A6", "#A33B20"),
+    ylim = c(0, 0.7),
+    xlab = "Input-pair fraction",
+    ylab = "Fitted-scale stress",
+    main = ref
   )
   legend(
-    "topright", names(profiles), col = c("#1B60A6", "#A33B20"),
-    pch = c(16, 17), lty = 1, bty = "n"
+    "topright",
+    names(profiles),
+    col = c("#1B60A6", "#A33B20"),
+    pch = c(16, 17),
+    lty = 1,
+    bty = "n"
   )
 }
 ```
@@ -183,9 +236,14 @@ for (ref in names(references)) {
     xy <- maps[[method]]
     overlap <- nbr_pres(din, as.matrix(dist(xy)), k)
     vizier::embed_plot(
-      xy, x = overlap, color_scheme = "grDevices::Viridis", limits = c(0, 1),
-      title = paste(ref, "reference /", method), fixed_aspect = TRUE,
-      show_axes = FALSE, cex = 0.85
+      xy,
+      x = overlap,
+      color_scheme = "grDevices::Viridis",
+      limits = c(0, 1),
+      title = paste(ref, "reference /", method),
+      fixed_aspect = TRUE,
+      show_axes = FALSE,
+      cex = 0.85
     )
   }
 }
@@ -207,10 +265,18 @@ See [Lee and colleagues](https://doi.org/10.1016/j.neucom.2012.12.036) for RNX a
 [weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
 ```{r roll-pointwise-rnx, eval=FALSE}
-roll_ranks <- lapply(references, exact_rank_profiles, embeddings = maps, k = k, mrre = TRUE)
+roll_ranks <- lapply(
+  references,
+  exact_rank_profiles,
+  embeddings = maps,
+  k = k,
+  mrre = TRUE
+)
 rnx_differences <- lapply(roll_ranks, function(scores) {
-  cbind(rnx15 = scores$LTSA$curve[, 1] - scores$PCA$curve[, 1],
-        auc = scores$LTSA$auc - scores$PCA$auc)
+  cbind(
+    rnx15 = scores$LTSA$curve[, 1] - scores$PCA$curve[, 1],
+    auc = scores$LTSA$auc - scores$PCA$auc
+  )
 })
 wins <- t(vapply(rnx_differences, function(d) colMeans(d > 0), numeric(2)))
 round(wins, 3)
@@ -227,9 +293,14 @@ limit <- max(abs(unlist(lapply(rnx_differences, function(d) d[, "auc"]))))
 par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2.5, 0.5))
 for (ref in names(rnx_differences)) {
   vizier::embed_plot(
-    flat, x = rnx_differences[[ref]][, "auc"], color_scheme = "grDevices::Blue-Red 3",
-    limits = c(-limit, limit), title = paste(ref, "reference"),
-    fixed_aspect = TRUE, show_axes = FALSE, cex = 1.2
+    flat,
+    x = rnx_differences[[ref]][, "auc"],
+    color_scheme = "grDevices::Blue-Red 3",
+    limits = c(-limit, limit),
+    title = paste(ref, "reference"),
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    cex = 1.2
   )
 }
 ```
@@ -263,17 +334,26 @@ roll_errors <- lapply(names(references), function(ref) {
   scores <- roll_ranks[[ref]]
   p <- scores$PCA
   l <- scores$LTSA
-  ahead <- l$curve[, 1] > p$curve[, 1] & l$auc > p$auc &
-    l$trustworthiness[, 1] > p$trustworthiness[, 1] & l$continuity[, 1] > p$continuity[, 1]
+  ahead <- l$curve[, 1] > p$curve[, 1] &
+    l$auc > p$auc &
+    l$trustworthiness[, 1] > p$trustworthiness[, 1] &
+    l$continuity[, 1] > p$continuity[, 1]
   inspect <- which(ahead & l$mrre_input[, 1] > p$mrre_input[, 1])
-  nearest_rank <- vapply(inspect, function(i) {
-    nearest <- neighbor_order(references[[ref]], i)[1]
-    vapply(maps, function(y) match(nearest, neighbor_order(y, i)), integer(1))
-  }, integer(length(maps)))
+  nearest_rank <- vapply(
+    inspect,
+    function(i) {
+      nearest <- neighbor_order(references[[ref]], i)[1]
+      vapply(maps, function(y) match(nearest, neighbor_order(y, i)), integer(1))
+    },
+    integer(length(maps))
+  )
   median_rank <- apply(nearest_rank, 1, median)
-  c(ahead = sum(ahead), higher_input_error = length(inspect),
+  c(
+    ahead = sum(ahead),
+    higher_input_error = length(inspect),
     higher_output_error = sum(ahead & l$mrre_output[, 1] > p$mrre_output[, 1]),
-    median_rank)
+    median_rank
+  )
 })
 print(do.call(rbind, setNames(roll_errors, names(references))))
 ```
@@ -303,18 +383,29 @@ anchor_triplets <- sample_triplets(nrow(flat), n_triplets = 512)
 triplet_differences <- lapply(references, function(reference) {
   scores <- lapply(maps, function(y) {
     random_triplet_accuracy(
-      reference, y, triplets = anchor_triplets, by_anchor = TRUE, n_threads = 1
+      reference,
+      y,
+      triplets = anchor_triplets,
+      by_anchor = TRUE,
+      n_threads = 1
     )$by_anchor$accuracy
   })
   scores$LTSA - scores$PCA
 })
 outer <- s > min(s) + 0.8 * diff(range(s))
-round(t(vapply(names(references), function(ref) {
-  c(
-    triplet_accuracy = mean(triplet_differences[[ref]][outer]),
-    rnx_auc = mean(rnx_differences[[ref]][outer, "auc"])
-  )
-}, numeric(2))), 3)
+round(
+  t(vapply(
+    names(references),
+    function(ref) {
+      c(
+        triplet_accuracy = mean(triplet_differences[[ref]][outer]),
+        rnx_auc = mean(rnx_differences[[ref]][outer, "auc"])
+      )
+    },
+    numeric(2)
+  )),
+  3
+)
 ```
 
 ```text
@@ -332,9 +423,14 @@ limit <- max(abs(unlist(scores)))
 par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2.5, 0.5))
 for (metric in names(scores)) {
   vizier::embed_plot(
-    flat, x = scores[[metric]], color_scheme = "grDevices::Blue-Red 3",
-    limits = c(-limit, limit), title = metric,
-    fixed_aspect = TRUE, show_axes = FALSE, cex = 1.2
+    flat,
+    x = scores[[metric]],
+    color_scheme = "grDevices::Blue-Red 3",
+    limits = c(-limit, limit),
+    title = metric,
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    cex = 1.2
   )
 }
 ```
@@ -357,13 +453,33 @@ on opposite sides of zero. [Narayan, Berger and Cho](https://doi.org/10.1038/s41
 also compare local radii when assessing density preservation.
 
 ```{r roll-radius, eval=FALSE}
-multipliers <- vapply(band_results$Intrinsic, function(z) z$fitted_scale[z$band == 1], numeric(1))
-radii <- Map(function(y, multiplier) {
-  local_radius_correlation(flat, y * multiplier, k = k, nn_method_in = "brute",
-                           metric_in = "euclidean", metric_out = "euclidean", ret_extra = TRUE)
-}, maps, multipliers)
+multipliers <- vapply(
+  band_results$Intrinsic,
+  function(z) z$fitted_scale[z$band == 1],
+  numeric(1)
+)
+radii <- Map(
+  function(y, multiplier) {
+    local_radius_correlation(
+      flat,
+      y * multiplier,
+      k = k,
+      nn_method_in = "brute",
+      metric_in = "euclidean",
+      metric_out = "euclidean",
+      ret_extra = TRUE
+    )
+  },
+  maps,
+  multipliers
+)
 ratio <- lapply(radii, function(r) r$scale_out[, 1] / r$scale_in[, 1])
-fifth <- cut(s, quantile(s, seq(0, 1, by = 0.2)), include.lowest = TRUE, labels = FALSE)
+fifth <- cut(
+  s,
+  quantile(s, seq(0, 1, by = 0.2)),
+  include.lowest = TRUE,
+  labels = FALSE
+)
 median_ratio <- sapply(ratio, function(z) tapply(z, fifth, median))
 ltsa_overlap <- nbr_pres_knn(radii$LTSA$nn_in$idx, radii$LTSA$nn_out$idx, k)
 round(cbind(median_ratio, LTSA_overlap = tapply(ltsa_overlap, fifth, mean)), 2)
@@ -385,14 +501,32 @@ par(mar = c(0.3, 0.5, 1.8, 0.5))
 for (method in names(ratio)) {
   value <- log2(ratio[[method]])
   colors <- palette[1L + round(50 * (1 + pmax(-1, pmin(1, value))))]
-  vizier::embed_plot(flat, colors = colors, fixed_aspect = TRUE, show_axes = FALSE,
-                     title = method, cex = 1.2)
+  vizier::embed_plot(
+    flat,
+    colors = colors,
+    fixed_aspect = TRUE,
+    show_axes = FALSE,
+    title = method,
+    cex = 1.2
+  )
   abline(v = quantile(s, c(0.2, 0.4, 0.6, 0.8)), col = "grey45", lty = 3)
 }
 par(mar = c(1.6, 5, 0.2, 5))
-image(seq(-1, 1, length.out = 101), 1, matrix(1:101), col = palette,
-      axes = FALSE, xlab = "", ylab = "")
-mtext(c("Half the radius", "Unchanged", "Twice the radius"), side = 1, at = -1:1, line = 0.15)
+image(
+  seq(-1, 1, length.out = 101),
+  1,
+  matrix(1:101),
+  col = palette,
+  axes = FALSE,
+  xlab = "",
+  ylab = ""
+)
+mtext(
+  c("Half the radius", "Unchanged", "Twice the radius"),
+  side = 1,
+  at = -1:1,
+  line = 0.15
+)
 ```
 
 ```{r show-roll-radius-map, echo=FALSE, out.width="100%", fig.alt="Dotted lines divide each flat roll into five strips. LTSA has a blue second strip and a red middle strip, while median PCA radii stay near the reference in all five."}
@@ -416,11 +550,21 @@ uses a fixed-scale residual.
 ```{r roll-shape, eval=FALSE}
 reference_graph <- radii[[1]]$nn_in
 inspect_shape <- function(y, multiplier, r) {
-  shape <- local_procrustes(flat, y * multiplier, k = k, nn_in = reference_graph, ret_extra = TRUE)
+  shape <- local_procrustes(
+    flat,
+    y * multiplier,
+    k = k,
+    nn_in = reference_graph,
+    ret_extra = TRUE
+  )
   i <- which.max(shape$pointwise_error)
   overlap <- nbr_pres_knn(reference_graph$idx, r$nn_out$idx, k)
-  c(row = i, patch_error = shape$pointwise_error[i], overlap = overlap[i],
-    radius_ratio = unname(r$scale_out[i, 1] / r$scale_in[i, 1]))
+  c(
+    row = i,
+    patch_error = shape$pointwise_error[i],
+    overlap = overlap[i],
+    radius_ratio = unname(r$scale_out[i, 1] / r$scale_in[i, 1])
+  )
 }
 round(do.call(rbind, Map(inspect_shape, maps, multipliers, radii)), 3)
 ```
@@ -464,17 +608,33 @@ ylim <- extendrange(c(a[, 2], aligned[, 2]), f = 0.08)
 par(mfrow = c(1, 2), mar = c(2.2, 1.3, 2.1, 0.4))
 for (name in names(patches)) {
   xy <- patches[[name]]
-  vizier::embed_plot(xy, colors = "grey40", title = name, xlim = xlim, ylim = ylim,
-                     show_axes = FALSE, fixed_aspect = TRUE)
+  vizier::embed_plot(
+    xy,
+    colors = "grey40",
+    title = name,
+    xlim = xlim,
+    ylim = ylim,
+    show_axes = FALSE,
+    fixed_aspect = TRUE
+  )
   from <- edges[, 1]
   to <- edges[, 2]
   segments(xy[from, 1], xy[from, 2], xy[to, 1], xy[to, 2], col = "grey75")
   points(xy, pch = 16, col = "grey40", cex = 0.75)
   points(xy[1, , drop = FALSE], pch = 4, lwd = 2, cex = 1.2)
   points(xy[focus, ], pch = c(15, 17), col = ink, cex = 1.15)
-  text(xy[focus, ], labels = ids[focus], col = ink, font = 2,
-       pos = if (name == "Flat reference") c(2, 4) else c(4, 2))
-  mtext(sprintf("Marked points are %.2f units apart", dist(xy[focus, ])), side = 1, line = 0.4)
+  text(
+    xy[focus, ],
+    labels = ids[focus],
+    col = ink,
+    font = 2,
+    pos = if (name == "Flat reference") c(2, 4) else c(4, 2)
+  )
+  mtext(
+    sprintf("Marked points are %.2f units apart", dist(xy[focus, ])),
+    side = 1,
+    line = 0.4
+  )
 }
 ```
 
@@ -508,12 +668,16 @@ largest <- which.max(intrinsic$relative_area_out - intrinsic$relative_area_in)
 vertices <- intrinsic$triangles[largest, ]
 ltsa_rnx <- roll_ranks$Intrinsic$LTSA$auc
 expanded <- gap_maps$Ambient$deformation < 0 & intrinsic$deformation > 0
-round(c(
-  intrinsic_deformation = intrinsic$deformation[largest],
-  triangle_vertex_rnx = mean(ltsa_rnx[vertices]),
-  mean_rnx = mean(ltsa_rnx),
-  percent_area_flipping_to_expansion = 100 * sum(intrinsic$relative_area_out[expanded])
-), 3)
+round(
+  c(
+    intrinsic_deformation = intrinsic$deformation[largest],
+    triangle_vertex_rnx = mean(ltsa_rnx[vertices]),
+    mean_rnx = mean(ltsa_rnx),
+    percent_area_flipping_to_expansion = 100 *
+      sum(intrinsic$relative_area_out[expanded])
+  ),
+  3
+)
 ```
 
 ```text
@@ -532,7 +696,15 @@ colors <- hcl.colors(101, "Blue-Red 3")
 par(mfrow = c(1, 2), mar = c(0.6, 0.6, 2.7, 0.6))
 for (ref in names(gap_maps)) {
   fill <- colors[round(50 * (1 + gap_maps[[ref]]$deformation)) + 1L]
-  plot(xy, type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = paste(ref, "reference"))
+  plot(
+    xy,
+    type = "n",
+    asp = 1,
+    axes = FALSE,
+    xlab = "",
+    ylab = "",
+    main = paste(ref, "reference")
+  )
   polygon(xy[triangle_rows, 1], xy[triangle_rows, 2], col = fill, border = NA)
   points(xy, pch = 16, cex = 0.28, col = "#20262F90")
   polygon(xy[vertices, , drop = FALSE], border = "#FFF2D9", lwd = 2)
