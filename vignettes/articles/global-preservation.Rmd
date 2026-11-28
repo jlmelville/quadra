@@ -175,11 +175,11 @@ even though the complete distributions agree.
 
 ## Stress After Fitting One Scale
 
-What happens if we let the embedding choose its units?
+What happens if you let the embedding choose its units?
 [Smelser, Miller and Kobourov](https://arxiv.org/abs/2408.07724)
 fit one multiplier to the output distances.
 [Takaeda's benchmark](https://github.com/toorpia/dr-fidelity-benchmark)
-fits it separately for each input-distance band. Let's try the full band on a small example.
+fits it separately for each input-distance band. Try the full band on a small example.
 The three distances from the first point change from `1, 2, 3` to `2, 3, 4`.
 
 ```{r fitted-scale-stress}
@@ -205,7 +205,7 @@ c(
 
 Range scaling takes both sets of distances to `0, 0.5, 1`, giving zero error. Now try to do the
 same with a single multiplier. Halving the output distances fixes the first pair, but it sends
-the third distance to 2 when we wanted 3. Even the best multiplier leaves a fitted-scale stress
+the third distance to 2 when the target was 3. Even the best multiplier leaves a fitted-scale stress
 of about 0.122. [Try the same comparison on short distances](distance-band-fidelity.html).
 
 ## Check Output Scale Alongside Scores

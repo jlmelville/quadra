@@ -95,8 +95,7 @@
 * Corrected self-neighbor handling in `nbr_pres_knn()` and supplied nearest-neighbor graphs.
 * `roc_auc()` and `pr_auc()` now handle retrieval problems with undefined rows consistently.
 * `nbr_pres_knn()` now supports multithreaded calculations through `n_threads`.
-* rnndescent is now on [CRAN](https://cran.r-project.org/package=rnndescent), so we no longer need
-  to install that from github.
+* You can now install rnndescent from [CRAN](https://cran.r-project.org/package=rnndescent).
 * `grain_size` for thread-handling has been removed from any API that exposed it.
 * Numeric `random_triplet_accuracy()` sampling uses a new sampler, so the exact sample sequence can
   differ from earlier versions. Set the seed and thread count for reproducible results within this
