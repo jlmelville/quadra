@@ -120,10 +120,10 @@ Color follows arc length from the inner turn (purple) to the outer turn
 
 Use every unordered pair here. For larger data, use one sample from
 [`sample_pairs()`](https://jlmelville.github.io/quadra/reference/sample_pairs.md)
-for both references and both embeddings. For neighbor overlap we use the
+for both references and both embeddings. For neighbor overlap I use the
 shared-neighbor fraction described by [Chen and
 Buja](https://doi.org/10.1198/jasa.2009.0111). For Spearman correlation
-we use the pair-distance comparison from
+I use the pair-distance comparison from
 [drnb](https://github.com/jlmelville/drnb) with all pairs.
 
 ``` r
@@ -240,8 +240,8 @@ band, LTSA has lower stress.](figures/roll-bands.png)
 
 PCA has lower fitted-scale stress at all five cutoffs for straight-line
 distances. Along the surface it still leads at the first four cutoffs.
-LTSA pulls ahead only when we include every pair. So the full-surface
-result doesn’t tell us which map better preserves short distances.
+LTSA pulls ahead only when you include every pair. So the full-surface
+result doesn’t tell you which map better preserves short distances.
 
 ## Locate the lost neighbors
 
@@ -275,11 +275,11 @@ Both panels in each row use the same 0–1 scale from purple to yellow.
 ## Compare neighborhood agreement across sizes
 
 Fifteen neighbors is one view of the roll. Does LTSA still come out
-ahead if we widen the neighborhood? RNX measures overlap after adjusting
-for chance. For each point we can compare the maps at `k = 15`, then
-over the whole RNX curve. Its area (RNX AUC) gives more weight to
-smaller neighborhoods. In the table, a win means LTSA scored higher than
-PCA for that point. See [Lee and
+ahead if you widen the neighborhood? RNX measures overlap after
+adjusting for chance. For each point you can compare the maps at
+`k = 15`, then over the whole RNX curve. Its area (RNX AUC) gives more
+weight to smaller neighborhoods. In the table, a win means LTSA scored
+higher than PCA for that point. See [Lee and
 colleagues](https://doi.org/10.1016/j.neucom.2012.12.036) for RNX and
 their [weighted summary](https://doi.org/10.1016/j.neucom.2014.12.095).
 
@@ -345,8 +345,8 @@ continuity](https://doi.org/10.1007/3-540-44668-0_68) penalize new and
 lost neighbors by their ranks, respectively. Now take the points where
 all four measures favor LTSA on the surface. What happened to the very
 closest surface neighbor? Input mean relative rank error (MRRE) gives
-the greatest weight to a move from first place. We’ll look for points
-where that changes which map we’d choose. [Lee and Verleysen describe
+the greatest weight to a move from first place. Look for points where
+that changes which map you would choose. [Lee and Verleysen describe
 MRRE](https://proceedings.mlr.press/v4/lee08a.html).
 
 ``` r

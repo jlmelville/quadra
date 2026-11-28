@@ -74,7 +74,7 @@
 <div class="section level2">
 <h2 id="which-embedding-would-you-use">Which embedding would you use?<a class="anchor" aria-label="anchor" href="#which-embedding-would-you-use"></a>
 </h2>
-<p>We start with PCA and UMAP fitted to the same 5,000 handwritten
+<p>I start with PCA and UMAP fitted to the same 5,000 handwritten
 digits, then bring in t-SNE for a closer look at the neighbors. Which
 map you would use depends on what you want to read from it.</p>
 <ul>
@@ -113,7 +113,7 @@ directions</a>.</li>
 <li>
 <strong>Does a UMAP island hold together in pixel space?</strong>
 The island with the best neighborhood agreement has sampled groups that
-tend to hold together when we trace them back to the pixels. Start in
+tend to hold together when you trace them back to the pixels. Start in
 pixel space, though, and some groups involving those same images
 disperse in UMAP. <a href="#check-groups-without-digit-labels">Trace the
 groups in both directions</a> or <a href="#which-images-acquire-shared-neighbors">see which image pairs
@@ -151,9 +151,9 @@ supply the data, embedding, plotting, and optional audit methods.</p>
 </h3>
 <p>The 5,000 training images are balanced by digit. Both fits use the
 same pixels on a 0–1 scale, with no per-pixel standardization. For UMAP
-we use <code>uwot</code>’s implementation of the method of McInnes,
-Healy and Melville. <a href="https://arxiv.org/abs/1802.03426" class="external-link">UMAP
-paper</a> · <a href="https://github.com/jlmelville/uwot" class="external-link">uwot</a></p>
+I use <code>uwot</code>’s implementation of the method of McInnes, Healy
+and Melville. <a href="https://arxiv.org/abs/1802.03426" class="external-link">UMAP paper</a>
+· <a href="https://github.com/jlmelville/uwot" class="external-link">uwot</a></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">x</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
 <span><span class="va">fit_umap</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_neighbors</span>, <span class="va">seed</span><span class="op">)</span> <span class="op">{</span></span>
@@ -192,7 +192,7 @@ paper</a> · <a href="https://github.com/jlmelville/uwot" class="external-link">
 </h2>
 <p>Use all 5,000 images. Reuse the pixel neighbor graph, pair sample,
 and triplet sample across both embeddings. Look at several neighborhood
-sizes, including UMAP’s fitting scale of 15. For neighbor overlap we
+sizes, including UMAP’s fitting scale of 15. For neighbor overlap I
 count the fraction retained, as in <a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">Chen and Buja</a>. The
 sampled Spearman comparison draws on <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a>. <a href="https://jmlr.org/papers/v22/20-1061.html" class="external-link">Wang and colleagues</a>
 use triplet accuracy to evaluate distance ordering in embeddings.</p>
@@ -255,11 +255,10 @@ yellow.</p>
 <h3 id="spot-check-the-pixel-neighbor-search">Spot-check the pixel neighbor search<a class="anchor" aria-label="anchor" href="#spot-check-the-pixel-neighbor-search"></a>
 </h3>
 <p>The first calculation used an approximate search in pixel space.
-Could that explain UMAP’s lead? We can check 100 images of each digit
+Could that explain UMAP’s lead? I’ll check 100 images of each digit
 exactly. For now these 1,000 images are just the <em>queries</em>. Each
 one can still have any of the other 4,999 images as a neighbor. Later
-we’ll see what happens when we also restrict the candidates to the
-1,000-image sample.</p>
+I’ll also restrict the candidates to the 1,000-image sample.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">417</span><span class="op">)</span></span>
 <span><span class="va">audit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
@@ -283,9 +282,9 @@ summary</a>.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">audit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>There are two ways to get a list of 15 neighbors from the approximate
-search. We can ask for 15, or we can ask for 50 and keep the first 15,
-as we did above. Let’s compare both lists with the exact pixel
-neighbors, keeping the embedding graphs fixed.</p>
+search. You can ask for 15, or you can ask for 50 and keep the first 15,
+as I did above. Compare both lists with the exact pixel neighbors,
+keeping the embedding graphs fixed.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">416</span><span class="op">)</span></span>
 <span><span class="va">narrow</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nn_preservation.html">nn_preservation</a></span><span class="op">(</span></span>
@@ -387,7 +386,7 @@ tightly connected set of entirely new neighbors.</p>
 distances better than the dataset-wide score suggests. The input-pair
 fractions are cumulative. The rank and fitted-scale stress comparisons
 follow <a href="https://arxiv.org/abs/2608.21779" class="external-link">Takaeda’s
-benchmark</a>. Here we use sampled pairs.</p>
+benchmark</a>. Here I use sampled pairs.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bands</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">profiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">maps</span>, <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
@@ -464,8 +463,8 @@ penalize misplaced neighbors by rank.</p>
 <pre class="text"><code>     trustworthiness continuity rnx_auc
 PCA            0.742      0.884   0.173
 UMAP           0.942      0.916   0.340</code></pre>
-<p>We can also treat each image as a retrieval query and ask whether the
-other images of its digit rank ahead of different digits. <a href="https://jmlr.org/papers/v11/venna10a.html" class="external-link">Venna and
+<p>You can also treat each image as a retrieval query and ask whether
+the other images of its digit rank ahead of different digits. <a href="https://jmlr.org/papers/v11/venna10a.html" class="external-link">Venna and
 colleagues</a> use this retrieval view to evaluate embeddings. Quadra
 computes the AUCs with <a href="https://cran.r-project.org/package=PRROC" class="external-link">PRROC</a>, using its
 Davis–Goadrich PR area.</p>
@@ -701,7 +700,7 @@ RNX AUC on each matched query set, by 0.009–0.020.</p>
 <h3 id="inspect-the-closest-neighbors-within-the-first-15">Inspect the closest neighbors within the first 15<a class="anchor" aria-label="anchor" href="#inspect-the-closest-neighbors-within-the-first-15"></a>
 </h3>
 <p>Keeping four of the closest 15 images sounds better than keeping
-none. Does it mean we can trust the <em>first</em> neighbor? Mean
+none. Does it mean you can trust the <em>first</em> neighbor? Mean
 relative rank error (MRRE) gives that first position the most weight.
 Input MRRE follows the closest pixel neighbors into each map. Output
 MRRE takes the closest neighbors on the map and looks up their pixel
@@ -853,13 +852,12 @@ the RNX candidate pool raises the fraction favoring UMAP by RNX AUC from
 <div class="section level2">
 <h2 id="umap-versus-tsne">Does keeping more neighbors help retrieve the same digit?<a class="anchor" aria-label="anchor" href="#umap-versus-tsne"></a>
 </h2>
-<p>PCA gave UMAP an easy lead on neighbor overlap. Let’s give UMAP some
-stiffer competition. Fit t-SNE to the same pixels, using the first two
-principal components to initialize the map. Both maps now have
-recognizable groups of digits. Pick a 4 in either map and there are two
-things we could ask. Are its neighbors the <em>same images</em> that
-were close to it in pixel space? And how far down the ranking do we have
-to go to find the <em>other 4s</em>?</p>
+<p>PCA gave UMAP an easy lead on neighbor overlap. For some stiffer
+competition, I fit t-SNE to the same pixels, using the first two
+principal components to initialize the map. Both maps have recognizable
+groups of digits. Pick a 4 in either map. Are its neighbors the <em>same
+images</em> that were close to it in pixel space? And how far down the
+ranking do you have to go to find the <em>other 4s</em>?</p>
 <details><summary>
 Fit t-SNE to the 5,000 images
 </summary><p>Use the pixels, labels, training row IDs and two maps from <a href="#load-the-digits">the data and fits</a>. The <a href="#spot-check-the-pixel-neighbor-search">pixel search spot check</a>
@@ -1044,7 +1042,7 @@ where 1 is closest.</p>
 </table>
 <p>For the 2, t-SNE finds the two closest pixel neighbors in reverse
 order. UMAP’s first choice ranks 26th in pixels. Now take the 6. UMAP’s
-very first neighbor is a 2, while t-SNE finds the same 6 we got from the
+very first neighbor is a 2, while t-SNE finds the same 6 I got from the
 pixels. Keep looking down the list, though, and UMAP retrieves the other
 6s better overall. For the 4, both maps found 4s, but t-SNE kept ten of
 the original fifteen images and UMAP kept eight.</p>
@@ -1093,7 +1091,7 @@ Select the examples, inspect their scores and draw their neighbors
 </details><div class="section level3">
 <h3 id="how-many-of-the-first-few-neighbors-have-the-right-digit">How many of the first few neighbors have the right digit?<a class="anchor" aria-label="anchor" href="#how-many-of-the-first-few-neighbors-have-the-right-digit"></a>
 </h3>
-<p>Suppose we only look at the five images closest to a query on the
+<p>Suppose you only look at the five images closest to a query on the
 map. If four show the same digit as the query, its precision at five is
 4/5. Keep the same 4,999 candidates and count the matching digits among
 the first one, five and fifteen. Each entry below is the mean percentage
@@ -1140,7 +1138,7 @@ that match, giving each query equal weight.</p>
 <p>Across all 1,000 queries, t-SNE finds more matching digits on average
 at each cutoff. Its lead shrinks from six percentage points at the first
 neighbor to about one at fifteen. UMAP’s higher full-ranking PR AUC
-tells us which map retrieves the other 499 images of the digit better
+tells you which map retrieves the other 499 images of the digit better
 overall. For someone looking only at the first few images, t-SNE does
 better here.</p>
 <p>The last two rows use the 414 queries where t-SNE retained more pixel
@@ -1191,7 +1189,7 @@ Count matching digits at each depth
 15 and 30 neighbors, each with seeds 414 and 437. Fit t-SNE at
 perplexities 15, 30 and 50 with the same PCA start, seed and optimizer.
 Each t-SNE fit uses three times its perplexity in pixel neighbors. For
-each query we still have all 4,999 other images to choose from.</p>
+each query you still have all 4,999 other images to choose from.</p>
 <p>Compare each t-SNE map with each UMAP map. The table gives the
 smallest and largest differences in mean same-digit precision, in
 percentage points. Positive values favor t-SNE.</p>
@@ -1265,7 +1263,7 @@ digits. Use the same audit rows in all three spaces. Then compare
 distance consistency, the fraction of observations nearer their own
 digit centroid than the other digit’s centroid, with half credit for
 ties. <a href="https://arxiv.org/abs/2308.00278" class="external-link">Jeon and colleagues</a>
-track gains and losses in class-pair consistency. We use the unrescaled
+track gains and losses in class-pair consistency. I use the unrescaled
 fraction from <a href="https://doi.org/10.1111/j.1467-8659.2009.01467.x" class="external-link">Sips and
 colleagues</a>.</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
@@ -1615,7 +1613,7 @@ changes from 0.513 to 0.455
 (<code>mean(full_ranks$UMAP$auc[audit[island]])</code>).</p>
 <p>The island contains 100 handwritten 1s and six images of other
 digits. Keep those same 106 queries. How well can each retrieve its own
-digit when we expand the ranking from the 999 other audit images to all
+digit when you expand the ranking from the 999 other audit images to all
 4,999 other images? The table gives the median PR AUC for each
 group.</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">

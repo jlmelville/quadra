@@ -103,6 +103,55 @@ workflow ran exact coordinate ranks for all 5,000 images and used 1,000
 for the group comparison. [MNIST group
 audit](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html#check-groups-without-digit-labels)
 
+### Which scores would I use to compare UMAP or t-SNE fits?
+
+For a sweep over initializations or parameter settings, I’d start with
+two scores on every fit.
+
+1.  **Neighbor overlap.** I use
+    [`nn_preservation()`](https://jlmelville.github.io/quadra/reference/nn_preservation.md)
+    at two fixed sizes, say `k = c(15, 50)`. A map can keep the closest
+    few images and lose its lead farther down the list. Build the input
+    graph once for the larger size and reuse it for every fit, even when
+    varying UMAP’s `n_neighbors` or t-SNE’s perplexity. Build a fresh
+    graph for each map. At full MNIST size I’d supply an exact 2D graph
+    from a k-d tree or use `nn_method_out = "nnd"` and spot-check the
+    approximate search. The default output search is brute force.
+2.  **Random triplet accuracy.** Two maps can keep the same neighbors
+    and put whole groups in different places. Given an anchor and two
+    other images, which image was closer to the anchor in the input, and
+    is it still closer on the map? I’d start with five triplets per
+    observation. For 60,000 rows that’s 300,000 comparisons. Draw them
+    once with
+    [`sample_triplets()`](https://jlmelville.github.io/quadra/reference/sample_triplets.md)
+    and pass the same `triplets` to
+    [`random_triplet_accuracy()`](https://jlmelville.github.io/quadra/reference/random_triplet_accuracy.md)
+    for every fit. This calculation needs dense coordinates. If the
+    input is too large to store densely, I’d stick with graph overlap.
+
+For an initialization comparison, keep the input representation,
+distance metric and optimizer settings fixed. For a parameter
+comparison, vary the parameter of interest. Run stochastic settings over
+the same set of seeds and compare the paired scores. I’d want to see a
+difference hold up across seeds before choosing a setting on its
+strength.
+
+If finding other images of the same digit is the goal, I’d also report
+**same-digit precision at 1, 5 and 15** from the map’s neighbor lists.
+That answers a different question from recovering the same individual
+images. In the MNIST comparison, t-SNE’s same-digit lead shrank at each
+cutoff in all 12 pairings. [MNIST fit
+comparison](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html#does-the-early-lead-depend-on-the-settings)
+
+For a closer look at the finalists, I’d run
+[`exact_rank_profiles()`](https://jlmelville.github.io/quadra/reference/exact_rank_profiles.md)
+on the same few hundred queries against the full candidate pool.
+Trustworthiness penalizes distant points that turned up nearby on the
+map. Continuity penalizes close neighbors that moved far away. With
+labels, pass the map coordinates and the same `query_rows` to
+[`pr_auc()`](https://jlmelville.github.io/quadra/reference/pr_auc.md) to
+check the whole ranking.
+
 ### Sample queries when the full neighbor pool matters
 
 To estimate rank preservation for the full dataset, sample the

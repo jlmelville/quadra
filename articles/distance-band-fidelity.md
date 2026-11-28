@@ -1,12 +1,12 @@
 # Distance fidelity across scales
 
 Suppose an embedding puts two well-separated clouds almost on top of
-each other. What would a score for short distances tell us? That depends
-on where we look for the short pairs. Here we choose them in the input,
-then see what happens as we widen the radius to include both clouds.
-Spearman correlation tells us whether the distances keep their order.
-Normalized stress tells us how closely their lengths match after we fit
-one scale factor for the whole band.
+each other. What would a score for short distances tell you? That
+depends on where you look for the short pairs. Here I choose them in the
+input, then see what happens as I widen the radius to include both
+clouds. Spearman correlation measures how well the distances keep their
+order. Normalized stress measures how closely their lengths match after
+I fit one scale factor for the whole band.
 
 The rank and fitted-scale stress comparisons follow [Takaeda’s
 benchmark](https://arxiv.org/abs/2608.21779) and its
@@ -92,11 +92,11 @@ mean(nbr_pres(as.matrix(dist(x)), as.matrix(dist(merged)), k))
 
     ## [1] 0.4347222
 
-At radius 2.5 the stress is effectively zero. Every pair we’ve checked
+At radius 2.5 the stress is effectively zero. Every pair I’ve checked
 belongs to a single cloud, and sliding a cloud sideways leaves those
 distances alone. The neighbor overlap tells a different story because a
 point can now pick up neighbors from the other cloud. To see those pairs
-in the distance score, we have to widen the *input* radius.
+in the distance score, you have to widen the *input* radius.
 
 ## Compare sampled and exact profiles
 
@@ -339,6 +339,6 @@ Only 17 of the 488 pairs come from the stretched cloud, yet they account
 for 94.1% of the squared error. The five points with the largest
 contributions all come from that cloud. Each appears in just one or two
 pairs. Another 17 points in the same cloud have no partner within the
-radius, so this band tells us nothing about their distortion. Even the
-unchanged cloud contributes a little error because we multiply its
+radius, so this band tells you nothing about their distortion. Even the
+unchanged cloud contributes a little error because I multiply its
 distances by the same fitted factor of 0.969.

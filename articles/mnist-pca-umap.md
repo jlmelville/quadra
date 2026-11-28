@@ -2,7 +2,7 @@
 
 ## Which embedding would you use?
 
-We start with PCA and UMAP fitted to the same 5,000 handwritten digits,
+I start with PCA and UMAP fitted to the same 5,000 handwritten digits,
 then bring in t-SNE for a closer look at the neighbors. Which map you
 would use depends on what you want to read from it.
 
@@ -36,7 +36,7 @@ would use depends on what you want to read from it.
   [inspect the angles in both directions](#class-angle-plot).
 - **Does a UMAP island hold together in pixel space?** The island with
   the best neighborhood agreement has sampled groups that tend to hold
-  together when we trace them back to the pixels. Start in pixel space,
+  together when you trace them back to the pixels. Start in pixel space,
   though, and some groups involving those same images disperse in UMAP.
   [Trace the groups in both
   directions](#check-groups-without-digit-labels) or [see which image
@@ -79,9 +79,9 @@ rm(digits)
 ### Fit and plot two embeddings
 
 The 5,000 training images are balanced by digit. Both fits use the same
-pixels on a 0–1 scale, with no per-pixel standardization. For UMAP we
-use `uwot`’s implementation of the method of McInnes, Healy and
-Melville. [UMAP paper](https://arxiv.org/abs/1802.03426) ·
+pixels on a 0–1 scale, with no per-pixel standardization. For UMAP I use
+`uwot`’s implementation of the method of McInnes, Healy and Melville.
+[UMAP paper](https://arxiv.org/abs/1802.03426) ·
 [uwot](https://github.com/jlmelville/uwot)
 
 ``` r
@@ -127,7 +127,7 @@ islands.](figures/mnist-embeddings.png)
 
 Use all 5,000 images. Reuse the pixel neighbor graph, pair sample, and
 triplet sample across both embeddings. Look at several neighborhood
-sizes, including UMAP’s fitting scale of 15. For neighbor overlap we
+sizes, including UMAP’s fitting scale of 15. For neighbor overlap I
 count the fraction retained, as in [Chen and
 Buja](https://doi.org/10.1198/jasa.2009.0111). The sampled Spearman
 comparison draws on [drnb](https://github.com/jlmelville/drnb). [Wang
@@ -203,10 +203,10 @@ Both panels use a 0–1 scale from purple to yellow.
 ### Spot-check the pixel neighbor search
 
 The first calculation used an approximate search in pixel space. Could
-that explain UMAP’s lead? We can check 100 images of each digit exactly.
+that explain UMAP’s lead? I’ll check 100 images of each digit exactly.
 For now these 1,000 images are just the *queries*. Each one can still
-have any of the other 4,999 images as a neighbor. Later we’ll see what
-happens when we also restrict the candidates to the 1,000-image sample.
+have any of the other 4,999 images as a neighbor. Later I’ll also
+restrict the candidates to the 1,000-image sample.
 
 ``` r
 
@@ -240,9 +240,9 @@ exact_hits <- vapply(
 ```
 
 There are two ways to get a list of 15 neighbors from the approximate
-search. We can ask for 15, or we can ask for 50 and keep the first 15,
-as we did above. Let’s compare both lists with the exact pixel
-neighbors, keeping the embedding graphs fixed.
+search. You can ask for 15, or you can ask for 50 and keep the first 15,
+as I did above. Compare both lists with the exact pixel neighbors,
+keeping the embedding graphs fixed.
 
 ``` r
 
@@ -356,7 +356,7 @@ connected set of entirely new neighbors.
 Use the same pair sample to ask whether each method preserves short
 distances better than the dataset-wide score suggests. The input-pair
 fractions are cumulative. The rank and fitted-scale stress comparisons
-follow [Takaeda’s benchmark](https://arxiv.org/abs/2608.21779). Here we
+follow [Takaeda’s benchmark](https://arxiv.org/abs/2608.21779). Here I
 use sampled pairs.
 
 ``` r
@@ -444,7 +444,7 @@ PCA            0.742      0.884   0.173
 UMAP           0.942      0.916   0.340
 ```
 
-We can also treat each image as a retrieval query and ask whether the
+You can also treat each image as a retrieval query and ask whether the
 other images of its digit rank ahead of different digits. [Venna and
 colleagues](https://jmlr.org/papers/v11/venna10a.html) use this
 retrieval view to evaluate embeddings. Quadra computes the AUCs with
@@ -715,11 +715,11 @@ RNX AUC on each matched query set, by 0.009–0.020.
 ### Inspect the closest neighbors within the first 15
 
 Keeping four of the closest 15 images sounds better than keeping none.
-Does it mean we can trust the *first* neighbor? Mean relative rank error
-(MRRE) gives that first position the most weight. Input MRRE follows the
-closest pixel neighbors into each map. Output MRRE takes the closest
-neighbors on the map and looks up their pixel ranks. [Lee and Verleysen
-describe MRRE](https://proceedings.mlr.press/v4/lee08a.html).
+Does it mean you can trust the *first* neighbor? Mean relative rank
+error (MRRE) gives that first position the most weight. Input MRRE
+follows the closest pixel neighbors into each map. Output MRRE takes the
+closest neighbors on the map and looks up their pixel ranks. [Lee and
+Verleysen describe MRRE](https://proceedings.mlr.press/v4/lee08a.html).
 
 ``` r
 
@@ -889,13 +889,12 @@ the RNX candidate pool raises the fraction favoring UMAP by RNX AUC from
 
 ## Does keeping more neighbors help retrieve the same digit?
 
-PCA gave UMAP an easy lead on neighbor overlap. Let’s give UMAP some
-stiffer competition. Fit t-SNE to the same pixels, using the first two
-principal components to initialize the map. Both maps now have
-recognizable groups of digits. Pick a 4 in either map and there are two
-things we could ask. Are its neighbors the *same images* that were close
-to it in pixel space? And how far down the ranking do we have to go to
-find the *other 4s*?
+PCA gave UMAP an easy lead on neighbor overlap. For some stiffer
+competition, I fit t-SNE to the same pixels, using the first two
+principal components to initialize the map. Both maps have recognizable
+groups of digits. Pick a 4 in either map. Are its neighbors the *same
+images* that were close to it in pixel space? And how far down the
+ranking do you have to go to find the *other 4s*?
 
 Fit t-SNE to the 5,000 images
 
@@ -1070,7 +1069,7 @@ pixels.](figures/mnist-tsne-neighbors.png)](https://jlmelville.github.io/quadra/
 
 For the 2, t-SNE finds the two closest pixel neighbors in reverse order.
 UMAP’s first choice ranks 26th in pixels. Now take the 6. UMAP’s very
-first neighbor is a 2, while t-SNE finds the same 6 we got from the
+first neighbor is a 2, while t-SNE finds the same 6 I got from the
 pixels. Keep looking down the list, though, and UMAP retrieves the other
 6s better overall. For the 4, both maps found 4s, but t-SNE kept ten of
 the original fifteen images and UMAP kept eight.
@@ -1122,7 +1121,7 @@ for (i in examples) {
 
 ### How many of the first few neighbors have the right digit?
 
-Suppose we only look at the five images closest to a query on the map.
+Suppose you only look at the five images closest to a query on the map.
 If four show the same digit as the query, its precision at five is 4/5.
 Keep the same 4,999 candidates and count the matching digits among the
 first one, five and fifteen. Each entry below is the mean percentage
@@ -1138,7 +1137,7 @@ that match, giving each query equal weight.
 Across all 1,000 queries, t-SNE finds more matching digits on average at
 each cutoff. Its lead shrinks from six percentage points at the first
 neighbor to about one at fifteen. UMAP’s higher full-ranking PR AUC
-tells us which map retrieves the other 499 images of the digit better
+tells you which map retrieves the other 499 images of the digit better
 overall. For someone looking only at the first few images, t-SNE does
 better here.
 
@@ -1191,7 +1190,7 @@ Keep the same 5,000 images and the same 1,000 queries. Fit UMAP with 15
 and 30 neighbors, each with seeds 414 and 437. Fit t-SNE at perplexities
 15, 30 and 50 with the same PCA start, seed and optimizer. Each t-SNE
 fit uses three times its perplexity in pixel neighbors. For each query
-we still have all 4,999 other images to choose from.
+you still have all 4,999 other images to choose from.
 
 Compare each t-SNE map with each UMAP map. The table gives the smallest
 and largest differences in mean same-digit precision, in percentage
@@ -1242,7 +1241,7 @@ digits. Use the same audit rows in all three spaces. Then compare
 distance consistency, the fraction of observations nearer their own
 digit centroid than the other digit’s centroid, with half credit for
 ties. [Jeon and colleagues](https://arxiv.org/abs/2308.00278) track
-gains and losses in class-pair consistency. We use the unrescaled
+gains and losses in class-pair consistency. I use the unrescaled
 fraction from [Sips and
 colleagues](https://doi.org/10.1111/j.1467-8659.2009.01467.x).
 
@@ -1641,7 +1640,7 @@ from 0.513 to 0.455 (`mean(full_ranks$UMAP$auc[audit[island]])`).
 
 The island contains 100 handwritten 1s and six images of other digits.
 Keep those same 106 queries. How well can each retrieve its own digit
-when we expand the ranking from the 999 other audit images to all 4,999
+when you expand the ranking from the 999 other audit images to all 4,999
 other images? The table gives the median PR AUC for each group.
 
 ``` r

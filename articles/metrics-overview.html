@@ -226,6 +226,53 @@ workflow ran exact coordinate ranks for all 5,000 images and used 1,000
 for the group comparison. <a href="mnist-pca-umap.html#check-groups-without-digit-labels">MNIST group
 audit</a></p>
 <div class="section level3">
+<h3 id="which-scores-would-i-use-to-compare-umap-or-t-sne-fits">Which scores would I use to compare UMAP or t-SNE fits?<a class="anchor" aria-label="anchor" href="#which-scores-would-i-use-to-compare-umap-or-t-sne-fits"></a>
+</h3>
+<p>For a sweep over initializations or parameter settings, I’d start
+with two scores on every fit.</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Neighbor overlap.</strong> I use
+<code><a href="../reference/nn_preservation.html">nn_preservation()</a></code> at two fixed sizes, say
+<code>k = c(15, 50)</code>. A map can keep the closest few images and
+lose its lead farther down the list. Build the input graph once for the
+larger size and reuse it for every fit, even when varying UMAP’s
+<code>n_neighbors</code> or t-SNE’s perplexity. Build a fresh graph for
+each map. At full MNIST size I’d supply an exact 2D graph from a k-d
+tree or use <code>nn_method_out = "nnd"</code> and spot-check the
+approximate search. The default output search is brute force.</li>
+<li>
+<strong>Random triplet accuracy.</strong> Two maps can keep the same
+neighbors and put whole groups in different places. Given an anchor and
+two other images, which image was closer to the anchor in the input, and
+is it still closer on the map? I’d start with five triplets per
+observation. For 60,000 rows that’s 300,000 comparisons. Draw them once
+with <code><a href="../reference/sample_triplets.html">sample_triplets()</a></code> and pass the same
+<code>triplets</code> to <code><a href="../reference/random_triplet_accuracy.html">random_triplet_accuracy()</a></code> for
+every fit. This calculation needs dense coordinates. If the input is too
+large to store densely, I’d stick with graph overlap.</li>
+</ol>
+<p>For an initialization comparison, keep the input representation,
+distance metric and optimizer settings fixed. For a parameter
+comparison, vary the parameter of interest. Run stochastic settings over
+the same set of seeds and compare the paired scores. I’d want to see a
+difference hold up across seeds before choosing a setting on its
+strength.</p>
+<p>If finding other images of the same digit is the goal, I’d also
+report <strong>same-digit precision at 1, 5 and 15</strong> from the
+map’s neighbor lists. That answers a different question from recovering
+the same individual images. In the MNIST comparison, t-SNE’s same-digit
+lead shrank at each cutoff in all 12 pairings. <a href="mnist-pca-umap.html#does-the-early-lead-depend-on-the-settings">MNIST
+fit comparison</a></p>
+<p>For a closer look at the finalists, I’d run
+<code><a href="../reference/exact_rank_profiles.html">exact_rank_profiles()</a></code> on the same few hundred queries
+against the full candidate pool. Trustworthiness penalizes distant
+points that turned up nearby on the map. Continuity penalizes close
+neighbors that moved far away. With labels, pass the map coordinates and
+the same <code>query_rows</code> to <code><a href="../reference/pr_auc.html">pr_auc()</a></code> to check the
+whole ranking.</p>
+</div>
+<div class="section level3">
 <h3 id="sample-queries-when-the-full-neighbor-pool-matters">Sample queries when the full neighbor pool matters<a class="anchor" aria-label="anchor" href="#sample-queries-when-the-full-neighbor-pool-matters"></a>
 </h3>
 <p>To estimate rank preservation for the full dataset, sample the

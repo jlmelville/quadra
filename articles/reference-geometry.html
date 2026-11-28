@@ -174,8 +174,8 @@ turn (yellow).</p>
 </h2>
 <p>Use every unordered pair here. For larger data, use one sample from
 <code><a href="../reference/sample_pairs.html">sample_pairs()</a></code> for both references and both embeddings. For
-neighbor overlap we use the shared-neighbor fraction described by <a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">Chen and Buja</a>. For
-Spearman correlation we use the pair-distance comparison from <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> with all pairs.</p>
+neighbor overlap I use the shared-neighbor fraction described by <a href="https://doi.org/10.1198/jasa.2009.0111" class="external-link">Chen and Buja</a>. For
+Spearman correlation I use the pair-distance comparison from <a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> with all pairs.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">references</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Ambient <span class="op">=</span> <span class="va">rolled</span>, Intrinsic <span class="op">=</span> <span class="va">flat</span><span class="op">)</span></span>
 <span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/combn.html" class="external-link">combn</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
@@ -278,8 +278,8 @@ including fitted-scale stress.</p>
 <p><img src="figures/roll-bands.png" class="r-plt" alt="PCA has lower stress for every ambient band. At the full intrinsic band, LTSA has lower stress." width="100%"></p>
 <p>PCA has lower fitted-scale stress at all five cutoffs for
 straight-line distances. Along the surface it still leads at the first
-four cutoffs. LTSA pulls ahead only when we include every pair. So the
-full-surface result doesn’t tell us which map better preserves short
+four cutoffs. LTSA pulls ahead only when you include every pair. So the
+full-surface result doesn’t tell you which map better preserves short
 distances.</p>
 </div>
 <div class="section level2">
@@ -312,8 +312,8 @@ yellow.</p>
 <h2 id="compare-neighborhood-agreement-across-sizes">Compare neighborhood agreement across sizes<a class="anchor" aria-label="anchor" href="#compare-neighborhood-agreement-across-sizes"></a>
 </h2>
 <p>Fifteen neighbors is one view of the roll. Does LTSA still come out
-ahead if we widen the neighborhood? RNX measures overlap after adjusting
-for chance. For each point we can compare the maps at
+ahead if you widen the neighborhood? RNX measures overlap after
+adjusting for chance. For each point you can compare the maps at
 <code>k = 15</code>, then over the whole RNX curve. Its area (RNX AUC)
 gives more weight to smaller neighborhoods. In the table, a win means
 LTSA scored higher than PCA for that point. See <a href="https://doi.org/10.1016/j.neucom.2012.12.036" class="external-link">Lee and
@@ -370,8 +370,8 @@ trustworthiness and continuity</a> penalize new and lost neighbors by
 their ranks, respectively. Now take the points where all four measures
 favor LTSA on the surface. What happened to the very closest surface
 neighbor? Input mean relative rank error (MRRE) gives the greatest
-weight to a move from first place. We’ll look for points where that
-changes which map we’d choose. <a href="https://proceedings.mlr.press/v4/lee08a.html" class="external-link">Lee and Verleysen
+weight to a move from first place. Look for points where that changes
+which map you would choose. <a href="https://proceedings.mlr.press/v4/lee08a.html" class="external-link">Lee and Verleysen
 describe MRRE</a>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">neighbor_order</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">coords</span>, <span class="va">i</span><span class="op">)</span> <span class="op">{</span></span>

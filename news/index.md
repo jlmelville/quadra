@@ -177,9 +177,8 @@
   now handle retrieval problems with undefined rows consistently.
 - [`nbr_pres_knn()`](https://jlmelville.github.io/quadra/reference/nbr_pres_knn.md)
   now supports multithreaded calculations through `n_threads`.
-- rnndescent is now on
-  [CRAN](https://cran.r-project.org/package=rnndescent), so we no longer
-  need to install that from github.
+- You can now install rnndescent from
+  [CRAN](https://cran.r-project.org/package=rnndescent).
 - `grain_size` for thread-handling has been removed from any API that
   exposed it.
 - Numeric

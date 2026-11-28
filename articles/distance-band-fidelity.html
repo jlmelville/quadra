@@ -72,12 +72,12 @@
     
     
 <p>Suppose an embedding puts two well-separated clouds almost on top of
-each other. What would a score for short distances tell us? That depends
-on where we look for the short pairs. Here we choose them in the input,
-then see what happens as we widen the radius to include both clouds.
-Spearman correlation tells us whether the distances keep their order.
-Normalized stress tells us how closely their lengths match after we fit
-one scale factor for the whole band.</p>
+each other. What would a score for short distances tell you? That
+depends on where you look for the short pairs. Here I choose them in the
+input, then see what happens as I widen the radius to include both
+clouds. Spearman correlation measures how well the distances keep their
+order. Normalized stress measures how closely their lengths match after
+I fit one scale factor for the whole band.</p>
 <p>The rank and fitted-scale stress comparisons follow <a href="https://arxiv.org/abs/2608.21779" class="external-link">Takaeda’s benchmark</a> and its
 <a href="https://github.com/toorpia/dr-fidelity-benchmark" class="external-link">code</a>.
 Takaeda credits <a href="https://arxiv.org/abs/2408.07724" class="external-link">Smelser,
@@ -146,12 +146,11 @@ pair list.</p>
 <code class="sourceCode R"><span><span class="va">k</span> <span class="op">&lt;-</span> <span class="fl">8</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="../reference/nbr_pres.html">nbr_pres</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">merged</span><span class="op">)</span><span class="op">)</span>, <span class="va">k</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 0.4347222</span></span></code></pre>
-<p>At radius 2.5 the stress is effectively zero. Every pair we’ve
-checked belongs to a single cloud, and sliding a cloud sideways leaves
-those distances alone. The neighbor overlap tells a different story
-because a point can now pick up neighbors from the other cloud. To see
-those pairs in the distance score, we have to widen the <em>input</em>
-radius.</p>
+<p>At radius 2.5 the stress is effectively zero. Every pair I’ve checked
+belongs to a single cloud, and sliding a cloud sideways leaves those
+distances alone. The neighbor overlap tells a different story because a
+point can now pick up neighbors from the other cloud. To see those pairs
+in the distance score, you have to widen the <em>input</em> radius.</p>
 </div>
 <div class="section level2">
 <h2 id="compare-sampled-and-exact-profiles">Compare sampled and exact profiles<a class="anchor" aria-label="anchor" href="#compare-sampled-and-exact-profiles"></a>
@@ -368,8 +367,8 @@ much evidence each observation contributes.</p>
 account for 94.1% of the squared error. The five points with the largest
 contributions all come from that cloud. Each appears in just one or two
 pairs. Another 17 points in the same cloud have no partner within the
-radius, so this band tells us nothing about their distortion. Even the
-unchanged cloud contributes a little error because we multiply its
+radius, so this band tells you nothing about their distortion. Even the
+unchanged cloud contributes a little error because I multiply its
 distances by the same fitted factor of 0.969.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

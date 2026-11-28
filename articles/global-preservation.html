@@ -280,11 +280,11 @@ complete distributions agree.</p>
 <div class="section level2">
 <h2 id="stress-after-fitting-one-scale">Stress After Fitting One Scale<a class="anchor" aria-label="anchor" href="#stress-after-fitting-one-scale"></a>
 </h2>
-<p>What happens if we let the embedding choose its units? <a href="https://arxiv.org/abs/2408.07724" class="external-link">Smelser, Miller and Kobourov</a>
+<p>What happens if you let the embedding choose its units? <a href="https://arxiv.org/abs/2408.07724" class="external-link">Smelser, Miller and Kobourov</a>
 fit one multiplier to the output distances. <a href="https://github.com/toorpia/dr-fidelity-benchmark" class="external-link">Takaeda’s
-benchmark</a> fits it separately for each input-distance band. Let’s try
-the full band on a small example. The three distances from the first
-point change from <code>1, 2, 3</code> to <code>2, 3, 4</code>.</p>
+benchmark</a> fits it separately for each input-distance band. Try the
+full band on a small example. The three distances from the first point
+change from <code>1, 2, 3</code> to <code>2, 3, 4</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
@@ -309,8 +309,8 @@ point change from <code>1, 2, 3</code> to <code>2, 3, 4</code>.</p>
 <p>Range scaling takes both sets of distances to <code>0, 0.5, 1</code>,
 giving zero error. Now try to do the same with a single multiplier.
 Halving the output distances fixes the first pair, but it sends the
-third distance to 2 when we wanted 3. Even the best multiplier leaves a
-fitted-scale stress of about 0.122. <a href="distance-band-fidelity.html">Try the same comparison on short
+third distance to 2 when the target was 3. Even the best multiplier
+leaves a fitted-scale stress of about 0.122. <a href="distance-band-fidelity.html">Try the same comparison on short
 distances</a>.</p>
 </div>
 <div class="section level2">

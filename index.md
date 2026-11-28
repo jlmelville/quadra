@@ -79,14 +79,14 @@ For a worked example, pick the question closest to yours.
 ## Acknowledgments
 
 [ZADU](https://github.com/hj-n/zadu), the Python library by Hyeon Jeon
-and colleagues, pointed us to several measures, including the [Gap
+and colleagues, pointed me to several measures, including the [Gap
 Index](https://arxiv.org/abs/2607.28324) of Ros, Arleo and Paulovich.
 For Steadiness and Cohesiveness, Quadra follows ZADU 0.5.4 in how it
 weights shared neighbors and how it combines losses in the pointwise
 maps.
 
 - [drnb](https://github.com/jlmelville/drnb) inspired three comparisons
-  in Quadra. We compare the distance ranks of sampled pairs, estimate
+  in Quadra. I compare the distance ranks of sampled pairs, estimate
   stress from sampled pairs, and compare counts of reciprocal neighbors
   between spaces.
 - The distance-band profile comes from [Yoshio Takaeda’s

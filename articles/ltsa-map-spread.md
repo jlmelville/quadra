@@ -2,14 +2,14 @@
 
 Two of the 5,000 handwritten digits below account for 99.72% of the sum
 of squared distances from the center of the LTSA map. The other 4,998
-are there if you zoom in. How much would we have noticed from the
+are there if you zoom in. How much would you have noticed from the
 fraction of pixel neighbors the map retained?
 
 ## What changed between the two maps?
 
 Local Tangent Space Alignment (LTSA) fits a plane to each patch of
 neighboring images and finds global coordinates that align those local
-fits. We can keep the patches and the alignment matrix fixed and change
+fits. You can keep the patches and the alignment matrix fixed and change
 one choice. Ordinary LTSA gives each image equal weight when it
 normalizes the coordinate columns. Jacobi normalization takes the
 weights from the diagonal of the alignment matrix. Both maps below use
@@ -27,15 +27,15 @@ The rings mark the same 1 and 2 in both maps. Each panel shows every
 digit at its own map’s full range. To compare concentration
 independently of the axis scales, measure each image’s squared distance
 from its map’s centroid, then add up those distances starting with the
-farthest image. In ordinary LTSA the first two images take us almost to
-100%. With Jacobi normalization the top two account for 0.28%, and it
-takes 1,848 images to reach 90%.
+farthest image. In ordinary LTSA the first two images already account
+for nearly 100%. With Jacobi normalization the top two account for
+0.28%, and it takes 1,848 images to reach 90%.
 
 Fetch the digits, fit LTSA and draw the comparison
 
 This is the balanced training sample from the [MNIST
 workflow](https://jlmelville.github.io/quadra/articles/mnist-pca-umap.html#load-the-digits).
-The pixel graph is exact. We build it once with 30 entries per row so we
+The pixel graph is exact. I build it once with 30 entries per row so you
 can also try a larger patch. Both 15-image fits had a connected
 neighborhood graph and the eigensolver reported `ok`.
 
@@ -133,9 +133,9 @@ almost as much error as setting every map distance to zero.
 | Ordinary, 30 per patch | 0.84% | 0.118 | 0.617 |
 
 The last row changes only the size of the patches used to fit ordinary
-LTSA. The two-point concentration all but disappears, even though we
+LTSA. The two-point concentration all but disappears, even though I
 still score overlap at 15 and get much the same answer. Neighbors can
-keep their order in a tiny clump. Their distances tell us how much of
+keep their order in a tiny clump. Their distances tell you how much of
 the original geometry still fits inside it.
 
 Do the two farthest digits also account for most of the error? Only 21
@@ -208,8 +208,8 @@ c(
 
 ## Which distances should a Swiss roll preserve?
 
-MNIST gave us one reference, Euclidean distance between pixel vectors.
-The Swiss roll gives us two. Imagine two points directly across a fold
+On MNIST I used one reference, Euclidean distance between pixel vectors.
+The Swiss roll offers two. Imagine two points directly across a fold
 from each other. The straight line between them can be short even when
 the route along the sheet is long. Fit ordinary LTSA and UMAP to the
 same 612 points in three dimensions, then score each map against both
@@ -226,7 +226,7 @@ Make the roll, fit both maps and measure stress on every pair
 The [Swiss-roll
 workflow](https://jlmelville.github.io/quadra/articles/reference-geometry.html#make-the-roll-and-its-flat-reference)
 gives the arc-length formula. Keeping arc length and height in the same
-units gives us distances on the unrolled sheet. Both fits see only the
+units gives distances on the unrolled sheet. Both fits see only the
 rolled coordinates.
 
 ``` r
@@ -295,8 +295,7 @@ for (name in names(views)) {
 | Straight through the roll (3D)    | 0.335 | 0.530 |
 | Along the unrolled sheet (2D)     | 0.453 | 0.064 |
 
-If we want to read straight-line distances through the roll, LTSA has
-the lower stress. If we want a map of the sheet we would get by
-unrolling it, UMAP has the lower stress by a much wider margin. We
-changed neither the maps nor the pairs. We changed which distance we
-wanted the map to reproduce.
+If you want to read straight-line distances through the roll, LTSA has
+the lower stress. If you want a map of the unrolled sheet, UMAP has the
+lower stress by a much wider margin. I used the same maps and pairs both
+times. I changed which distance I wanted the map to reproduce.

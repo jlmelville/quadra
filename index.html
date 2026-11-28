@@ -101,10 +101,10 @@
 <div class="section level2">
 <h2 id="acknowledgments">Acknowledgments<a class="anchor" aria-label="anchor" href="#acknowledgments"></a>
 </h2>
-<p><a href="https://github.com/hj-n/zadu" class="external-link">ZADU</a>, the Python library by Hyeon Jeon and colleagues, pointed us to several measures, including the <a href="https://arxiv.org/abs/2607.28324" class="external-link">Gap Index</a> of Ros, Arleo and Paulovich. For Steadiness and Cohesiveness, Quadra follows ZADU 0.5.4 in how it weights shared neighbors and how it combines losses in the pointwise maps.</p>
+<p><a href="https://github.com/hj-n/zadu" class="external-link">ZADU</a>, the Python library by Hyeon Jeon and colleagues, pointed me to several measures, including the <a href="https://arxiv.org/abs/2607.28324" class="external-link">Gap Index</a> of Ros, Arleo and Paulovich. For Steadiness and Cohesiveness, Quadra follows ZADU 0.5.4 in how it weights shared neighbors and how it combines losses in the pointwise maps.</p>
 <ul>
 <li>
-<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> inspired three comparisons in Quadra. We compare the distance ranks of sampled pairs, estimate stress from sampled pairs, and compare counts of reciprocal neighbors between spaces.</li>
+<a href="https://github.com/jlmelville/drnb" class="external-link">drnb</a> inspired three comparisons in Quadra. I compare the distance ranks of sampled pairs, estimate stress from sampled pairs, and compare counts of reciprocal neighbors between spaces.</li>
 <li>The distance-band profile comes from <a href="https://github.com/toorpia/dr-fidelity-benchmark" class="external-link">Yoshio Takaeda’s benchmark</a>. It asks how well distances are preserved among pairs that fall within a given radius in the input.</li>
 <li>For the Class Angular Distortion Index, Quadra follows <a href="https://github.com/KaviruGunaratne/cadi" class="external-link">Gunaratne, Kobourov and Miller’s code</a>. The cosine of an angle can change by at most two, so dividing the mean squared change by four puts the score on a scale from zero to one.</li>
 <li>The idea of comparing distance distributions with Earth Mover’s Distance comes from <a href="https://github.com/KenLauLab/DR-structure-preservation" class="external-link">Heiser and Lau’s work on single-cell data</a>. Quadra estimates those distributions by sampling pairs of observations.</li>
