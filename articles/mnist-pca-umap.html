@@ -156,14 +156,17 @@ Healy and Melville. <a href="https://arxiv.org/abs/1802.03426" class="external-l
 paper</a> · <a href="https://github.com/jlmelville/uwot" class="external-link">uwot</a></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">x</span>, rank. <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">$</span><span class="va">x</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">414</span><span class="op">)</span></span>
-<span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu">umap</span><span class="op">(</span></span>
-<span>  <span class="va">x</span>,</span>
-<span>  n_neighbors <span class="op">=</span> <span class="fl">15</span>,</span>
-<span>  min_dist <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  n_threads <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  n_sgd_threads <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
+<span><span class="va">fit_umap</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_neighbors</span>, <span class="va">seed</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="va">seed</span><span class="op">)</span></span>
+<span>  <span class="fu">uwot</span><span class="fu">::</span><span class="fu">umap</span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    n_neighbors <span class="op">=</span> <span class="va">n_neighbors</span>,</span>
+<span>    min_dist <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>    n_threads <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    n_sgd_threads <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">fit_umap</span><span class="op">(</span><span class="fl">15</span>, <span class="fl">414</span><span class="op">)</span></span>
 <span><span class="va">maps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>PCA <span class="op">=</span> <span class="va">pca</span>, UMAP <span class="op">=</span> <span class="va">umap</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">digit_colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu">grDevices</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors</a></span><span class="op">(</span><span class="fl">10</span>, <span class="st">"Set 2"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">label</span><span class="op">)</span><span class="op">)</span></span>
@@ -867,26 +870,33 @@ option in smallvis. The exact pixel graph from rnndescent 0.3.0 supplies
 paper</a> · <a href="https://github.com/jlmelville/smallvis" class="external-link">smallvis</a></p>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># pak::pak(c("jlmelville/smallvis/smallvis", "zufft"))</span></span>
-<span><span class="va">pixel_graph</span> <span class="op">&lt;-</span> <span class="fu">rnndescent</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">brute_force_knn</a></span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">91</span>, n_threads <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">435</span><span class="op">)</span></span>
-<span><span class="va">tsne</span> <span class="op">&lt;-</span> <span class="fu">smallvis</span><span class="fu">::</span><span class="fu">smallvis</span><span class="op">(</span></span>
-<span>  <span class="va">x</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"tsne"</span>, repulsion <span class="op">=</span> <span class="st">"hybrid"</span><span class="op">)</span>,</span>
-<span>  inp_kernel <span class="op">=</span> <span class="st">"nngaussian"</span>,</span>
-<span>  neighbors <span class="op">=</span> <span class="va">pixel_graph</span>,</span>
-<span>  Y_init <span class="op">=</span> <span class="fl">1e-4</span> <span class="op">*</span> <span class="va">pca</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">pca</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>  scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  pca <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  perplexity <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  exaggeration_factor <span class="op">=</span> <span class="fl">12</span>,</span>
-<span>  stop_lying_iter <span class="op">=</span> <span class="fl">250</span>,</span>
-<span>  mom_switch_iter <span class="op">=</span> <span class="fl">250</span>,</span>
-<span>  eta <span class="op">=</span> <span class="fl">200</span>,</span>
-<span>  max_iter <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  epoch_callback <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  n_threads <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
+<span><span class="va">fit_tsne</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">perplexity</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">pixel_graph</span> <span class="op">&lt;-</span> <span class="fu">rnndescent</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/rnndescent/reference/brute_force_knn.html" class="external-link">brute_force_knn</a></span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    k <span class="op">=</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">perplexity</span> <span class="op">+</span> <span class="fl">1</span>,</span>
+<span>    n_threads <span class="op">=</span> <span class="fl">2</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">435</span><span class="op">)</span></span>
+<span>  <span class="fu">smallvis</span><span class="fu">::</span><span class="fu">smallvis</span><span class="op">(</span></span>
+<span>    <span class="va">x</span>,</span>
+<span>    method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"tsne"</span>, repulsion <span class="op">=</span> <span class="st">"hybrid"</span><span class="op">)</span>,</span>
+<span>    inp_kernel <span class="op">=</span> <span class="st">"nngaussian"</span>,</span>
+<span>    neighbors <span class="op">=</span> <span class="va">pixel_graph</span>,</span>
+<span>    Y_init <span class="op">=</span> <span class="fl">1e-4</span> <span class="op">*</span> <span class="va">pca</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">pca</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    pca <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    perplexity <span class="op">=</span> <span class="va">perplexity</span>,</span>
+<span>    exaggeration_factor <span class="op">=</span> <span class="fl">12</span>,</span>
+<span>    stop_lying_iter <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>    mom_switch_iter <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>    eta <span class="op">=</span> <span class="fl">200</span>,</span>
+<span>    max_iter <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>    epoch_callback <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    n_threads <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>    verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">tsne</span> <span class="op">&lt;-</span> <span class="fu">fit_tsne</span><span class="op">(</span><span class="fl">30</span><span class="op">)</span></span>
 <span><span class="va">digit_maps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>UMAP <span class="op">=</span> <span class="va">umap</span>, `t-SNE` <span class="op">=</span> <span class="va">tsne</span><span class="op">)</span></span></code></pre></div>
 </details><p><a href="figures/mnist-tsne-scales.png" target="_blank"><img src="figures/mnist-tsne-scales.png" class="r-plt" alt="Both maps have recognizable digit groups. The RNX curve is much higher for t-SNE at five neighbors. UMAP is slightly ahead at 150." width="100%"></a></p>
 <p>At five neighbors, t-SNE has nearly twice UMAP’s chance-adjusted
@@ -1142,7 +1152,7 @@ precision for these selected queries.</p>
 Count matching digits at each depth
 </summary><div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">depth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">5L</span>, <span class="fl">15L</span><span class="op">)</span></span>
-<span><span class="va">precision</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">digit_maps</span>, <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">digit_precision</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span>
 <span>    <span class="va">audit</span>,</span>
 <span>    <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">{</span></span>
@@ -1153,7 +1163,8 @@ Count matching digits at each depth
 <span>    <span class="op">}</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">depth</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">precision</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">digit_maps</span>, <span class="va">digit_precision</span><span class="op">)</span></span>
 <span><span class="va">mean_percent</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">rows</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span>
 <span>    <span class="va">precision</span>,</span>
@@ -1171,6 +1182,77 @@ Count matching digits at each depth
 <span>  UMAP <span class="op">=</span> <span class="va">precision</span><span class="op">$</span><span class="va">UMAP</span><span class="op">[</span><span class="va">disagree</span>, <span class="fl">1</span><span class="op">]</span>,</span>
 <span>  tSNE <span class="op">=</span> <span class="va">precision</span><span class="op">[[</span><span class="st">"t-SNE"</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">disagree</span>, <span class="fl">1</span><span class="op">]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+</details>
+</div>
+<div class="section level3">
+<h3 id="does-the-early-lead-depend-on-the-settings">Does the early lead depend on the settings?<a class="anchor" aria-label="anchor" href="#does-the-early-lead-depend-on-the-settings"></a>
+</h3>
+<p>Keep the same 5,000 images and the same 1,000 queries. Fit UMAP with
+15 and 30 neighbors, each with seeds 414 and 437. Fit t-SNE at
+perplexities 15, 30 and 50 with the same PCA start, seed and optimizer.
+Each t-SNE fit uses three times its perplexity in pixel neighbors. For
+each query we still have all 4,999 other images to choose from.</p>
+<p>Compare each t-SNE map with each UMAP map. The table gives the
+smallest and largest differences in mean same-digit precision, in
+percentage points. Positive values favor t-SNE.</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th align="right">Neighbors inspected</th>
+<th align="right">Smallest difference</th>
+<th align="right">Largest difference</th>
+<th align="right">Comparisons favoring t-SNE</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">4.90</td>
+<td align="right">7.30</td>
+<td align="right">12 of 12</td>
+</tr>
+<tr class="even">
+<td align="right">5</td>
+<td align="right">2.42</td>
+<td align="right">5.56</td>
+<td align="right">12 of 12</td>
+</tr>
+<tr class="odd">
+<td align="right">15</td>
+<td align="right">−0.04</td>
+<td align="right">3.33</td>
+<td align="right">11 of 12</td>
+</tr>
+</tbody>
+</table>
+<p>The lead shrinks from one to five neighbors and again from five to
+fifteen in every pairing. At fifteen, UMAP comes out ahead once. With 15
+neighbors and seed 437, it finds six more matching digits than t-SNE at
+perplexity 50 across the 15,000 query-neighbor positions.</p>
+<details><summary>
+Refit the maps and compare the 12 pairs
+</summary><div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">umap_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">umap</span>, <span class="fu">fit_umap</span><span class="op">(</span><span class="fl">15</span>, <span class="fl">437</span><span class="op">)</span>, <span class="fu">fit_umap</span><span class="op">(</span><span class="fl">30</span>, <span class="fl">414</span><span class="op">)</span>, <span class="fu">fit_umap</span><span class="op">(</span><span class="fl">30</span>, <span class="fl">437</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tsne_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu">fit_tsne</span><span class="op">(</span><span class="fl">15</span><span class="op">)</span>, <span class="va">tsne</span>, <span class="fu">fit_tsne</span><span class="op">(</span><span class="fl">50</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mean_precision</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="fu">digit_precision</span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">umap_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">umap_fits</span>, <span class="va">mean_precision</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">depth</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tsne_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">tsne_fits</span>, <span class="va">mean_precision</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">depth</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fit_pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
+<span>  umap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">umap_fits</span><span class="op">)</span>,</span>
+<span>  tsne <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">tsne_fits</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gap</span> <span class="op">&lt;-</span> <span class="va">tsne_scores</span><span class="op">[</span>, <span class="va">fit_pairs</span><span class="op">$</span><span class="va">tsne</span><span class="op">]</span> <span class="op">-</span> <span class="va">umap_scores</span><span class="op">[</span>, <span class="va">fit_pairs</span><span class="op">$</span><span class="va">umap</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  neighbors <span class="op">=</span> <span class="va">depth</span>,</span>
+<span>  smallest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">gap</span>, <span class="fl">1</span>, <span class="va">min</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  largest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">gap</span>, <span class="fl">1</span>, <span class="va">max</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  tsne_ahead <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">gap</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">gap</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&gt;</span> <span class="va">gap</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span> <span class="op">&amp;</span> <span class="va">gap</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span> <span class="op">&gt;</span> <span class="va">gap</span><span class="op">[</span><span class="fl">3</span>, <span class="op">]</span><span class="op">)</span></span></code></pre></div>
 </details><p>For a case where overlap barely moves while the whole map changes
 shape, see <a href="ltsa-map-spread.html">the two LTSA fits</a>.</p>
 </div>
@@ -1186,7 +1268,7 @@ ties. <a href="https://arxiv.org/abs/2308.00278" class="external-link">Jeon and 
 track gains and losses in class-pair consistency. We use the unrescaled
 fraction from <a href="https://doi.org/10.1111/j.1467-8659.2009.01467.x" class="external-link">Sips and
 colleagues</a>.</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">label_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">maps</span>, <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/label_trustworthiness_continuity.html">label_trustworthiness_continuity</a></span><span class="op">(</span></span>
 <span>    <span class="va">x</span><span class="op">[</span><span class="va">audit</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
@@ -1241,7 +1323,7 @@ UMAP           0.997      0.988
  method pair    ROC     PR    DSC
     PCA  5/9 0.0715 0.0282 -0.095
    UMAP  2/8 0.2263 0.2049 -0.005</code></pre>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">xlim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">changes</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="va">d</span><span class="op">$</span><span class="va">PR</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.03</span>, <span class="fl">0.05</span><span class="op">)</span></span>
 <span><span class="va">ylim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">changes</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="va">d</span><span class="op">$</span><span class="va">DSC</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.02</span>, <span class="fl">0.02</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.2</span>, <span class="fl">4.2</span>, <span class="fl">2.2</span>, <span class="fl">0.8</span><span class="op">)</span>, las <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -1288,7 +1370,7 @@ Miller</a> introduced CADI. Quadra follows the normalization in their <a href="h
 picks classes first. Quadra samples eligible triplets uniformly. These
 audit classes are balanced, but class sizes can affect the overall score
 in other data.</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">426</span><span class="op">)</span></span>
 <span><span class="va">angle_triplets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_class_triplets.html">sample_class_triplets</a></span><span class="op">(</span><span class="va">audit_label</span>, n_triplets <span class="op">=</span> <span class="fl">90000</span><span class="op">)</span></span>
 <span><span class="va">angular</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">maps</span>, <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
@@ -1321,7 +1403,7 @@ in other data.</p>
  anchor endpoints   PCA  UMAP
       3         5 0.075 0.118
       5         3 0.056 0.040</code></pre>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">angle_change</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">angular</span>, <span class="kw">function</span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">acos</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">cosine_out</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">acos</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">cosine_in</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="fl">180</span> <span class="op">/</span> <span class="va">pi</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
@@ -1396,7 +1478,7 @@ share of the total triangle area changes. This comparison uses the same
 1,000 audit rows and requires the <code>geometry</code> package. <a href="https://arxiv.org/abs/2607.28324" class="external-link">Ros, Arleo and Paulovich</a>
 introduced the index and provide a <a href="https://codeberg.org/jros/gap-index" class="external-link">reference
 implementation</a>.</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gap_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">maps</span>, <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/gap_index.html">gap_index</a></span><span class="op">(</span></span>
 <span>    <span class="va">x</span><span class="op">[</span><span class="va">audit</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
@@ -1423,7 +1505,7 @@ implementation</a>.</p>
 [1] "2" "4" "5"
     input embedding
      0.09      3.45</code></pre>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">xy</span> <span class="op">&lt;-</span> <span class="va">maps</span><span class="op">$</span><span class="va">UMAP</span><span class="op">[</span><span class="va">audit</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
 <span><span class="va">triangle_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">umap_gap</span><span class="op">$</span><span class="va">triangles</span>, <span class="cn">NA_integer_</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors</a></span><span class="op">(</span><span class="fl">101</span>, <span class="st">"Blue-Red 3"</span><span class="op">)</span></span>
@@ -1480,7 +1562,7 @@ labels. This section requires the <code>dbscan</code> and
 colleagues</a>. Quadra follows <a href="https://github.com/hj-n/zadu" class="external-link">ZADU 0.5.4</a> for shared-neighbor
 and map weights. The authors also provide their <a href="https://github.com/hj-n/steadiness-cohesiveness" class="external-link">original
 implementation</a>.</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">451</span><span class="op">)</span></span>
 <span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/steadiness_cohesiveness.html">steadiness_cohesiveness</a></span><span class="op">(</span></span>
 <span>  <span class="va">x</span><span class="op">[</span><span class="va">audit</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
@@ -1536,7 +1618,7 @@ digits. Keep those same 106 queries. How well can each retrieve its own
 digit when we expand the ranking from the 999 other audit images to all
 4,999 other images? The table gives the median PR AUC for each
 group.</p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">audit_pr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pr_auc.html">pr_auc</a></span><span class="op">(</span></span>
 <span>  <span class="va">dout</span><span class="op">$</span><span class="va">UMAP</span>,</span>
 <span>  <span class="va">audit_label</span>,</span>
@@ -1563,7 +1645,7 @@ group.</p>
 <pre class="text"><code>             queries audit_PR full_PR
 Digit 1          100    0.862   0.816
 Other digits       6    0.090   0.092</code></pre>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">0.6</span>, <span class="fl">2.4</span>, <span class="fl">0.6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">key</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"steadiness"</span>, <span class="st">"cohesiveness"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">vizier</span><span class="fu">::</span><span class="fu">embed_plot</span><span class="op">(</span></span>
@@ -1608,7 +1690,7 @@ gain and loss, each measured by a Frobenius norm. Compare scores at
 fixed graph size and <code>k</code>. <a href="https://arxiv.org/abs/2206.13891" class="external-link">Fujiwara et al., equation 3</a>
 Their <a href="https://github.com/takanori-fujiwara/fealm" class="external-link">FEALM
 code</a> implements the comparison.</p>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span>
 <span>    <span class="va">graphs</span>,</span>
@@ -1625,7 +1707,7 @@ audit rows. Look for images that went from zero shared neighbors to at
 least eight, and that never directly listed each other in either space.
 Select the pair with the largest gain, breaking ties by audit row
 positions.</p>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">audit_graph</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">Inf</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>idx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">row</span><span class="op">)</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
